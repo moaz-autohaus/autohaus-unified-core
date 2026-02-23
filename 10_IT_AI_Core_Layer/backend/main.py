@@ -19,8 +19,8 @@ async def get_heartbeat():
     return {"status": "alive", "cil_connection": "verified"}
 
 # Static Hosting for React Frontend
-# Assumes build output is populated in frontend/dist
-DIST_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+# Points upward past `10_IT_AI_Core_Layer/backend` to the workspace root `dist/` directory
+DIST_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "dist")
 
 if os.path.exists(DIST_DIR):
     assets_dir = os.path.join(DIST_DIR, "assets")
