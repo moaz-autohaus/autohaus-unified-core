@@ -1,0 +1,20 @@
+[
+    {
+        "id": "staff_001",
+        "name": "Service Lead",
+        "role": "Lead Mechanic",
+        "billing_rates": {
+            "internal": 95,
+            "retail": 135
+        }
+    },
+    {
+        "id": "staff_002",
+        "name": "Detail Specialist",
+        "role": "Recon",
+        "billing_rates": {
+            "internal": 95,
+            "retail": 135
+        }
+    }
+]

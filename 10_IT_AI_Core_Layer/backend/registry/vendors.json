@@ -1,0 +1,14 @@
+[
+    {
+        "id": "vendor_parts_001",
+        "name": "Haus Parts Supply",
+        "category": "Parts",
+        "status": "Active"
+    },
+    {
+        "id": "vendor_supplies_001",
+        "name": "Unified Detailing Supplies",
+        "category": "Supplies",
+        "status": "Active"
+    }
+]

@@ -1,0 +1,14 @@
+[
+    {
+        "id": "KAMM_LLC",
+        "name": "KAMM LLC",
+        "role": "Owner/Inventory",
+        "description": "Unified Entity - Inventory Ownership & Strategic Capital"
+    },
+    {
+        "id": "AUTOHAUS_SERVICES",
+        "name": "AutoHaus Services",
+        "role": "Labor/Recon",
+        "description": "Unified Entity - Operational Labor, Recon, and Fulfillment"
+    }
+]

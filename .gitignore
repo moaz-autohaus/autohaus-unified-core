@@ -1,0 +1,24 @@
+# AutoHaus Sovereign Core - Git Ignore
+# Explicitly ignoring Private Data Layers (01-09) to prevent leakage
+# Only tracking 10_IT_AI_Core_Layer (System Logic)
+
+# Ignore Data Layers
+/01_Unified_Inbox/
+/02_Unified_Processed/
+/03_Personnel_Registry/
+/04_Unified_Projects/
+/05_AutoHaus_Businesses/
+/06_Unified_Finance/
+/07_Unified_Health/
+/08_Unified_Evidence/
+/09_Unified_Knowledge/
+
+# OS Files
+.DS_Store
+*.swp
+
+# Secrets
+.env
+auth/
+*service_account.json
+*credentials.json
