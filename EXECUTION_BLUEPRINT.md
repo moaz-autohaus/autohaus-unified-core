@@ -65,3 +65,40 @@
   3. If an anomaly is found, execute a Twilio API call to push an SMS alert to the CEO's configured mobile number.
 - **State Update:** Append `"anomaly_monitor": "active"` to `backend_primitives`.
 - **Verification Hook:** Insert a fake $5,000 transport fee into the BigQuery ledger, run `anomaly_engine.py`, and verify the script triggers the Twilio dispatch function.
+
+---
+
+## # MODULE 6: Module_Omnichannel_Ear (Twilio Sync)
+- **Goal:** Replicate MyKaarma's "Single Local Number" feature natively via the CIL and Identity Engine.
+- **Pre-requisites:** `Module_Identity_Bedrock` active. Twilio Account SID/Token in `.env`.
+- **Technical Specs:**
+  1. Create `10_IT_AI_Core_Layer/backend/routes/twilio_webhooks.py`.
+  2. Implement `POST /api/webhooks/twilio/sms` to receive inbound SMS.
+  3. Extract the sender's phone number, query the `IdentityEngine` to find their `master_person_id`.
+  4. Query the `inventory_master` to find their open Repair Order/Deal and route the message via Slack/SMS to the specifically assigned AutoHaus staff member.
+- **State Update:** Append `"omnichannel_twilio": "active"` to `backend_primitives`.
+- **Verification Hook:** Send a text to the Twilio number and verify the console logs a payload matching the phone number to an existing `master_person_id`.
+
+---
+
+## # MODULE 7: Module_Client_JIT_Portal (Digital Quotes)
+- **Goal:** Oust MyKaarma's quote approval UI by allowing the CIL to text a dynamic "Approval Plate" directly to customers.
+- **Pre-requisites:** `Module_JIT_Plate_Protocol` active.
+- **Technical Specs:**
+  1. Create a public-facing React route in the Replit frontend: `/quote/:uuid`.
+  2. Create a backend endpoint `GET /api/public/quote/{uuid}` that pulls the specific Digital Twin flag (e.g., "Rusty Subframe") and the associated repair cost.
+  3. Build a React component (`ApprovalPlate.jsx`) that renders the Red/Yellow/Green defect report with a "Digitally Sign & Approve" button.
+- **State Update:** Append `"customer_jit_quotes": "active"` to `backend_primitives`.
+- **Verification Hook:** Hardcode a test UUID in BigQuery, navigate to the React route, and verify the quote renders and the "Approve" button triggers a backend success log.
+
+---
+
+## # MODULE 8: Module_Logistics_Tracking (P&D Driver Maps)
+- **Goal:** Provide Uber-style live tracking links for Fluiditruck and Carlux customers.
+- **Pre-requisites:** Google Maps API key active.
+- **Technical Specs:**
+  1. Establish a lightweight Google AppSheet connected to BigQuery.
+  2. Create `10_IT_AI_Core_Layer/backend/routes/logistics.py` with `POST /api/logistics/location`.
+  3. When an AppSheet driver starts a route, send a Twilio SMS to the customer containing a unique React frontend link (e.g., `/track/:uuid`) mapping the driver's coordinates.
+- **State Update:** Append `"logistics_tracking": "active"` to `backend_primitives`.
+- **Verification Hook:** Push mock coordinates to the logistics API, open the tracking URL, and verify the UI plots the location on a Google Map component.
