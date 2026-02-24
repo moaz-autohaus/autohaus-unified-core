@@ -1,0 +1,78 @@
+{
+    "system_manifest": {
+        "current_version": "3.1.0-Alpha",
+        "paradigm": "Conversational Operating System (C-OS)",
+        "primary_objective": "Autonomous Enterprise Operations via Digital Chief of Staff and JIT UI Plates"
+    },
+    "backend_primitives": {
+        "semantic_catalog": {
+            "status": "active",
+            "file": "10_IT_AI_Core_Layer/auth/business_ontology.json",
+            "description": "JSON ontology mapping corporate entities and API vendors for AI context."
+        },
+        "immutable_lineage_log": {
+            "status": "active",
+            "gcp_resource": "autohaus-infrastructure.autohaus_cil.system_audit_ledger",
+            "description": "Append-only BigQuery table for tamper-proof logging of human and AI actions."
+        },
+        "identity_engine": {
+            "status": "active",
+            "gcp_resource": "autohaus-infrastructure.autohaus_cil.master_person_graph",
+            "middleware": "10_IT_AI_Core_Layer/backend/utils/identity_resolution.py",
+            "description": "Probabilistic matching engine assigning universal IDs to fragmented entities."
+        },
+        "document_intake_webhook": {
+            "status": "active",
+            "file": "10_IT_AI_Core_Layer/backend/routes/webhooks.py",
+            "description": "FastAPI endpoint routing unstructured uploads to Gemini for extraction."
+        }
+    },
+    "active_entities": {
+        "CARBON_LLC": {
+            "role": "Master Holding Entity",
+            "domain": "Global Strategy, Payroll, FinOps"
+        },
+        "KAMM_LLC": {
+            "role": "Lane A",
+            "domain": "Retail Sales, Financing, Warranty"
+        },
+        "ASTROLOGISTICS_LLC": {
+            "role": "Lane B",
+            "domain": "Fleet Operations, Rental Management, Commercial Transport"
+        },
+        "LANE_SERVICE": {
+            "role": "Service Lane",
+            "domain": "Recon, Diagnostics, Subcontracted Repairs"
+        }
+    },
+    "data_anchors": {
+        "inventory_master": {
+            "type": "BigQuery",
+            "purpose": "Current physical state and location of vehicles"
+        },
+        "system_audit_ledger": {
+            "type": "BigQuery",
+            "purpose": "Historical action log (The Lineage)"
+        },
+        "master_person_graph": {
+            "type": "BigQuery",
+            "purpose": "Universal CRM tracking"
+        },
+        "google_drive_architecture": {
+            "type": "Cloud Storage",
+            "purpose": "File hosting, strictly mapped via automated naming conventions"
+        }
+    },
+    "state_health": {
+        "last_verified_action": "Success: Probabilistic Identity Merge of Web Lead & Service Record.",
+        "timestamp": "2026-02-24T12:00:00Z",
+        "blocking_errors": null
+    },
+    "active_constraints": [
+        "C-OS Paradigm: The UI is a blank slate. The Chatbot orchestrates and mounts JIT Plates based on conversational intent.",
+        "Strict API Abstraction: The Frontend (React/Vite) MUST NEVER connect directly to BigQuery or APIs. It calls the Python CIL.",
+        "Data Gravity: All data must ultimately rest in Google Cloud (BigQuery/Storage).",
+        "Veblen Aesthetic: Deep Zinc (bg-zinc-950), stark white text, Porsche Red accents. High-end, stealth luxury design.",
+        "Conversational vs Operational Isolation: Strategic context lives in Vector Memory; transactional data lives in SQL."
+    ]
+}
