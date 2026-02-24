@@ -5,12 +5,14 @@ from fastapi.staticfiles import StaticFiles
 
 from routes.inventory import inventory_router
 from routes.webhooks import webhook_router
+from routes.chat_stream import chat_router
 
 app = FastAPI(title="AutoHaus CIL Bridge - Unified")
 
 # API Routing
 app.include_router(inventory_router, prefix="/api/inventory")
 app.include_router(webhook_router, prefix="/api")
+app.include_router(chat_router)  # WebSocket at /ws/chat (no prefix — WS routes are absolute)
 
 # Governance Anchor Path
 @app.get("/api/heartbeat")
