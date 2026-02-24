@@ -1,0 +1,53 @@
+{
+  "business_structure": {
+    "parent_entity": {
+      "legal_name": "Carbon LLC",
+      "display_name": "AutoHaus",
+      "description": "The master management and intellectual property holding entity.",
+      "tax_id_ref": "CONFIDENTIAL_DB_LOOKUP"
+    },
+    "operating_lanes": [
+      {
+        "lane_id": "LANE_A",
+        "legal_name": "KAMM LLC",
+        "alias": "AutoHaus Retail",
+        "function": "Retail Sales & Financing",
+        "description": "Handles all public-facing vehicle sales, CRM leads, and direct dealership financing."
+      },
+      {
+        "lane_id": "LANE_B",
+        "legal_name": "AstroLogistics LLC",
+        "alias": "AutoHaus Fleet",
+        "function": "Logistics & Fleet Operations",
+        "description": "Manages Turo rentals, Fluiditruck fleets, and external vendor car movements."
+      },
+      {
+        "lane_id": "LANE_SERVICE",
+        "legal_name": "Carbon LLC - Service Division",
+        "alias": "AutoHaus Service",
+        "function": "Repairs, Recon & Diagnostics",
+        "description": "Performs mechanical inspections, body-shop tasks, and internal vehicle reconditioning. Bills labor to Lane A and Lane B."
+      }
+    ]
+  },
+  "facility_locations": [
+    {
+      "location_id": "LOC_UNI",
+      "name": "University Ave Showroom",
+      "address": "Primary Retail Address",
+      "primary_lane": "LANE_A"
+    },
+    {
+      "location_id": "LOC_ANS",
+      "name": "Ansborough Operations",
+      "address": "Secondary Service & Overflow Lot",
+      "primary_lane": "LANE_SERVICE"
+    }
+  ],
+  "vendor_mappings": {
+    "DealerCenter": "DMS_PROVIDER_API",
+    "QuickBooks": "FINANCE_GL_API",
+    "Kiri_Engine": "DIGITAL_TWIN_3D_API",
+    "Twilio": "OMNICHANNEL_COMM_API"
+  }
+}
