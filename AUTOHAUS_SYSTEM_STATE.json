@@ -41,6 +41,11 @@
             "status": "active",
             "file": "10_IT_AI_Core_Layer/backend/memory/vector_vault.py",
             "description": "Gemini text-embedding-004 powered Vector Vault for CEO strategic context, isolated from operational BigQuery data."
+        },
+        "omnichannel_twilio": {
+            "status": "active",
+            "file": "10_IT_AI_Core_Layer/backend/routes/twilio_webhooks.py",
+            "description": "Twilio SMS webhook chaining Identity Resolution, Sovereign Memory, Agentic Router, KAMM Compliance Fence, and JIT Plate push into a single inbound SMS handler."
         }
     },
     "active_entities": {
