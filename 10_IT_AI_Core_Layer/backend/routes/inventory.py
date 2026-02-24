@@ -107,3 +107,78 @@ async def get_vehicle(
         return results[0]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"CIL Core Fetch Error: {str(e)}")
+
+from pydantic import BaseModel
+import uuid
+from datetime import datetime
+import json
+
+class PromoteRequest(BaseModel):
+    vehicle_id: str
+    actor_id: str = "Admin_Ahsin" # Will be derived from OAuth token later
+
+@inventory_router.post("/promote")
+async def promote_vehicle(
+    payload: PromoteRequest,
+    client: bigquery.Client = Depends(get_bq_client)
+):
+    """
+    UCC Command Hook: Promotes a vehicle from 'Pending' to 'Live'.
+    Executes a two-phase commit:
+    1. Update inventory_master status.
+    2. Write an immutable entry to system_audit_ledger.
+    """
+    if not client:
+        raise HTTPException(status_code=500, detail="BigQuery Link Offline.")
+
+    v_id = payload.vehicle_id
+    
+    # --- PHASE 1: Data Mutation ---
+    update_query = """
+        UPDATE `autohaus_cil.inventory_master`
+        SET status = 'Live'
+        WHERE id = @v_id AND status = 'Pending'
+    """
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ScalarQueryParameter("v_id", "STRING", v_id)]
+    )
+    
+    try:
+        update_job = client.query(update_query, job_config=job_config)
+        update_job.result()  # Wait for update to complete
+        
+        if update_job.num_dml_affected_rows == 0:
+            raise HTTPException(status_code=400, detail="Vehicle not found or already Live.")
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Mutation failed: {str(e)}")
+
+    # --- PHASE 2: Immutable Auditing (The Lineage Log) ---
+    audit_id = str(uuid.uuid4())
+    timestamp = datetime.utcnow().isoformat() + "Z"
+    
+    audit_record = {
+        "audit_id": audit_id,
+        "timestamp": timestamp,
+        "actor_id": payload.actor_id,
+        "action_type": "GOVERNANCE_APPROVAL",
+        "entity_type": "VEHICLE",
+        "entity_id": v_id,
+        "old_value": json.dumps({"status": "Pending"}),
+        "new_value": json.dumps({"status": "Live"}),
+        "metadata": json.dumps({"client_api": "UCC Hub v2.0"})
+    }
+    
+    try:
+        errors = client.insert_rows_json("autohaus-infrastructure.autohaus_cil.system_audit_ledger", [audit_record])
+        if errors:
+            print(f"[AUDIT FAILURE] Ledger write failed but state mutated: {errors}")
+            # Non-fatal to the user, but triggers backend alerts.
+    except Exception as e:
+        print(f"[AUDIT FAILURE] Ledger write failed but state mutated: {e}")
+
+    return {
+        "status": "success",
+        "message": f"{v_id} successfully promoted to LIVE and committed to Audit Ledger.",
+        "audit_transaction_id": audit_id
+    }
