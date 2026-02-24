@@ -48,8 +48,8 @@ If a completely new, autonomous third-party agent (like a voice agent, customer 
 
 ---
 
-## 4. UI/UX "Sovereign" Aesthetic Guidelines
-When generating user interfaces mapping to the CIL, the visual aesthetic must align with the **Sovereign, High-End Automotive brand** identity.
+## 4. UI/UX Aesthetic Guidelines
+When generating user interfaces mapping to the CIL, the visual aesthetic must align with a **High-End Automotive brand** identity.
 1. **Dark Mode Default**: Backgrounds should be deep charcoal or pure black (`#0A0A0A`).
 2. **Accents**: Use subtle gold, stark white typography, or specific brand colors (e.g., Porsche Red `#E30613` for primary destructive/submit actions). Do not use generic Bootstrap UI colors.
 3. **Typography**: Sleek, modern sans-serif fonts (e.g., Inter, Roboto).
