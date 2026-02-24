@@ -1,4 +1,4 @@
-# AutoHaus Sovereign Core - Git Ignore
+# AutoHaus Unified Core - Git Ignore
 # Explicitly ignoring Private Data Layers (01-09) to prevent leakage
 # Only tracking 10_IT_AI_Core_Layer (System Logic)
 
