@@ -2,77 +2,136 @@
     "system_manifest": {
         "current_version": "3.1.0-Alpha",
         "paradigm": "Conversational Operating System (C-OS)",
-        "primary_objective": "Autonomous Enterprise Operations via Digital Chief of Staff and JIT UI Plates"
+        "primary_objective": "Autonomous Enterprise Operations via Digital Chief of Staff and JIT UI Plates",
+        "anchor_document": "AutoHaus Ecosystem V2.1 Master Document"
     },
     "backend_primitives": {
         "semantic_catalog": {
             "status": "active",
             "file": "10_IT_AI_Core_Layer/auth/business_ontology.json",
-            "description": "JSON ontology mapping corporate entities and API vendors for AI context."
+            "description": "Ontology mapping 7 entities + insurance logic for AI context injection."
         },
         "immutable_lineage_log": {
             "status": "active",
             "gcp_resource": "autohaus-infrastructure.autohaus_cil.system_audit_ledger",
-            "description": "Append-only BigQuery table for tamper-proof logging of human and AI actions."
+            "description": "Append-only BigQuery table for tamper-proof logging and insurance audit trails."
         },
         "identity_engine": {
             "status": "active",
             "gcp_resource": "autohaus-infrastructure.autohaus_cil.master_person_graph",
             "middleware": "10_IT_AI_Core_Layer/backend/utils/identity_resolution.py",
-            "description": "Probabilistic matching engine assigning universal IDs to fragmented entities."
+            "description": "Universal CRM tracking across Sales, Service, Fleet, and Logistics."
         },
-        "document_intake_webhook": {
+        "intelligent_inbox": {
             "status": "active",
             "file": "10_IT_AI_Core_Layer/backend/routes/webhooks.py",
-            "description": "FastAPI endpoint routing unstructured uploads to Gemini for extraction."
+            "description": "Gemini-powered classification, renaming, and Drive routing pipeline."
         }
     },
     "active_entities": {
         "CARBON_LLC": {
-            "role": "Master Holding Entity",
-            "domain": "Global Strategy, Payroll, FinOps"
+            "role": "MSO / Management Hub",
+            "ownership": "Ahsin (100%)",
+            "domain": "HR, Payroll, AI Infrastructure, Admin Backbone",
+            "insurance": "Workers Comp, EPLI (Risk-Pure Admin)",
+            "personnel": [
+                "Ahsin (CEO)"
+            ]
         },
         "KAMM_LLC": {
-            "role": "Lane A",
-            "domain": "Retail Sales, Financing, Warranty"
+            "role": "Retail Dealership (Lane A/Sales)",
+            "ownership": "50% Carbon / 50% Next Gig",
+            "domain": "Sales, F&I, Inventory Acquisition",
+            "insurance": "Dealer Liability, Open Lot, Dealer GK",
+            "personnel": [
+                "Asim (Sales Lead)"
+            ]
+        },
+        "AUTOHAUS_SERVICES_LLC": {
+            "role": "Service & Recon (Lane A/Mechanical)",
+            "ownership": "Asim / Mohsin",
+            "domain": "Mechanical Recon, Diagnostics, Detailing, NNN Tenant",
+            "insurance": "Garage Liability, Garagekeepers (Service)",
+            "personnel": [
+                "Asim (Ops)",
+                "Mohsin (Ops)"
+            ]
         },
         "ASTROLOGISTICS_LLC": {
-            "role": "Lane B",
-            "domain": "Fleet Operations, Rental Management, Commercial Transport"
+            "role": "Cosmetic Studio (Lane B/CVAD)",
+            "ownership": "Mohsin (100%)",
+            "domain": "Tint, PPF, Ceramic, Vinyl Wraps",
+            "insurance": "General Liability (Installer), Bailee Coverage",
+            "personnel": [
+                "Mohsin (Lead)"
+            ]
         },
-        "LANE_SERVICE": {
-            "role": "Service Lane",
-            "domain": "Recon, Diagnostics, Subcontracted Repairs"
+        "FLUIDITRUCK_LLC": {
+            "role": "Fleet & Mobility",
+            "ownership": "Moaz (100%)",
+            "domain": "Airport Shuttle, Turo, Rentals, Fleet Assets",
+            "insurance": "Commercial Auto Fleet, Rental/Turo Endorsement",
+            "personnel": [
+                "Moaz (Lead)"
+            ]
+        },
+        "CARLUX_LLC": {
+            "role": "Logistics & Dispatch",
+            "ownership": "Moaz (100%)",
+            "domain": "Dispatch HQ, FMCSA Framework, Auction Coordination",
+            "insurance": "Hybrid Business Auto, Logistics Liability",
+            "personnel": [
+                "Moaz (Lead)"
+            ]
+        },
+        "MAHAD_HOLDINGS_LLC": {
+            "role": "Real Estate (Landlord)",
+            "ownership": "Kamran (100%)",
+            "domain": "Property Ownership (University Ave), Landlord",
+            "insurance": "LRO (Landlord Liability), Property",
+            "personnel": [
+                "Kamran (Lead)"
+            ]
         }
+    },
+    "personnel_access_matrix": {
+        "AHSIN_CEO": "Global Admin / Sovereign Access / Management Override",
+        "MOHSIN_OPS": "Lane B (CVAD) + Service + Fleet Logistics",
+        "ASIM_SALES": "Lane A (Service) + KAMM Sales + Inventory",
+        "MOAZ_LOGISTICS": "Fleet (Fluiditruck) + Dispatch (Carlux) + Logistics",
+        "KAMRAN_FACILITY": "Property (Mahad) + Strategic Infrastructure"
     },
     "data_anchors": {
         "inventory_master": {
             "type": "BigQuery",
-            "purpose": "Current physical state and location of vehicles"
+            "purpose": "Digital Twin state & location (KAMM / Fluiditruck)"
         },
         "system_audit_ledger": {
             "type": "BigQuery",
-            "purpose": "Historical action log (The Lineage)"
+            "purpose": "The immutable Lineage (Claim/Audit support)"
         },
         "master_person_graph": {
             "type": "BigQuery",
-            "purpose": "Universal CRM tracking"
+            "purpose": "Universal Identity Resolution (Unified CRM)"
         },
         "google_drive_architecture": {
             "type": "Cloud Storage",
-            "purpose": "File hosting, strictly mapped via automated naming conventions"
+            "purpose": "Canonical Folder Tree: 00_Intake to 17_Appendices"
         }
     },
-    "state_health": {
-        "last_verified_action": "Success: Probabilistic Identity Merge of Web Lead & Service Record.",
-        "timestamp": "2026-02-24T12:00:00Z",
-        "blocking_errors": null
-    },
     "active_constraints": [
-        "C-OS Paradigm: The UI is a blank slate. The Chatbot orchestrates and mounts JIT Plates based on conversational intent.",
-        "Strict API Abstraction: The Frontend (React/Vite) MUST NEVER connect directly to BigQuery or APIs. It calls the Python CIL.",
-        "Data Gravity: All data must ultimately rest in Google Cloud (BigQuery/Storage).",
-        "Veblen Aesthetic: Deep Zinc (bg-zinc-950), stark white text, Porsche Red accents. High-end, stealth luxury design.",
-        "Conversational vs Operational Isolation: Strategic context lives in Vector Memory; transactional data lives in SQL."
-    ]
+        "JIT UI: UI is a blank slate; Plates are mounted based on C-OS Agentic Router intent.",
+        "Insurance Isolation: Operating entity MUST carry the specific risk insurance; No mixing.",
+        "MSO Model: Carbon LLC remains 'Risk-Pure' (Administrative only).",
+        "Veblen Aesthetic: Zinc-950 background, Porsche Red accents, stark typography.",
+        "Data Sovereignty: All records rest in BigQuery; Replit/Frontend is stateless.",
+        "Entity Separation: Insurance must strictly follow the entity performing the risk.",
+        "NNN Compliance: AutoHaus Services and KAMM are responsible for building insurance per lease.",
+        "Sovereign Memory: Strategic CEO context is isolated from transactional vehicle data."
+    ],
+    "state_health": {
+        "last_verified_action": "Sync: Unified insurance model with Auto-Owners verified.",
+        "timestamp": "2026-02-24T12:24:00Z",
+        "blocking_errors": null
+    }
 }
