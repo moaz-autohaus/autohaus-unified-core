@@ -31,6 +31,11 @@
             "status": "active",
             "file": "10_IT_AI_Core_Layer/backend/agents/router_agent.py",
             "description": "Gemini 1.5 Pro intent classifier routing human commands to FINANCE, INVENTORY, SERVICE, CRM, LOGISTICS, or COMPLIANCE domains."
+        },
+        "jit_websocket": {
+            "status": "active",
+            "file": "10_IT_AI_Core_Layer/backend/routes/chat_stream.py",
+            "description": "WebSocket endpoint (/ws/chat) pushing MOUNT_PLATE commands to React UI for real-time JIT Plate hydration."
         }
     },
     "active_entities": {
