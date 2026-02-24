@@ -1,9 +1,9 @@
 {
     "system_manifest": {
-        "current_version": "3.1.0-Alpha",
+        "current_version": "3.1.1-Alpha",
         "paradigm": "Conversational Operating System (C-OS)",
-        "primary_objective": "Autonomous Enterprise Operations via Digital Chief of Staff and JIT UI Plates",
-        "anchor_document": "AutoHaus Ecosystem V2.1 Master Document"
+        "primary_objective": "Autonomous Enterprise Operations via Digital Chief of Staff",
+        "anchor_document": "AutoHaus Ecosystem V2.1 + MyKaarma Audit"
     },
     "backend_primitives": {
         "semantic_catalog": {
@@ -30,56 +30,45 @@
     },
     "active_entities": {
         "CARBON_LLC": {
-            "role": "MSO / Management Hub",
-            "ownership": "Ahsin (100%)",
-            "domain": "HR, Payroll, AI Infrastructure, Admin Backbone",
-            "insurance": "Workers Comp, EPLI (Risk-Pure Admin)",
+            "role": "MSO / Digital Brain",
+            "insurance": "Workers Comp, EPLI (Risk-Pure)",
             "personnel": [
                 "Ahsin (CEO)"
             ]
         },
         "KAMM_LLC": {
-            "role": "Retail Dealership (Lane A/Sales)",
-            "ownership": "50% Carbon / 50% Next Gig",
-            "domain": "Sales, F&I, Inventory Acquisition",
-            "insurance": "Dealer Liability, Open Lot, Dealer GK",
+            "role": "Dealer Compliance & Title HQ",
+            "activity_limit": "STRICT: Iowa Dealer Law Compliance, Title Processing, Damage Disclosures only.",
+            "insurance": "Unified Auto-Owners Policy",
             "personnel": [
-                "Asim (Sales Lead)"
+                "Asim (Compliance Lead)"
             ]
         },
         "AUTOHAUS_SERVICES_LLC": {
-            "role": "Service & Recon (Lane A/Mechanical)",
-            "ownership": "Asim / Mohsin",
-            "domain": "Mechanical Recon, Diagnostics, Detailing, NNN Tenant",
-            "insurance": "Garage Liability, Garagekeepers (Service)",
+            "role": "Service & Recon (Lane A)",
+            "insurance": "Unified Auto-Owners Policy (Garagekeepers)",
             "personnel": [
                 "Asim (Ops)",
                 "Mohsin (Ops)"
             ]
         },
         "ASTROLOGISTICS_LLC": {
-            "role": "Cosmetic Studio (Lane B/CVAD)",
-            "ownership": "Mohsin (100%)",
-            "domain": "Tint, PPF, Ceramic, Vinyl Wraps",
-            "insurance": "General Liability (Installer), Bailee Coverage",
+            "role": "Cosmetic Studio (Lane B)",
+            "insurance": "Unified Auto-Owners Policy (Bailee)",
             "personnel": [
                 "Mohsin (Lead)"
             ]
         },
         "FLUIDITRUCK_LLC": {
-            "role": "Fleet & Mobility",
-            "ownership": "Moaz (100%)",
-            "domain": "Airport Shuttle, Turo, Rentals, Fleet Assets",
-            "insurance": "Commercial Auto Fleet, Rental/Turo Endorsement",
+            "role": "Fleet Asset Holding",
+            "insurance": "Unified Auto-Owners Policy (Fleet)",
             "personnel": [
                 "Moaz (Lead)"
             ]
         },
         "CARLUX_LLC": {
             "role": "Logistics & Dispatch",
-            "ownership": "Moaz (100%)",
-            "domain": "Dispatch HQ, FMCSA Framework, Auction Coordination",
-            "insurance": "Hybrid Business Auto, Logistics Liability",
+            "insurance": "Unified Auto-Owners Policy (Logistics)",
             "personnel": [
                 "Moaz (Lead)"
             ]
@@ -119,15 +108,12 @@
             "purpose": "Canonical Folder Tree: 00_Intake to 17_Appendices"
         }
     },
+    "insurance_anchor": "Unified Auto-Owners Insurance (Single Carrier Strategy)",
     "active_constraints": [
-        "JIT UI: UI is a blank slate; Plates are mounted based on C-OS Agentic Router intent.",
-        "Insurance Isolation: Operating entity MUST carry the specific risk insurance; No mixing.",
-        "MSO Model: Carbon LLC remains 'Risk-Pure' (Administrative only).",
-        "Veblen Aesthetic: Zinc-950 background, Porsche Red accents, stark typography.",
-        "Data Sovereignty: All records rest in BigQuery; Replit/Frontend is stateless.",
-        "Entity Separation: Insurance must strictly follow the entity performing the risk.",
-        "NNN Compliance: AutoHaus Services and KAMM are responsible for building insurance per lease.",
-        "Sovereign Memory: Strategic CEO context is isolated from transactional vehicle data."
+        "JIT UI: UI is stateless; Plates are mounted based on C-OS intent.",
+        "KAMM Scope: KAMM is purely a legal/compliance vehicle for dealership paperwork.",
+        "MSO Model: Carbon LLC carries zero operational risk.",
+        "Insurance Purity: No risk mixing; policy follows the entity action."
     ],
     "state_health": {
         "last_verified_action": "Sync: Unified insurance model with Auto-Owners verified.",
