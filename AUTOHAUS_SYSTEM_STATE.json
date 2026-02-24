@@ -26,6 +26,11 @@
             "status": "active",
             "file": "10_IT_AI_Core_Layer/backend/routes/webhooks.py",
             "description": "Gemini-powered classification, renaming, and Drive routing pipeline."
+        },
+        "agentic_router": {
+            "status": "active",
+            "file": "10_IT_AI_Core_Layer/backend/agents/router_agent.py",
+            "description": "Gemini 1.5 Pro intent classifier routing human commands to FINANCE, INVENTORY, SERVICE, CRM, LOGISTICS, or COMPLIANCE domains."
         }
     },
     "active_entities": {
