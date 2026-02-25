@@ -8,4 +8,8 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  server: {
+    allowedHosts: true, // Allow Replit URLs and other external hosts for Vite dev server
+    host: '0.0.0.0'
+  }
 })
