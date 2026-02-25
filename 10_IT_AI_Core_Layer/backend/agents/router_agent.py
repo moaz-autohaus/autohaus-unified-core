@@ -131,9 +131,13 @@ class RouterAgent:
         print(result.to_json())
     """
 
-    def __init__(self, api_key: Optional[str] = None, model_name: str = "gemini-1.5-pro"):
+    def __init__(self, api_key: Optional[str] = None, model_name: str = "gemini-2.5-flash"):
         """
         Initialize the RouterAgent with Gemini credentials.
+
+
+
+
 
         Args:
             api_key:    Google AI API key. Falls back to GEMINI_API_KEY env var.
@@ -154,7 +158,14 @@ class RouterAgent:
                 temperature=0.1,       # Near-deterministic for classification
                 top_p=0.95,
                 max_output_tokens=512, # Classification payloads are small
+                response_mime_type="application/json",
             ),
+            safety_settings=[
+                {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+            ]
         )
         logger.info(f"RouterAgent initialized with model: {model_name}")
 
