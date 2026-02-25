@@ -1,4 +1,7 @@
 import os
+import asyncio
+import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -9,9 +12,49 @@ from routes.chat_stream import chat_router
 from routes.twilio_webhooks import twilio_router
 from routes.quote_routes import quote_router
 from routes.logistics import logistics_router
-from routes.crm_intake import crm_router
+from routes.identity_routes import identity_router
 
-app = FastAPI(title="AutoHaus CIL Bridge - Unified")
+logger = logging.getLogger("autohaus.main")
+
+# ---------------------------------------------------------------------------
+# Background Anomaly Scheduler (Fix: Module 5 was orphaned with no trigger)
+# ---------------------------------------------------------------------------
+async def anomaly_sweep_loop():
+    """Runs the anomaly engine every 30 minutes as a background coroutine."""
+    while True:
+        await asyncio.sleep(1800)  # 30 minutes
+        try:
+            logger.info("[ANOMALY SCHEDULER] Running periodic anomaly sweep...")
+            # Import lazily to avoid circular imports and heavy init at startup
+            from scripts.anomaly_engine import run_anomaly_checks
+            await asyncio.to_thread(run_anomaly_checks)
+            logger.info("[ANOMALY SCHEDULER] Sweep complete.")
+        except ImportError:
+            logger.warning("[ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.")
+        except Exception as e:
+            logger.error(f"[ANOMALY SCHEDULER] Sweep failed: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan events: start background tasks on boot, cleanup on shutdown."""
+    # 1. Anomaly Sweep
+    anomaly_task = asyncio.create_task(anomaly_sweep_loop())
+    logger.info("[LIFESPAN] Anomaly sweep scheduler started (every 30 min).")
+    
+    # 2. Drive Ear (Ambient Listening)
+    from services.drive_ear import drive_ear
+    drive_task = asyncio.create_task(drive_ear.poll_forever())
+    logger.info("[LIFESPAN] Drive Ear (Neural Membrane) active.")
+    
+    yield
+    
+    anomaly_task.cancel()
+    drive_task.cancel()
+    logger.info("[LIFESPAN] Background services stopped.")
+
+
+app = FastAPI(title="AutoHaus CIL Bridge - Unified", lifespan=lifespan)
 
 # API Routing
 app.include_router(inventory_router, prefix="/api/inventory")
@@ -20,7 +63,7 @@ app.include_router(chat_router)  # WebSocket at /ws/chat (no prefix — WS route
 app.include_router(twilio_router, prefix="/api")  # Twilio SMS at /api/webhooks/twilio/sms
 app.include_router(quote_router, prefix="/api")   # Quote Portal at /api/public/quote/{uuid}
 app.include_router(logistics_router, prefix="/api/logistics")
-app.include_router(crm_router, prefix="/api/crm")
+app.include_router(identity_router, prefix="/api/crm")
 
 
 # Governance Anchor Path

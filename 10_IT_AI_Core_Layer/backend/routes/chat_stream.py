@@ -30,12 +30,15 @@ Version: 1.0.0
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Dict, Any, Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+import google.generativeai as genai
 
-# Import the Agentic Router from Module 2
+# C-OS Modules
 from agents.router_agent import RouterAgent, RoutedIntent
+from memory.vector_vault import VectorVault
+from agents.iea_agent import InputEnrichmentAgent
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("autohaus.chat_stream")
@@ -118,20 +121,64 @@ def _get_router() -> RouterAgent:
 
 
 # ---------------------------------------------------------------------------
+# Skin Selection Logic (Backend decides, Frontend obeys)
+# ---------------------------------------------------------------------------
+def _resolve_skin(urgency_score: int, target_entity: str) -> dict:
+    """
+    The Backend is the single source of truth for the visual expression.
+    This function maps urgency and context to a UI Strategy directive.
+    """
+    if urgency_score >= 8:
+        return {
+            "skin": "FIELD_DIAGNOSTIC",
+            "urgency": urgency_score,
+            "vibration": True,
+            "overlay": "porsche-red-pulse",
+        }
+    elif target_entity in ("CLIENT", "EXTERNAL", "WEB_LEAD"):
+        return {
+            "skin": "CLIENT_HANDSHAKE",
+            "urgency": urgency_score,
+            "vibration": False,
+            "overlay": None,
+        }
+    elif urgency_score <= 2:
+        return {
+            "skin": "GHOST",
+            "urgency": urgency_score,
+            "vibration": False,
+            "overlay": None,
+        }
+    else:
+        return {
+            "skin": "SUPER_ADMIN",
+            "urgency": urgency_score,
+            "vibration": False,
+            "overlay": None,
+        }
+
+
+# ---------------------------------------------------------------------------
 # JIT Plate Builder
 # ---------------------------------------------------------------------------
-def build_plate_payload(routed: RoutedIntent) -> dict:
+def build_plate_payload(routed: RoutedIntent, urgency_score: int = 5) -> dict:
     """
     Translate a RoutedIntent into a JIT Plate mount command for the React UI.
 
     The React <PlateHydrator /> component listens for these payloads and
     dynamically imports and renders the correct visualization component.
+
+    The nested `strategy` block makes the frontend truly stateless —
+    it never has to guess which skin to use.
     """
     plate_id = PLATE_MAP.get(routed.intent, "CHAT_RESPONSE")
 
     # If confidence is low, override to ambiguity resolution
     if routed.confidence < 0.7 and routed.intent != "UNKNOWN":
         plate_id = "AMBIGUITY_RESOLUTION"
+
+    # Backend resolves the skin — frontend is dumb
+    strategy = _resolve_skin(urgency_score, routed.target_entity)
 
     payload = {
         "type": "MOUNT_PLATE",
@@ -141,11 +188,72 @@ def build_plate_payload(routed: RoutedIntent) -> dict:
         "entities": routed.entities,
         "target_entity": routed.target_entity,
         "suggested_action": routed.suggested_action,
+        "strategy": strategy,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "dataset": [],  # Placeholder: hydrated with BigQuery data in future modules
     }
 
     return payload
+
+
+# ---------------------------------------------------------------------------
+# Message Processor
+# ---------------------------------------------------------------------------
+async def process_incoming_message(websocket: WebSocket, client_id: str, text_data: str):
+    """Processes an incoming chat message using the C-OS pipeline."""
+    logger.info(f"[WS] Received message: '{text_data[:80]}...'")
+
+    # 1. Sovereign Memory context injection
+    from memory.vector_vault import VectorVault
+    vault = VectorVault()
+    memory_context = vault.build_context_injection(text_data, top_k=3)
+
+    enriched_input = text_data
+    if memory_context:
+        logger.info(f"[WS] Found historical context.")
+        enriched_input = f"{text_data}\n\n{memory_context}"
+
+    # 2. Intelligent Membrane: IEA Enrichment
+    from agents.iea_agent import InputEnrichmentAgent
+    iea = InputEnrichmentAgent()
+    logger.info("[WS] Passing through IEA Membrane")
+    iea_result = iea.evaluate(enriched_input)
+
+    if iea_result.status == "INCOMPLETE":
+        logger.warning(f"[WS] Membrane caught incomplete input: {iea_result.clarifying_question}")
+        # If incomplete, bypass the Router and ask the user directly
+        clarification_payload = {
+            "type": "MOUNT_PLATE",
+            "plate_id": "CHAT_RESPONSE",
+            "intent": "CLARIFICATION_REQUIRED",
+            "confidence": 1.0,
+            "entities": iea_result.extracted_entities,
+            "target_entity": "CARBON_LLC",
+            "suggested_action": iea_result.clarifying_question,
+            "strategy": _resolve_skin(5, "CARBON_LLC"),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "dataset": []
+        }
+        await manager.send_personal_message(clarification_payload, client_id)
+        return
+
+    # 3. Classify structured input via RouterAgent
+    from agents.router_agent import RouterAgent
+    router = _get_router()
+    logger.info("[WS] Classifying intent.")
+    routed_intent = router.classify(enriched_input)
+
+    # 4. Determine Urgency via Attention Dispatcher
+    from agents.attention_dispatcher import AttentionDispatcher
+    dispatcher = AttentionDispatcher()
+    attention_result = dispatcher.evaluate_event(enriched_input)
+
+    # 5. Generate the JIT Plate JSON payload
+    plate_payload = build_plate_payload(routed_intent, urgency_score=attention_result.urgency_score)
+
+    # 6. Push payload back to the browser
+    logger.info(f"[WS] Pushing Plate: {plate_payload['plate_id']} (Intent: {plate_payload['intent']}, Skin: {plate_payload['strategy']['skin']}, Urgency: {attention_result.urgency_score})")
+    await manager.send_personal_message(plate_payload, client_id)
 
 
 # ---------------------------------------------------------------------------
@@ -173,6 +281,8 @@ async def websocket_chat_endpoint(websocket: WebSocket):
         "type": "SYSTEM",
         "message": "AutoHaus C-OS v3.1 — Digital Chief of Staff connected.",
         "connected_clients": manager.active_count,
+        "authority_state": "SOVEREIGN",
+        "legacy_sync": False,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }, client_id)
 
@@ -195,22 +305,8 @@ async def websocket_chat_endpoint(websocket: WebSocket):
                 }, client_id)
                 continue
 
-            logger.info(f"[{client_id}] Received: {user_message[:80]}")
-
-            # ── STEP 1: Classify intent via the Agentic Router ──
-            router = _get_router()
-            routed_intent = router.classify(user_message)
-
-            # ── STEP 2: Build the JIT Plate payload ──
-            plate_payload = build_plate_payload(routed_intent)
-
-            # ── STEP 3: Push the Plate to the client ──
-            await manager.send_personal_message(plate_payload, client_id)
-
-            logger.info(
-                f"[{client_id}] Pushed plate: {plate_payload['plate_id']} "
-                f"(confidence: {routed_intent.confidence})"
-            )
+            # Call the new message processing function
+            await process_incoming_message(websocket, client_id, user_message)
 
     except WebSocketDisconnect:
         manager.disconnect(client_id)

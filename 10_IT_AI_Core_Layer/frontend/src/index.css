@@ -1,26 +1,124 @@
-@import "tailwindcss";
-
-@theme {
-  --color-zinc-950: #09090b;
-  --color-zinc-900: #18181b;
-  --color-red-600: #e11d48;
-  --color-gold: #c5a059;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
-    --bg-primary: #09090b;
-    --bg-card: #18181b;
-    --text-primary: #fafafa;
-    --text-muted: #a1a1aa;
-    --accent-red: #e11d48;
-    --accent-gold: #c5a059;
+    --bg-primary: #080808;
+    --bg-card: #0f0f0f;
+    --text-primary: #e8e8e8;
+    --brand-border: #1c1c1c;
+    --accent-primary: #C5A059;
+    --accent-secondary: #8a6d3b;
   }
-  
-  body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: 'Inter', -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
+
+  .theme-super_admin {
+    --bg-primary: #080808;
+    --bg-card: #0f0f0f;
+    --text-primary: #e8e8e8;
+    --brand-border: #1c1c1c;
+    --accent-primary: #C5A059;
+    --accent-secondary: #8a6d3b;
   }
+
+  .theme-field_diagnostic {
+    --bg-primary: #190505;
+    --bg-card: #2d0b0b;
+    --text-primary: #fee2e2;
+    --brand-border: #7f1d1d;
+    --accent-primary: #f87171;
+    --accent-secondary: #fca5a5;
+  }
+}
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+@keyframes pulse-dot {
+
+  0%,
+  80%,
+  100% {
+    opacity: .3;
+    transform: scale(.8)
+  }
+
+  40% {
+    opacity: 1;
+    transform: scale(1)
+  }
+}
+
+@keyframes blink {
+
+  0%,
+  100% {
+    opacity: 1
+  }
+
+  50% {
+    opacity: 0
+  }
+}
+
+@keyframes msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px)
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0)
+  }
+}
+
+@keyframes plate-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px)
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0)
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0
+  }
+
+  100% {
+    background-position: 200% 0
+  }
+}
+
+@layer utilities {
+  .shimmer-active {
+    background: linear-gradient(90deg, transparent, #ffffff08, transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite linear;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px
+}
+
+::-webkit-scrollbar-track {
+  background: transparent
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 2px
+}
+
+body {
+  @apply bg-[#080808] text-[#e8e8e8] transition-colors duration-300 antialiased;
+  margin: 0;
+  height: 100vh;
+  font-family: 'DM Sans', sans-serif;
 }

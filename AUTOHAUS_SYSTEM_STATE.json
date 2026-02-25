@@ -64,8 +64,12 @@
         },
         "crm_intake_api": {
             "status": "active",
-            "file": "10_IT_AI_Core_Layer/backend/routes/crm_intake.py",
-            "description": "REST API wrapper for the Identity Engine that digests omni-channel inbound leads."
+            "file": "10_IT_AI_Core_Layer/backend/routes/identity_routes.py",
+            "description": "REST API wrapper for the Identity Engine with Attention Dispatcher integration. Broadcasts NEW_LEAD JIT Plates over WebSocket."
+        },
+        "intelligent_membrane": {
+            "status": "active",
+            "description": "Omni-Channel Neural Membrane (SMS & Drive Ear) for bidirectional ambient awareness."
         }
     },
     "active_entities": {
@@ -149,15 +153,26 @@
         }
     },
     "insurance_anchor": "Unified Auto-Owners Insurance (Single Carrier Strategy)",
+    "system_authority": {
+        "primary_engine": "REPLIT_CIL_v3.1",
+        "legacy_bridge": "DEPRECATED",
+        "authority_matrix": {
+            "intake_sla": "Sovereign_CIL",
+            "executive_briefing": "Morning_Brief_Engine",
+            "dashboard_rendering": "Visual_Orchestrator_WebSocket",
+            "recon_logic": "Logistics_Module_Digital_Twin"
+        }
+    },
     "active_constraints": [
         "JIT UI: UI is stateless; Plates are mounted based on C-OS intent.",
         "KAMM Scope: KAMM is purely a legal/compliance vehicle for dealership paperwork.",
         "MSO Model: Carbon LLC carries zero operational risk.",
-        "Insurance Purity: No risk mixing; policy follows the entity action."
+        "Insurance Purity: No risk mixing; policy follows the entity action.",
+        "Legacy Shutdown: Apps Script triggers are COLD. Brain authority is with Replit."
     ],
     "state_health": {
-        "last_verified_action": "Sync: Unified insurance model with Auto-Owners verified.",
-        "timestamp": "2026-02-24T12:24:00Z",
+        "last_verified_action": "Sync: Omni-Channel Neural Membrane (v3.1) active. Drive Ear monitoring 00_Inbox.",
+        "timestamp": "2026-02-25T10:45:00Z",
         "blocking_errors": null
     }
 }
