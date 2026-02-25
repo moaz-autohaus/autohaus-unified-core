@@ -56,6 +56,11 @@
             "status": "active",
             "file": "10_IT_AI_Core_Layer/backend/routes/quote_routes.py",
             "description": "Public-facing Digital Quote portal with severity-coded health cards, KAMM Iowa Disclosure compliance, SMS verification gate, and Veblen Stealth Luxury UI."
+        },
+        "logistics_tracking": {
+            "status": "active",
+            "file": "10_IT_AI_Core_Layer/backend/routes/logistics.py",
+            "description": "AppSheet GPS webhook receiver and Twilio SMS dispatcher for live P&D driver tracking maps."
         }
     },
     "active_entities": {

@@ -8,6 +8,7 @@ from routes.webhooks import webhook_router
 from routes.chat_stream import chat_router
 from routes.twilio_webhooks import twilio_router
 from routes.quote_routes import quote_router
+from routes.logistics import logistics_router
 
 app = FastAPI(title="AutoHaus CIL Bridge - Unified")
 
@@ -17,6 +18,7 @@ app.include_router(webhook_router, prefix="/api")
 app.include_router(chat_router)  # WebSocket at /ws/chat (no prefix — WS routes are absolute)
 app.include_router(twilio_router, prefix="/api")  # Twilio SMS at /api/webhooks/twilio/sms
 app.include_router(quote_router, prefix="/api")   # Quote Portal at /api/public/quote/{uuid}
+app.include_router(logistics_router, prefix="/api/logistics")
 
 # Governance Anchor Path
 @app.get("/api/heartbeat")
