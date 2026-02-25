@@ -51,6 +51,11 @@
             "status": "active",
             "file": "10_IT_AI_Core_Layer/scripts/anomaly_engine.py",
             "description": "Autonomous 3-check background auditor (Golden Rule, Entity Drift, Margin Alert) with Twilio CEO alerting and MSO Purity enforcement."
+        },
+        "customer_jit_quotes": {
+            "status": "active",
+            "file": "10_IT_AI_Core_Layer/backend/routes/quote_routes.py",
+            "description": "Public-facing Digital Quote portal with severity-coded health cards, KAMM Iowa Disclosure compliance, SMS verification gate, and Veblen Stealth Luxury UI."
         }
     },
     "active_entities": {

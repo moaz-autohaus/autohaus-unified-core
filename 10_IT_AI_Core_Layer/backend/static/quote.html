@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoHaus — Vehicle Health Report</title>
+    <style>
+        /* ============================================================
+           VEBLEN STEALTH LUXURY — AutoHaus C-OS Quote Portal
+           ============================================================ */
+        :root {
+            --bg-primary: #09090b;
+            --bg-card: #18181b;
+            --bg-card-hover: #1f1f23;
+            --border: #27272a;
+            --text-primary: #fafafa;
+            --text-muted: #a1a1aa;
+            --text-dim: #71717a;
+            --accent-red: #e11d48;
+            --accent-red-hover: #f43f5e;
+            --accent-gold: #c5a059;
+            --severity-critical: #ef4444;
+            --severity-monitor: #eab308;
+            --severity-good: #22c55e;
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 32px 0 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .header-brand {
+            font-size: 11px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            margin-bottom: 8px;
+        }
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+        .header-vehicle {
+            font-size: 15px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .header-vin {
+            font-size: 11px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+        .header-entity {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 4px 12px;
+            background: rgba(197, 160, 89, 0.1);
+            border: 1px solid rgba(197, 160, 89, 0.2);
+            border-radius: 20px;
+            font-size: 11px;
+            color: var(--accent-gold);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* KAMM Compliance Banner */
+        .kamm-banner {
+            background: linear-gradient(135deg, rgba(225, 29, 72, 0.08), rgba(225, 29, 72, 0.02));
+            border: 1px solid rgba(225, 29, 72, 0.2);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .kamm-banner.visible { display: block; }
+        .kamm-banner h3 {
+            font-size: 12px;
+            color: var(--accent-red);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .kamm-banner p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Line Items */
+        .section-label {
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+        }
+
+        .line-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            transition: border-color 0.2s, background 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+        .line-item:hover {
+            background: var(--bg-card-hover);
+        }
+        .line-item.selected {
+            border-color: var(--accent-red);
+            background: rgba(225, 29, 72, 0.04);
+        }
+
+        .line-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .line-item-left {
+            flex: 1;
+        }
+
+        .severity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        .severity-CRITICAL {
+            background: rgba(239, 68, 68, 0.12);
+            color: var(--severity-critical);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .severity-MONITOR {
+            background: rgba(234, 179, 8, 0.12);
+            color: var(--severity-monitor);
+            border: 1px solid rgba(234, 179, 8, 0.2);
+        }
+        .severity-GOOD {
+            background: rgba(34, 197, 94, 0.12);
+            color: var(--severity-good);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .severity-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .severity-CRITICAL .severity-dot { background: var(--severity-critical); }
+        .severity-MONITOR .severity-dot { background: var(--severity-monitor); }
+        .severity-GOOD .severity-dot { background: var(--severity-good); }
+
+        .line-item-title {
+            font-size: 15px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+        .line-item-notes {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .line-item-cost {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 10px;
+            font-variant-numeric: tabular-nums;
+        }
+        .line-item-labor {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .line-item-check {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 22px; height: 22px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .line-item.selected .line-item-check {
+            border-color: var(--accent-red);
+            background: var(--accent-red);
+        }
+        .line-item.selected .line-item-check::after {
+            content: '✓';
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* Video Section */
+        .video-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .video-placeholder {
+            background: #0f0f12;
+            border-radius: 8px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+
+        /* Summary */
+        .summary {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin: 24px 0;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+        .summary-row.total {
+            border-top: 1px solid var(--border);
+            margin-top: 8px;
+            padding-top: 14px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .summary-label { color: var(--text-muted); }
+        .summary-value { font-variant-numeric: tabular-nums; }
+
+        /* Approve Button */
+        .approve-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: var(--accent-red);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .approve-btn:hover { background: var(--accent-red-hover); }
+        .approve-btn:active { transform: scale(0.98); }
+        .approve-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Success State */
+        .success-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(9, 9, 11, 0.95);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .success-overlay.visible {
+            display: flex;
+        }
+        .success-check {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            background: rgba(34, 197, 94, 0.15);
+            border: 2px solid var(--severity-good);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+        .success-text {
+            font-size: 18px;
+            font-weight: 500;
+            text-align: center;
+        }
+        .success-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 32px 0;
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-dim);
+        }
+        .spinner {
+            width: 32px; height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent-red);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Loading State -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading vehicle health report...</p>
+        </div>
+
+        <!-- Main Content (hidden until loaded) -->
+        <div id="content" style="display:none;">
+            <div class="header">
+                <div class="header-brand" id="entity-brand"></div>
+                <h1>Vehicle Health Report</h1>
+                <div class="header-vehicle" id="vehicle-name"></div>
+                <div class="header-vin" id="vehicle-vin"></div>
+                <div class="header-entity" id="entity-badge"></div>
+            </div>
+
+            <!-- KAMM Compliance Banner (only for VEHICLE_SALE) -->
+            <div class="kamm-banner" id="kamm-banner">
+                <h3>⚖️ KAMM LLC — Iowa Damage Disclosure</h3>
+                <p>Iowa Code requires a Damage Disclosure Statement for all motor vehicle sales. By approving this quote, you acknowledge receipt of the Iowa DOT Damage Disclosure form. This document is processed exclusively by KAMM LLC, Dealer Compliance HQ.</p>
+            </div>
+
+            <!-- Tech Video -->
+            <div class="video-section" id="video-section" style="display:none;">
+                <div class="section-label">Visual Scribe — Tech Inspection</div>
+                <div class="video-placeholder" id="video-container">
+                    <span>📹 No inspection video available for this quote</span>
+                </div>
+            </div>
+
+            <!-- Line Items -->
+            <div class="section-label">Inspection Findings</div>
+            <div id="line-items"></div>
+
+            <!-- Summary -->
+            <div class="summary" id="summary">
+                <div class="summary-row">
+                    <span class="summary-label">Selected Items</span>
+                    <span class="summary-value" id="selected-count">0 of 0</span>
+                </div>
+                <div class="summary-row total">
+                    <span class="summary-label">Approved Total</span>
+                    <span class="summary-value" id="approved-total">$0.00</span>
+                </div>
+            </div>
+
+            <button class="approve-btn" id="approve-btn" disabled onclick="submitApproval()">
+                Select items to approve
+            </button>
+
+            <div class="footer">
+                AUTOHAUS COMMAND CENTER &bull; C-OS v3.1 &bull; POWERED BY CARBON LLC
+            </div>
+        </div>
+
+        <!-- Success Overlay -->
+        <div class="success-overlay" id="success-overlay">
+            <div class="success-check">✓</div>
+            <div class="success-text" id="success-message">Approval Confirmed</div>
+            <div class="success-sub" id="success-detail">Your service advisor will be in touch shortly.</div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // AutoHaus C-OS — JIT Quote Portal Logic
+        // ============================================================
+        const API_BASE = window.location.origin;
+        let quoteData = null;
+        let selectedItems = new Set();
+
+        // Extract UUID from URL path: /quote/{uuid}
+        function getQuoteUUID() {
+            const path = window.location.pathname;
+            const parts = path.split('/');
+            return parts[parts.length - 1] || 'demo-quote-001';
+        }
+
+        // Fetch quote data from backend
+        async function loadQuote() {
+            const uuid = getQuoteUUID();
+            try {
+                const res = await fetch(`${API_BASE}/api/public/quote/${uuid}`);
+                if (!res.ok) throw new Error('Quote not found');
+                quoteData = await res.json();
+                renderQuote();
+            } catch (err) {
+                document.getElementById('loading').innerHTML =
+                    `<p style="color: var(--severity-critical);">Quote not found or expired.</p>
+                     <p style="color: var(--text-dim); margin-top: 8px;">Please contact your service advisor.</p>`;
+            }
+        }
+
+        // Render the full quote UI
+        function renderQuote() {
+            const q = quoteData;
+
+            // Header
+            document.getElementById('entity-brand').textContent = q.entity_brand;
+            document.getElementById('vehicle-name').textContent = q.vehicle;
+            document.getElementById('vehicle-vin').textContent = `VIN: ${q.vin}`;
+            document.getElementById('entity-badge').textContent = q.entity_brand;
+
+            // KAMM Compliance
+            if (q.kamm_disclosure_required) {
+                document.getElementById('kamm-banner').classList.add('visible');
+            }
+
+            // Video
+            if (q.tech_video_url) {
+                document.getElementById('video-section').style.display = 'block';
+                document.getElementById('video-container').innerHTML =
+                    `<video controls style="width:100%;border-radius:8px;" src="${q.tech_video_url}"></video>`;
+            }
+
+            // Line Items
+            const container = document.getElementById('line-items');
+            container.innerHTML = '';
+            q.line_items.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'line-item';
+                el.dataset.id = item.id;
+                el.onclick = () => toggleItem(item.id, el);
+                el.innerHTML = `
+                    <div class="line-item-check"></div>
+                    <div class="line-item-header">
+                        <div class="line-item-left">
+                            <span class="severity-badge severity-${item.severity}">
+                                <span class="severity-dot"></span>
+                                ${item.severity === 'CRITICAL' ? 'Critical' :
+                                  item.severity === 'MONITOR' ? 'Monitor' : 'Good'}
+                            </span>
+                            <div class="line-item-title">${item.description}</div>
+                            <div class="line-item-notes">${item.notes}</div>
+                        </div>
+                    </div>
+                    <div class="line-item-cost">$${item.cost.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                    ${item.labor_hours > 0 ?
+                        `<div class="line-item-labor">${item.labor_hours}h estimated labor</div>` : ''}
+                `;
+                container.appendChild(el);
+            });
+
+            // Auto-select critical items
+            q.line_items.filter(i => i.severity === 'CRITICAL').forEach(item => {
+                selectedItems.add(item.id);
+                const el = document.querySelector(`[data-id="${item.id}"]`);
+                if (el) el.classList.add('selected');
+            });
+
+            updateSummary();
+
+            // Show content
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+        }
+
+        // Toggle line item selection
+        function toggleItem(itemId, el) {
+            if (selectedItems.has(itemId)) {
+                selectedItems.delete(itemId);
+                el.classList.remove('selected');
+            } else {
+                selectedItems.add(itemId);
+                el.classList.add('selected');
+            }
+            updateSummary();
+        }
+
+        // Update the cost summary
+        function updateSummary() {
+            const total = quoteData.line_items
+                .filter(i => selectedItems.has(i.id))
+                .reduce((sum, i) => sum + i.cost, 0);
+
+            document.getElementById('selected-count').textContent =
+                `${selectedItems.size} of ${quoteData.line_items.length}`;
+            document.getElementById('approved-total').textContent =
+                `$${total.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+
+            const btn = document.getElementById('approve-btn');
+            if (selectedItems.size > 0) {
+                btn.disabled = false;
+                btn.textContent = `Digitally Sign & Approve — $${total.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+            } else {
+                btn.disabled = true;
+                btn.textContent = 'Select items to approve';
+            }
+        }
+
+        // Submit approval to backend
+        async function submitApproval() {
+            const btn = document.getElementById('approve-btn');
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/public/quote/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        quote_id: quoteData.quote_id,
+                        approved_items: Array.from(selectedItems),
+                        customer_signature: quoteData.customer_name,
+                    }),
+                });
+
+                const result = await res.json();
+
+                if (result.status === 'sms_verification_required') {
+                    btn.textContent = '🔐 SMS Verification Sent — Check Your Phone';
+                    btn.disabled = true;
+                    return;
+                }
+
+                // Show success
+                document.getElementById('success-message').textContent =
+                    `$${result.approved_total.toLocaleString('en-US', {minimumFractionDigits: 2})} Approved`;
+                document.getElementById('success-detail').textContent =
+                    `${result.approved_items} item(s) confirmed — ${result.entity}`;
+                document.getElementById('success-overlay').classList.add('visible');
+
+            } catch (err) {
+                btn.textContent = 'Error — Please retry';
+                btn.disabled = false;
+            }
+        }
+
+        // Initialize
+        loadQuote();
+    </script>
+</body>
+</html>
