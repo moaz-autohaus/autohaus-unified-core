@@ -61,6 +61,11 @@
             "status": "active",
             "file": "10_IT_AI_Core_Layer/backend/routes/logistics.py",
             "description": "AppSheet GPS webhook receiver and Twilio SMS dispatcher for live P&D driver tracking maps."
+        },
+        "crm_intake_api": {
+            "status": "active",
+            "file": "10_IT_AI_Core_Layer/backend/routes/crm_intake.py",
+            "description": "REST API wrapper for the Identity Engine that digests omni-channel inbound leads."
         }
     },
     "active_entities": {
