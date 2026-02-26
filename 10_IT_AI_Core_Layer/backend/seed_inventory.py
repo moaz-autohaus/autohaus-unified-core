@@ -1,6 +1,7 @@
-from google.cloud import bigquery
-from google.oauth2 import service_account
 import os
+import uuid
+import json
+from datetime import datetime
 
 import google.auth
 from googleapiclient.discovery import build # Added import for build
@@ -117,6 +118,31 @@ def push_ghost_inventory():
     
     if not errors:
         print("[SUCCESS] Inventory Seeded! is_active flags = True. View ready to ingest.")
+        
+        # Emit SEEDING_TIER_COMPLETED event
+        try:
+            event_id = str(uuid.uuid4())
+            event_row = {
+                "event_id": event_id,
+                "event_type": "SEEDING_TIER_COMPLETED",
+                "timestamp": datetime.utcnow().isoformat(),
+                "actor_type": "SYSTEM",
+                "actor_id": "seeding_script",
+                "actor_role": "ADMIN",
+                "target_type": "SYSTEM",
+                "target_id": "INVENTORY_MASTER",
+                "payload": json.dumps({
+                    "tier": "GHOST_INVENTORY",
+                    "record_count": len(rows_to_insert),
+                    "status": "SUCCESS"
+                }),
+                "metadata": None,
+                "idempotency_key": f"seed_{event_id}"
+            }
+            client.insert_rows_json(f"{client.project}.autohaus_cil.cil_events", [event_row])
+            print(f"[LEDGER] Seeding receipt emitted: {event_id}")
+        except Exception as e:
+            print(f"[WARNING] Failed to emit seeding receipt: {e}")
     else:
         print("[ERROR] Failed to push to CIL:")
         for e in errors:

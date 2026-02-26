@@ -1,0 +1,46 @@
+schema_id: BILL_OF_SALE
+schema_version: "1.0"
+description: "Vehicle purchase agreement or bill of sale"
+confidence_threshold: 0.85
+kamm_must_review: false
+archive_folder: "03_Sales"
+amendment_lock: false
+
+required_fields:
+  - name: vin
+    type: string
+    pattern: "^[A-HJ-NPR-Z0-9]{17}$"
+
+  - name: sale_price
+    type: decimal
+
+  - name: seller_name
+    type: string
+
+  - name: buyer_name
+    type: string
+
+  - name: sale_date
+    type: date
+
+optional_fields:
+  - name: payment_method
+    type: string
+    enum: [CASH, CHECK, WIRE, FINANCING]
+
+  - name: trade_in_vin
+    type: string
+
+  - name: trade_in_value
+    type: decimal
+
+  - name: tax_amount
+    type: decimal
+
+entity_links:
+  - field: vin
+    entity_type: VEHICLE
+  - field: seller_name
+    entity_type: PERSON
+  - field: buyer_name
+    entity_type: PERSON

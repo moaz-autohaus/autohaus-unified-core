@@ -1,0 +1,10 @@
+AUCTION RECEIPT - MANHEIM 
+--------------------------------------------------
+Buyer: AUTOHAUS LLC
+Date: 2026-02-10
+Vehicle: 2019 HONDA ACCORD
+VIN: 1HGCR2F54JAXXXXXX
+Auction Price: 18500.00
+Buyer Fee: 450.00
+Total: 18950.00
+--------------------------------------------------

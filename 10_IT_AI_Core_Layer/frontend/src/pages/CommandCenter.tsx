@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, Zap, ShieldAlert, FileText, CheckCircle2, ChevronRight, MapPin, Clock, DollarSign, Package } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useOrchestrator, USERS, ChatMessage as ChatMessageType, PlatePayload } from '../contexts/OrchestratorContext';
+import { useOrchestrator, USERS } from '../contexts/OrchestratorContext';
+import type { ChatMessage as ChatMessageType, PlatePayload } from '../contexts/OrchestratorContext';
 import { clsx } from 'clsx';
 
 // ─── DESIGN TOKENS (Shared with context) ──────────────────────────────────
@@ -212,6 +213,54 @@ function GenericPlate({ payload, onClose }: { payload: PlatePayload, onClose: ()
     );
 }
 
+function FallbackPlate({ payload, onClose }: { payload: PlatePayload, onClose: () => void }) {
+    const [showRaw, setShowRaw] = useState(false);
+    return (
+        <div className="h-full flex flex-col p-6 bg-red-950/10">
+            <div className="flex justify-between items-start mb-6 border-b border-red-900/20 pb-4">
+                <div className="flex items-center gap-3">
+                    <ShieldAlert className="w-8 h-8 text-red-500" />
+                    <div>
+                        <Tag label="RENDER_FAILED" color={T.red} />
+                        <h2 className="text-white text-sm font-bold font-mono tracking-wider mt-2">PLATE CORRUPTION DETECTED</h2>
+                        <p className="text-red-400/70 text-[11px] mt-1">{payload.validation_error || "Unknown validation error"}</p>
+                    </div>
+                </div>
+                <button onClick={onClose} className="text-zinc-600 hover:text-zinc-400">✕</button>
+            </div>
+            <div className="flex-1 overflow-auto space-y-4">
+                <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
+                    <p className="text-zinc-400 text-xs font-mono mb-2 uppercase tracking-widest text-[10px]">What happened?</p>
+                    <p className="text-zinc-100 text-sm italic">"The Chief of Staff sent a payload that deviated from the strictly enforced JIT Plate Contract. Render has been bypassed to prevent dashboard instability."</p>
+                </div>
+
+                <div className="space-y-2">
+                    <button
+                        onClick={() => setShowRaw(!showRaw)}
+                        className="flex items-center gap-2 text-gold font-mono text-[10px] hover:underline"
+                    >
+                        {showRaw ? "HIDE RAW PAYLOAD" : "VIEW RAW PAYLOAD"}
+                        <ChevronRight className={clsx("w-3 h-3 transition-transform", showRaw && "rotate-90")} />
+                    </button>
+
+                    {showRaw && (
+                        <pre className="p-4 bg-black border border-zinc-800 rounded font-mono text-[10px] text-zinc-400 overflow-x-auto">
+                            {JSON.stringify(payload, null, 2)}
+                        </pre>
+                    )}
+                </div>
+            </div>
+            <div className="pt-4">
+                <ActionBtn
+                    label="EMIT REPAIR TICKET"
+                    color={T.red}
+                    onClick={() => alert("Render correction ticket emitted to CIL Dev Team via POST /api/events/render-error (Stub).")}
+                />
+            </div>
+        </div>
+    );
+}
+
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export function CommandCenter() {
     const { user, mode, messages, latestPlate, setPlate, sendMessage, isConnected } = useOrchestrator();
@@ -235,6 +284,10 @@ export function CommandCenter() {
                 <p className="text-zinc-500 text-[9px] mt-2">Awaiting MOUNT_PLATE event</p>
             </div>
         );
+
+        if (latestPlate.is_corrupt) {
+            return <FallbackPlate payload={latestPlate} onClose={() => setPlate(null)} />;
+        }
 
         if (latestPlate.plate_id === 'FINANCE_CHART' || latestPlate.plate_id === 'FINANCE') {
             return <FinancePlate payload={latestPlate} onClose={() => setPlate(null)} />;

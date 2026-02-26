@@ -89,6 +89,14 @@ def setup_registry():
          
         # Drift / Run Frequency
         ("OPS", "drift_sweep_cron_minutes", "15", None, None, None),
+
+        # HITL Role Permissions
+        ("HITL", "ROLE_PERMISSIONS", 
+         json.dumps({
+             "SOVEREIGN": ["CONTEXT_ADD", "FIELD_OVERRIDE", "ENTITY_MERGE", "ENTITY_SPLIT", "REPROCESS", "CONFIRM_CLASSIFICATION", "ROLLBACK", "POLICY_CHANGE", "MEDIA_INGEST"],
+             "STANDARD": ["CONTEXT_ADD", "FIELD_OVERRIDE", "CONFIRM_CLASSIFICATION", "MEDIA_INGEST"],
+             "FIELD": ["CONTEXT_ADD", "MEDIA_INGEST"]
+         }), None, None, None),
     ]
 
     print("Seeding initial policies...")

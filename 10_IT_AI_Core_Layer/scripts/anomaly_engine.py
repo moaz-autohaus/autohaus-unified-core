@@ -59,9 +59,21 @@ TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
 TWILIO_PHONE_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER", "")
 CEO_PHONE_NUMBER = os.environ.get("CEO_PHONE_NUMBER", "")
 
+from database.policy_engine import get_policy
+
 # Thresholds (derived from AUTOHAUS_SYSTEM_STATE.json + Sovereign Memory SOPs)
-GOLDEN_RULE_MINUTES = 60       # Max minutes a VIN can sit 'Inbound' without a quote
-TRANSPORT_COST_CEILING = 500   # Max transport cost per Sovereign Memory preference
+# Dynamically loaded via Policy Engine
+def get_golden_rule_minutes():
+    val = get_policy("ANOMALY", "golden_rule_minutes")
+    if val is None:
+        raise ValueError("Missing ANOMALY.golden_rule_minutes in policy registry. No fallbacks allowed.")
+    return int(val)
+
+def get_transport_cost_ceiling():
+    val = get_policy("ANOMALY", "transport_cost_ceiling")
+    if val is None:
+        raise ValueError("Missing ANOMALY.transport_cost_ceiling in policy registry. No fallbacks allowed.")
+    return float(val)
 
 
 # ---------------------------------------------------------------------------
@@ -118,8 +130,9 @@ def check_golden_rule(client: bigquery.Client) -> list[Anomaly]:
     without a corresponding 'Quote_Sent' status in the audit ledger.
     """
     anomalies = []
+    golden_rule_minutes = get_golden_rule_minutes()
     threshold_time = (
-        datetime.now(timezone.utc) - timedelta(minutes=GOLDEN_RULE_MINUTES)
+        datetime.now(timezone.utc) - timedelta(minutes=golden_rule_minutes)
     ).isoformat()
 
     query = f"""
@@ -151,7 +164,7 @@ def check_golden_rule(client: bigquery.Client) -> list[Anomaly]:
             anomalies.append(Anomaly(
                 check_name="THE GOLDEN RULE",
                 severity="CRITICAL",
-                description=f"VIN sitting Inbound >{GOLDEN_RULE_MINUTES}min with no quote sent.",
+                description=f"VIN sitting Inbound >{golden_rule_minutes}min with no quote sent.",
                 affected_entity="AUTOHAUS_SERVICES_LLC",
                 affected_vin=str(row.get("vin", "UNKNOWN")),
                 detected_at=datetime.now(timezone.utc).isoformat(),
@@ -223,6 +236,8 @@ def check_margin_alert(client: bigquery.Client) -> list[Anomaly]:
     """
     anomalies = []
 
+    transport_cost_ceiling = get_transport_cost_ceiling()
+
     query = f"""
         SELECT
             entity_id AS vin,
@@ -240,7 +255,7 @@ def check_margin_alert(client: bigquery.Client) -> list[Anomaly]:
 
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
-            bigquery.ScalarQueryParameter("threshold", "FLOAT64", TRANSPORT_COST_CEILING),
+            bigquery.ScalarQueryParameter("threshold", "FLOAT64", transport_cost_ceiling),
         ]
     )
 
@@ -251,7 +266,7 @@ def check_margin_alert(client: bigquery.Client) -> list[Anomaly]:
             anomalies.append(Anomaly(
                 check_name="MARGIN ALERT",
                 severity="WARNING",
-                description=f"Transport cost ${cost:,.2f} exceeds ${TRANSPORT_COST_CEILING} ceiling.",
+                description=f"Transport cost ${cost:,.2f} exceeds ${transport_cost_ceiling} ceiling.",
                 affected_entity="CARLUX_LLC",
                 affected_vin=str(row.get("vin", "UNKNOWN")),
                 affected_amount=float(cost),

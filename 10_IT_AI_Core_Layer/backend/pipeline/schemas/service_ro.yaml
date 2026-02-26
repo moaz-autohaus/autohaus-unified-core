@@ -1,0 +1,43 @@
+schema_id: SERVICE_RO
+schema_version: "1.0"
+description: "Repair Order from AutoHaus Services or external shop"
+confidence_threshold: 0.85
+kamm_must_review: false
+archive_folder: "05_Service"
+amendment_lock: false
+
+required_fields:
+  - name: vin
+    type: string
+    pattern: "^[A-HJ-NPR-Z0-9]{17}$"
+
+  - name: ro_number
+    type: string
+
+  - name: service_entity
+    type: string
+    enum: [AUTOHAUS_SERVICES_LLC, ASTROLOGISTICS_LLC, EXTERNAL]
+
+  - name: total_cost
+    type: decimal
+
+  - name: service_date
+    type: date
+
+optional_fields:
+  - name: line_items
+    type: array
+
+  - name: technician_name
+    type: string
+
+  - name: customer_pay
+    type: boolean
+
+entity_links:
+  - field: vin
+    entity_type: VEHICLE
+  - field: service_entity
+    entity_type: COMPANY
+  - field: technician_name
+    entity_type: PERSON

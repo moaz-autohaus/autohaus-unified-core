@@ -37,11 +37,22 @@ from utils.identity_resolution import IdentityEngine
 # Module 2: Agentic Router
 from agents.router_agent import RouterAgent
 
+# Module 1: Identity Resolution
+from utils.identity_resolution import IdentityEngine
+
+# Module 2: Agentic Router
+from agents.router_agent import RouterAgent
+
 # Module 3: JIT Plate Protocol (ConnectionManager for browser push)
 from routes.chat_stream import manager as ws_manager, build_plate_payload
 
 # Module 4: Sovereign Memory
 from memory.vector_vault import VectorVault
+
+# Module 9: Intelligent Membrane (IEA & CSM)
+from agents.iea_agent import InputEnrichmentAgent, IEA_Result
+from memory.csm import ConversationStateManager
+from agents.attention_dispatcher import AttentionDispatcher
 
 # ---------------------------------------------------------------------------
 # Configuration & Logging
@@ -70,37 +81,41 @@ ENTITY_BRANDING = {
 # ---------------------------------------------------------------------------
 _router: Optional[RouterAgent] = None
 _vault: Optional[VectorVault] = None
-
+_iea: Optional[InputEnrichmentAgent] = None
+_csm: Optional[ConversationStateManager] = None
+_dispatcher: Optional[AttentionDispatcher] = None
 
 def _get_router() -> RouterAgent:
     global _router
-    if _router is None:
-        _router = RouterAgent()
+    if _router is None: _router = RouterAgent()
     return _router
-
 
 def _get_vault() -> VectorVault:
     global _vault
-    if _vault is None:
-        _vault = VectorVault()
+    if _vault is None: _vault = VectorVault()
     return _vault
+
+def _get_iea() -> InputEnrichmentAgent:
+    global _iea
+    if _iea is None: _iea = InputEnrichmentAgent()
+    return _iea
+
+def _get_csm() -> ConversationStateManager:
+    global _csm
+    if _csm is None: _csm = ConversationStateManager()
+    return _csm
+
+def _get_dispatcher() -> AttentionDispatcher:
+    global _dispatcher
+    if _dispatcher is None: _dispatcher = AttentionDispatcher()
+    return _dispatcher
 
 
 # ---------------------------------------------------------------------------
 # TwiML Response Builder
 # ---------------------------------------------------------------------------
 def build_twiml_reply(message: str) -> str:
-    """
-    Build a TwiML XML response for Twilio to send back as an SMS reply.
-
-    Twilio expects the webhook to return TwiML (XML), not JSON.
-    """
-    escaped = (
-        message
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
+    escaped = message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Message>{escaped}</Message>
@@ -120,121 +135,90 @@ async def handle_inbound_sms(
     Body: str = Form(""),
     To: str = Form(""),
 ):
-    """
-    The primary Omnichannel Ear endpoint.
-
-    Twilio sends a POST with form-encoded data when an SMS arrives.
-    This handler chains all C-OS modules into a single pipeline.
-    """
     phone_number = From.strip()
-    message_body = Body.strip()
-    timestamp = datetime.now(timezone.utc).isoformat()
-
-    logger.info(f"[TWILIO] Inbound SMS from {phone_number}: '{message_body[:80]}'")
-
-    if not message_body:
-        twiml = build_twiml_reply("AutoHaus received your message, but it was empty. Please try again.")
-        return Response(content=twiml, media_type="application/xml")
+    raw_message_body = Body.strip()
+    
+    logger.info(f"[TWILIO] Inbound SMS from {phone_number}: '{raw_message_body[:80]}'")
+    if not raw_message_body:
+        return Response(content=build_twiml_reply("Empty message."), media_type="application/xml")
 
     # ── STEP 1: Identity Resolution (Module 1) ──────────────────────
-    logger.info(f"[STEP 1] Resolving identity for {phone_number}")
-    identity_result = IdentityEngine.resolve_identity(
-        phone=phone_number,
-        source_tag="TWILIO_SMS",
-    )
-
+    identity_result = IdentityEngine.resolve_identity(phone=phone_number, source_tag="TWILIO_SMS")
     master_person_id = identity_result.get("master_person_id", "UNKNOWN")
-    is_new_contact = identity_result.get("is_new", False)
-    identity_confidence = identity_result.get("confidence_score", 0.0)
 
-    if identity_result.get("status") == "error":
-        logger.error(f"[STEP 1] Identity resolution failed: {identity_result}")
-        master_person_id = "UNRESOLVED"
+    # ── STEP 2: Intelligent Membrane - CSM Resume ───────────────────
+    csm = _get_csm()
+    active_state = csm.get_state(user_id=phone_number)
+    
+    message_body_for_iea = raw_message_body
+    if active_state:
+        logger.info(f"[MEMBRANE] Resuming suspended context for {phone_number}: {active_state}")
+        # Prepend the previous gathered info so the IEA knows this is a follow-up
+        message_body_for_iea = f"Previous Context: {active_state['collected_entities']}. New Input: {raw_message_body}"
 
-    logger.info(
-        f"[STEP 1] Identity resolved: {master_person_id} "
-        f"(new: {is_new_contact}, confidence: {identity_confidence})"
-    )
+    # ── STEP 3: Intelligent Membrane - IEA Enrichment ───────────────
+    logger.info("[MEMBRANE] Routing through Input Enrichment Agent (IEA)")
+    iea = _get_iea()
+    iea_result: IEA_Result = iea.evaluate(message_body_for_iea, previous_context=active_state)
+    
+    if iea_result.status == "INCOMPLETE":
+        logger.warning(f"[MEMBRANE] Input incomplete. Triggering CSM hold. Clarification: {iea_result.clarifying_question}")
+        # Save to Waiting Room
+        csm.set_state(
+            user_id=phone_number,
+            session_state="PENDING_CLARIFICATION",
+            pending_intent="UNKNOWN",
+            collected_entities=iea_result.extracted_entities
+        )
+        return Response(content=build_twiml_reply(iea_result.clarifying_question), media_type="application/xml")
+    
+    # If we made it here, the input is COMPLETE. Clear the waiting room.
+    csm.clear_state(user_id=phone_number)
 
-    # ── STEP 2: Sovereign Memory Recall (Module 4) ──────────────────
-    logger.info(f"[STEP 2] Recalling context from Vector Vault")
+    # ── STEP 4: Sovereign Memory Recall (Module 4) ──────────────────
     vault = _get_vault()
-    memory_context = vault.build_context_injection(message_body, top_k=3)
-
+    memory_context = vault.build_context_injection(raw_message_body, top_k=3)
+    enriched_input = raw_message_body
     if memory_context:
-        logger.info(f"[STEP 2] Memory context injected ({len(memory_context)} chars)")
-    else:
-        logger.info("[STEP 2] No relevant memories found")
+        enriched_input = f"{raw_message_body}\n\n{memory_context}"
 
-    # ── STEP 3: Agentic Router Classification (Module 2) ────────────
-    # Enrich the message with memory context for smarter classification
-    enriched_input = message_body
-    if memory_context:
-        enriched_input = f"{message_body}\n\n{memory_context}"
-
-    logger.info(f"[STEP 3] Classifying intent via RouterAgent")
+    # ── STEP 5: Agentic Router Classification (Module 2) ────────────
     router = _get_router()
     routed_intent = router.classify(enriched_input)
-
+    
     intent = routed_intent.intent
-    confidence = routed_intent.confidence
     target_entity = routed_intent.target_entity
     suggested_action = routed_intent.suggested_action
 
-    logger.info(
-        f"[STEP 3] Intent: {intent}, Confidence: {confidence}, "
-        f"Target: {target_entity}"
-    )
+    # ── STEP 6: KAMM Compliance Fence ───────────────────────────────
+    if any(kw in raw_message_body.lower() for kw in ["title", "disclosure", "dot", "registration"]):
+        intent, target_entity = "COMPLIANCE", "KAMM_LLC"
 
-    # ── STEP 4: KAMM Compliance Fence ───────────────────────────────
-    # Override: If SMS mentions titles/disclosures, force COMPLIANCE routing
-    compliance_keywords = [
-        "title", "damage disclosure", "dealer paperwork",
-        "registration", "lien", "dmv", "iowa dot",
-    ]
-    if any(kw in message_body.lower() for kw in compliance_keywords):
-        if intent != "COMPLIANCE":
-            logger.info("[STEP 4] KAMM Compliance Fence triggered — overriding intent")
-            intent = "COMPLIANCE"
-            target_entity = "KAMM_LLC"
-            suggested_action = "Route to KAMM Compliance for title/disclosure processing."
-
-    # ── STEP 5: JIT Plate Push to Browser (Module 3) ────────────────
-    # If any browser sessions are active, push a Plate to the UCC dashboard
-    if ws_manager.active_count > 0:
-        logger.info(f"[STEP 5] Pushing JIT Plate to {ws_manager.active_count} active client(s)")
-        plate_payload = build_plate_payload(routed_intent)
-        plate_payload["sms_source"] = phone_number
-        plate_payload["master_person_id"] = master_person_id
+    # ── STEP 7: Attention Dispatcher (Module 9) ─────────────────────
+    dispatcher = _get_dispatcher()
+    event_desc = f"User {master_person_id} requested {intent} action: {suggested_action}"
+    attention_result = dispatcher.evaluate_event(event_desc)
+    
+    # ── STEP 8: Route Output based on Attention Score ────────────────
+    plate_payload = build_plate_payload(routed_intent)
+    plate_payload["sms_source"] = phone_number
+    plate_payload["master_person_id"] = master_person_id
+    
+    if attention_result.route == "WEBSOCKET" and ws_manager.active_count > 0:
+        # Route 1: Desk - Push to UI silently
+        logger.info(f"[DISPATCHER] Low Urgency ({attention_result.urgency_score}/10). Pushing to UI.")
         await ws_manager.broadcast(plate_payload)
+        response_text = "" # Don't text Ahsin, he's seeing it on the screen
     else:
-        logger.info("[STEP 5] No active browser sessions — SMS-only response")
+        # Route 2: Pocket - Send SMS
+        logger.info(f"[DISPATCHER] High Urgency or No UI ({attention_result.urgency_score}/10). Sending SMS.")
+        brand = ENTITY_BRANDING.get(target_entity, "AutoHaus Command Center")
+        response_text = f"{attention_result.synthesized_message}\n\n— {brand}"
+        
+        # Still push to WS for the audit trail
+        if ws_manager.active_count > 0:
+             await ws_manager.broadcast(plate_payload)
 
-    # ── STEP 6: Build SMS Reply ─────────────────────────────────────
-    brand = ENTITY_BRANDING.get(target_entity, "AutoHaus Command Center")
-
-    if is_new_contact:
-        greeting = "Welcome to AutoHaus! We've created your profile."
-    else:
-        greeting = "Thanks for reaching out."
-
-    if confidence >= 0.7:
-        reply_body = (
-            f"{greeting}\n\n"
-            f"I understood your request as: {intent.replace('_', ' ').title()}.\n"
-            f"{suggested_action}\n\n"
-            f"— {brand}"
-        )
-    else:
-        reply_body = (
-            f"{greeting}\n\n"
-            f"I need a bit more detail to help you. "
-            f"Could you clarify what you need? "
-            f"(e.g., 'Check status on my BMW', 'Schedule an inspection')\n\n"
-            f"— {brand}"
-        )
-
-    logger.info(f"[STEP 6] Replying to {phone_number} as '{brand}'")
-
-    twiml = build_twiml_reply(reply_body)
-    return Response(content=twiml, media_type="application/xml")
+    # Note: Twilio requires non-empty responses, or it will throw an error, 
+    # but an empty <Message></Message> acts as a "silent acknowledge"
+    return Response(content=build_twiml_reply(response_text), media_type="application/xml")

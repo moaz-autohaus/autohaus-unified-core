@@ -1,0 +1,40 @@
+schema_id: FLOOR_PLAN_NOTE
+schema_version: "1.0"
+description: "Floor plan financing note from lender"
+confidence_threshold: 0.90
+kamm_must_review: false
+archive_folder: "10_Finance"
+amendment_lock: false
+
+required_fields:
+  - name: vin
+    type: string
+    pattern: "^[A-HJ-NPR-Z0-9]{17}$"
+
+  - name: lender_name
+    type: string
+
+  - name: principal_amount
+    type: decimal
+
+  - name: interest_rate
+    type: decimal
+
+  - name: maturity_date
+    type: date
+
+optional_fields:
+  - name: note_number
+    type: string
+
+  - name: curtailment_schedule
+    type: string
+
+  - name: payoff_amount
+    type: decimal
+
+entity_links:
+  - field: vin
+    entity_type: VEHICLE
+  - field: lender_name
+    entity_type: VENDOR

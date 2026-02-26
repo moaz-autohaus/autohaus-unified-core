@@ -28,7 +28,7 @@ import uuid as uuid_lib
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from pydantic import BaseModel
 
 from google.cloud import bigquery
@@ -174,3 +174,44 @@ async def update_location(payload: LocationUpdate, background_tasks: BackgroundT
         "job_id": payload.job_id,
         "recorded_at": timestamp
     }
+
+@logistics_router.get("/active")
+async def get_active_logistics(client: bigquery.Client = Depends(_get_bq_client)):
+    """
+    Returns a list of active logistics shipments for the Dashboard.
+    """
+    data = {
+        "active_shipments": []
+    }
+    
+    if not client:
+        return data
+
+    try:
+        # Fetch from BigQuery (where status is EN_ROUTE)
+        # Note: This query depends on the actual structure of logistics data if stored elsewhere
+        # Using audit ledger as a fallback to see recent en_route events
+        query = f"""
+            SELECT entity_id as id, timestamp as detected_at, metadata
+            FROM `{LEDGER_TABLE}`
+            WHERE action = 'LOGISTICS_EN_ROUTE'
+            ORDER BY timestamp DESC
+            LIMIT 10
+        """
+        query_job = client.query(query)
+        results = []
+        for row in query_job:
+            meta = json.loads(row.metadata) if isinstance(row.metadata, str) else row.metadata
+            results.append({
+                "id": row.id,
+                "vin": meta.get("vin", "UNKNOWN"),
+                "origin": "Processing Center",
+                "destination": "Facility",
+                "status": "IN_TRANSIT",
+                "eta": None
+            })
+        data["active_shipments"] = results
+        return data
+    except Exception as e:
+        print(f"Logistics active fetch error: {e}")
+        return data

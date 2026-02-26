@@ -1,0 +1,46 @@
+schema_id: VEHICLE_TITLE
+schema_version: "1.0"
+description: "State-issued certificate of vehicle ownership"
+confidence_threshold: 0.90
+kamm_must_review: true
+archive_folder: "02_Titles"
+amendment_lock: true
+
+required_fields:
+  - name: vin
+    type: string
+    pattern: "^[A-HJ-NPR-Z0-9]{17}$"
+    authority_minimum: VERIFIED
+
+  - name: owner_name
+    type: string
+
+  - name: state_of_issue
+    type: string
+    pattern: "^[A-Z]{2}$"
+
+  - name: lien_holder
+    type: string
+    nullable: true
+
+optional_fields:
+  - name: title_number
+    type: string
+
+  - name: odometer_reading
+    type: integer
+
+  - name: issue_date
+    type: date
+
+  - name: brand
+    type: string
+    enum: [CLEAN, SALVAGE, REBUILT, FLOOD, LEMON]
+
+entity_links:
+  - field: vin
+    entity_type: VEHICLE
+  - field: owner_name
+    entity_type: PERSON
+  - field: lien_holder
+    entity_type: COMPANY

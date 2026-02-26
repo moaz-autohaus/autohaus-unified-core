@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
+import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,6 +27,59 @@ export interface PlatePayload {
     dataset: any[];
     origin?: string;
     findings?: any[];
+    is_corrupt?: boolean;
+    validation_error?: string;
+}
+
+// ─── VALIDATION SCHEMAS ──────────────────────────────────────────────────────
+const FinancePlateSchema = z.object({
+    vin: z.string(),
+    lender_name: z.string(),
+    principal_amount: z.number(),
+    interest_rate: z.number().optional(),
+    maturity_date: z.string().optional()
+});
+
+const InventoryPlateSchema = z.object({
+    vin: z.string(),
+    make: z.string().optional(),
+    model: z.string().optional(),
+    status: z.string()
+});
+
+const GenericPlateSchema = z.object({
+    type: z.string(),
+    plate_id: z.string(),
+    intent: z.string(),
+    confidence: z.number(),
+    entities: z.record(z.string(), z.any()),
+    target_entity: z.string(),
+    suggested_action: z.string(),
+    strategy: z.object({
+        skin: z.string(),
+        urgency: z.number(),
+        vibration: z.boolean(),
+        overlay: z.string().nullable()
+    }),
+    timestamp: z.string(),
+    dataset: z.array(z.any())
+});
+
+function validatePlatePayload(plateId: string, payload: unknown) {
+    // 1. Initial structural check
+    const baseResult = GenericPlateSchema.safeParse(payload);
+    if (!baseResult.success) return baseResult;
+
+    // 2. Type-specific internal schema check
+    switch (plateId) {
+        case "FINANCE_NOTE":
+        case "FINANCE_CHART":
+            return FinancePlateSchema.safeParse(payload);
+        case "INVENTORY_TABLE":
+            return InventoryPlateSchema.safeParse(payload);
+        default:
+            return baseResult;
+    }
 }
 
 export interface ChatMessage {
@@ -145,10 +199,38 @@ export const OrchestratorProvider = ({ children }: { children: ReactNode }) => {
                 const data = JSON.parse(event.data);
 
                 if (data.type === 'MOUNT_PLATE' && data.strategy) {
+                    const validationResult = validatePlatePayload(data.plate_id, data);
+
+                    if (!validationResult.success) {
+                        console.error("Orchestrator: Plate validation failed", validationResult.error);
+                        const failedPayload = {
+                            ...data,
+                            validation_error: validationResult.error?.issues[0]?.message || "Validation failed",
+                            is_corrupt: true
+                        };
+                        setLatestPlate(failedPayload as any);
+
+                        // Auto-report to backend ledger
+                        const apiBase = window.location.origin;
+                        fetch(`${apiBase}/api/events/render-error`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                plate_type: data.plate_id || "UNKNOWN",
+                                reason: validationResult.error?.issues[0]?.message || "Schema mismatch",
+                                payload_snapshot_hash: "sha256:stub",
+                                target_id: data.target_id || "SYSTEM_ORPHAN"
+                            })
+                        }).catch(err => console.error("Failed to log render error to ledger", err));
+
+                        return;
+                    }
+
                     const strategy: UIStrategy = data.strategy;
                     setActiveSkin(strategy.skin as SkinType);
                     triggerSensoryFeedback(strategy);
                     setLatestPlate(data as PlatePayload);
+                    return;
                 }
 
                 if (data.type === 'SYSTEM' || data.type === 'CHAT_RESPONSE') {

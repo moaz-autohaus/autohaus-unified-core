@@ -81,3 +81,14 @@ To graduate from an "AI Intake Engine" to a fully "Conversational Operating Syst
         await websocket_manager.send_personal_message(message, client_id)
     ```
 4.  **React Rendering:** The React root component contains a `<PlateHydrator />`. It listens for `MOUNT_PLATE`. If it receives `component: "FINANCE_CHART"`, it dynamically imports the Recharts component and renders the JSON data directly into the chat stream without a single page reload.
+
+---
+
+## 5. Fallback & Error Recovery Protocol
+*The Problem:* Networks drop, APIs rate-limit, and databases timeout. A resilient C-OS cannot silently fail.
+*The Solution:* Predictable degradation paths for every critical handshake.
+
+**Technical Flow & Failovers:**
+1.  **WebSocket Dropped:** If the frontend loses connection, the React UI stores inputs in a `localStorage` outbox and enters a "Reconnecting..." ghost state. Upon reconnect, it flushes the outbox to the backend.
+2.  **LLM / Gemini Outage:** If the `google.generativeai` API returns a 429 or 503, the Agentic Router triggers the **Model Failover Chain** (Flash -> Pro -> Local Keyword Rules). If all fail, it returns an explicit `UNKNOWN` intent with `urgency_score: 8` and an error plate, ensuring the CEO explicitly sees the API failure, rather than the system freezing.
+3.  **BigQuery Unreachable:** (e.g., missing Service Account keys). The Identity Engine and Router catch the exception and immediately push a `SYSTEM_ERROR` plate to the active WebSocket. Operations requiring state changes are appended to a SQLite `dead_letter_queue` for later reconciliation.

@@ -1,0 +1,58 @@
+schema_id: AUCTION_RECEIPT
+schema_version: "1.0"
+description: "Purchase receipt from auction house (Copart, IAA, Manheim, etc.)"
+confidence_threshold: 0.85
+kamm_must_review: false
+archive_folder: "06_Auctions"
+amendment_lock: false
+
+required_fields:
+  - name: vin
+    type: string
+    pattern: "^[A-HJ-NPR-Z0-9]{17}$"
+
+  - name: purchase_price
+    type: decimal
+
+  - name: auction_house
+    type: string
+
+  - name: purchase_date
+    type: date
+
+  - name: buyer_name
+    type: string
+
+optional_fields:
+  - name: lot_number
+    type: string
+
+  - name: buyer_fee
+    type: decimal
+
+  - name: gate_fee
+    type: decimal
+
+  - name: auction_location
+    type: string
+
+  - name: vehicle_year
+    type: integer
+
+  - name: vehicle_make
+    type: string
+
+  - name: vehicle_model
+    type: string
+
+  - name: sale_type
+    type: string
+    enum: [LIVE, ONLINE, BUY_NOW]
+
+entity_links:
+  - field: vin
+    entity_type: VEHICLE
+  - field: auction_house
+    entity_type: VENDOR
+  - field: buyer_name
+    entity_type: PERSON

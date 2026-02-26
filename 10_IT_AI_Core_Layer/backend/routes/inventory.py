@@ -182,3 +182,63 @@ async def promote_vehicle(
         "message": f"{v_id} successfully promoted to LIVE and committed to Audit Ledger.",
         "audit_transaction_id": audit_id
     }
+
+@inventory_router.get("/{vehicle_id}/twin")
+async def get_digital_twin(
+    vehicle_id: str,
+    client: bigquery.Client = Depends(get_bq_client)
+):
+    """
+    Returns the Digital Twin for a vehicle, including validated facts and document links.
+    """
+    data = {
+        "vin": vehicle_id,
+        "digital_twin": {
+            "status": "INITIALIZING",
+            "last_sweep": None,
+            "facts": {},
+            "documents": []
+        }
+    }
+    
+    if not client:
+        return data
+
+    try:
+        # Fetch from entity_facts
+        query_facts = """
+            SELECT field_name, value, status, confidence_score
+            FROM `autohaus_cil.entity_facts`
+            WHERE entity_id = @v_id AND status = 'ACTIVE'
+        """
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[bigquery.ScalarQueryParameter("v_id", "STRING", f"VEH_{vehicle_id}")]
+        )
+        facts_job = client.query(query_facts, job_config=job_config)
+        facts = {row.field_name: row.value for row in facts_job}
+        
+        # Fetch from document_entity_links
+        query_docs = """
+            SELECT d.document_id, d.doc_type, l.relationship_type, d.terminal_state
+            FROM `autohaus_cil.document_entity_links` l
+            JOIN `autohaus_cil.documents` d ON l.document_id = d.document_id
+            WHERE l.entity_id = @v_id AND l.active = TRUE
+        """
+        docs_job = client.query(query_docs, job_config=job_config)
+        documents = []
+        for row in docs_job:
+            documents.append({
+                "id": row.document_id,
+                "type": row.doc_type,
+                "relationship": row.relationship_type,
+                "status": row.terminal_state
+            })
+
+        data["digital_twin"]["facts"] = facts
+        data["digital_twin"]["documents"] = documents
+        data["digital_twin"]["status"] = "VALIDATED" if facts else "STUB"
+        return data
+        
+    except Exception as e:
+        print(f"Digital Twin fetch error: {e}")
+        return data

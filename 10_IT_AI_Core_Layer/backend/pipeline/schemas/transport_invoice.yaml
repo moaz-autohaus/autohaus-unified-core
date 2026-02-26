@@ -1,0 +1,46 @@
+schema_id: TRANSPORT_INVOICE
+schema_version: "1.0"
+description: "Invoice for vehicle transport/shipping"
+confidence_threshold: 0.85
+kamm_must_review: false
+archive_folder: "07_Transport"
+amendment_lock: false
+
+required_fields:
+  - name: vin
+    type: string
+    pattern: "^[A-HJ-NPR-Z0-9]{17}$"
+
+  - name: transport_cost
+    type: decimal
+
+  - name: carrier_name
+    type: string
+
+  - name: origin
+    type: string
+
+  - name: destination
+    type: string
+
+optional_fields:
+  - name: pickup_date
+    type: date
+
+  - name: delivery_date
+    type: date
+
+  - name: invoice_number
+    type: string
+
+  - name: dispatch_entity
+    type: string
+    enum: [CARLUX_LLC, FLUIDITRUCK_LLC, EXTERNAL]
+
+entity_links:
+  - field: vin
+    entity_type: VEHICLE
+  - field: carrier_name
+    entity_type: VENDOR
+  - field: dispatch_entity
+    entity_type: COMPANY

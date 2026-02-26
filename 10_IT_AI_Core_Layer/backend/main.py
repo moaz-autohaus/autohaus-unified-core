@@ -13,6 +13,11 @@ from routes.twilio_webhooks import twilio_router
 from routes.quote_routes import quote_router
 from routes.logistics import logistics_router
 from routes.identity_routes import identity_router
+from routes.pipeline_routes import pipeline_router
+from routes.hitl_routes import hitl_router
+from routes.finance import finance_router
+from routes.anomalies import anomalies_router
+from routes.media_routes import media_router
 
 logger = logging.getLogger("autohaus.main")
 
@@ -64,6 +69,11 @@ app.include_router(twilio_router, prefix="/api")  # Twilio SMS at /api/webhooks/
 app.include_router(quote_router, prefix="/api")   # Quote Portal at /api/public/quote/{uuid}
 app.include_router(logistics_router, prefix="/api/logistics")
 app.include_router(identity_router, prefix="/api/crm")
+app.include_router(pipeline_router, prefix="/api")
+app.include_router(hitl_router, prefix="/api")
+app.include_router(finance_router, prefix="/api/finance")
+app.include_router(anomalies_router, prefix="/api/anomalies")
+app.include_router(media_router, prefix="/api/media")
 
 
 # Governance Anchor Path

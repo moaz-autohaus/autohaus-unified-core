@@ -102,3 +102,39 @@
   3. When an AppSheet driver starts a route, send a Twilio SMS to the customer containing a unique React frontend link (e.g., `/track/:uuid`) mapping the driver's coordinates.
 - **State Update:** Append `"logistics_tracking": "active"` to `backend_primitives`.
 - **Verification Hook:** Push mock coordinates to the logistics API, open the tracking URL, and verify the UI plots the location on a Google Map component.
+
+---
+
+## # MODULE 9: Module_Intelligent_Membrane
+- **Goal:** Build the Bidirectional AI Middleware to catch messy human inputs (Routing/CSM) and translate CIL outputs (Attention Model).
+- **Pre-requisites:** `Module_Identity_Bedrock` and `Module_Agentic_Router` active.
+- **Technical Specs:**
+  1. Create `10_IT_AI_Core_Layer/backend/memory/csm.py` (Conversation State Manager) using SQLite for active session persistence.
+  2. Implement `IEA` (Input Enrichment Agent) in `agents/iea_agent.py` upgrading the Router to handle "Incomplete" prompts and dispatching questions via CSM.
+  3. Create `agents/attention_dispatcher.py` to route events based on urgency (SMS vs WebSocket).
+- **State Update:** Append `"intelligent_membrane": "active"` to `backend_primitives`.
+- **Verification Hook:** Send an incomplete text message, verify CSM enters `PENDING` state and Twilio sends a clarifying question back. Reply to text, and verify CSM resumes original intent.
+
+---
+
+## # MODULE 10: Module_Telemetry_And_Observability
+- **Goal:** Provide measurable analytics on C-OS performance, error rates, and lead conversion times.
+- **Pre-requisites:** Central SQLite DB or BigQuery connection active.
+- **Technical Specs:**
+  1. Capture all WebSocket `MOUNT_PLATE` events and log them into `system_audit_ledger` (with latency and intent metadata).
+  2. Measure execution time across the IEA $\rightarrow$ Router $\rightarrow$ Attention Dispatcher chain.
+  3. Create a specialized JIT Plate (`SYSTEM_HEALTH_DASHBOARD`) capable of rendering error rates and average response times visually.
+- **State Update:** Append `"telemetry_observability": "active"` to `backend_primitives`.
+- **Verification Hook:** Use the Chatbot to ask "What is our error rate today?" — verify that the `SYSTEM_HEALTH_DASHBOARD` plate is hydrated over WebSocket.
+
+---
+
+## # MODULE 11: Module_Visual_Scribe (Phase 2 Enhancement)
+- **Goal:** Gemini Veo analysis of mechanic walk-around videos to extract and write structured defect data to BigQuery Digital Twins.
+- **Pre-requisites:** Google Cloud Storage bucket mapped; Gemini multimodel APIs enabled; Digital Twin schema adjusted in `inventory_master`.
+- **Technical Specs:**
+  1. Video ingestion via `POST /api/media/ingest` from mechanic devices (AppSheet or mobile interface).
+  2. Backend delegates to Gemini 1.5 Pro with prompt to extract mechanical defects and spatial assignments.
+  3. Emit structured updates into `digital_twin_flags` within BigQuery `inventory_master`.
+- **State Update:** Append `"visual_scribe_engine": "planned"` to `backend_primitives`.
+- **Verification Hook:** Upload a 30s video complaining about "metal on metal rotors," verify a BigQuery `UPDATE` logs a severity warning to the appropriate VIN's twin record.

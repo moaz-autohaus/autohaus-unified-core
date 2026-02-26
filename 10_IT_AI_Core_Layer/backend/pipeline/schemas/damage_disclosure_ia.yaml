@@ -1,0 +1,50 @@
+schema_id: DAMAGE_DISCLOSURE_IA
+schema_version: "1.0"
+description: "Iowa mandatory damage disclosure form"
+confidence_threshold: 0.95
+kamm_must_review: true
+archive_folder: "08_Compliance"
+amendment_lock: true
+
+required_fields:
+  - name: vin
+    type: string
+    pattern: "^[A-HJ-NPR-Z0-9]{17}$"
+    authority_minimum: COMPLIANCE_VERIFIED
+
+  - name: disclosure_type
+    type: string
+    enum: [FRAME_DAMAGE, FLOOD, SALVAGE, ODOMETER_DISCREPANCY, NONE]
+
+  - name: seller_name
+    type: string
+
+  - name: buyer_name
+    type: string
+
+  - name: disclosure_date
+    type: date
+
+  - name: seller_signature_present
+    type: boolean
+
+  - name: buyer_signature_present
+    type: boolean
+
+optional_fields:
+  - name: damage_description
+    type: string
+
+  - name: repair_description
+    type: string
+
+  - name: repair_cost
+    type: decimal
+
+entity_links:
+  - field: vin
+    entity_type: VEHICLE
+  - field: seller_name
+    entity_type: PERSON
+  - field: buyer_name
+    entity_type: PERSON

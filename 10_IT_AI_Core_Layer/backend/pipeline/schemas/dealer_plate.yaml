@@ -1,0 +1,60 @@
+schema_id: DEALER_PLATE
+schema_version: "1.0"
+description: "Iowa dealer plate assignment, transfer, or renewal documentation"
+confidence_threshold: 0.95
+kamm_must_review: true
+archive_folder: "08_Compliance"
+amendment_lock: true
+
+required_fields:
+  - name: plate_number
+    type: string
+    authority_minimum: COMPLIANCE_VERIFIED
+
+  - name: assigned_entity
+    type: string
+    enum: [KAMM_LLC]
+
+  - name: assigned_vehicle_vin
+    type: string
+    pattern: "^[A-HJ-NPR-Z0-9]{17}$"
+    nullable: true
+    authority_minimum: VERIFIED
+
+  - name: plate_type
+    type: string
+    enum: [DEALER, DEMO, TRANSPORTER]
+
+  - name: effective_date
+    type: date
+
+  - name: expiration_date
+    type: date
+
+optional_fields:
+  - name: previous_vehicle_vin
+    type: string
+    pattern: "^[A-HJ-NPR-Z0-9]{17}$"
+
+  - name: action_type
+    type: string
+    enum: [INITIAL_ASSIGNMENT, TRANSFER, RENEWAL, SURRENDER]
+
+  - name: iowa_dot_receipt_number
+    type: string
+
+  - name: fee_paid
+    type: decimal
+
+  - name: authorized_signer
+    type: string
+
+entity_links:
+  - field: assigned_vehicle_vin
+    entity_type: VEHICLE
+  - field: previous_vehicle_vin
+    entity_type: VEHICLE
+  - field: assigned_entity
+    entity_type: COMPANY
+  - field: authorized_signer
+    entity_type: PERSON

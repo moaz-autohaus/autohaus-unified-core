@@ -43,6 +43,7 @@ class IntentDomain(str, Enum):
     CRM = "CRM"
     LOGISTICS = "LOGISTICS"
     COMPLIANCE = "COMPLIANCE"
+    GOVERNANCE = "GOVERNANCE"
     UNKNOWN = "UNKNOWN"
 
 
@@ -87,6 +88,7 @@ Classify the user's command into exactly ONE of these domains:
 - CRM: Anything related to customers, leads, contacts, appointments, follow-ups, identity resolution.
 - LOGISTICS: Anything related to transport, dispatch, delivery, pick-up, fleet movement.
 - COMPLIANCE: Anything related to titles, damage disclosures, Iowa dealer law, insurance documents.
+- GOVERNANCE: Anything related to resolving open questions, overriding fields, entity trust, lineage, correction patterns, or system policies.
 - UNKNOWN: If the intent cannot be confidently classified.
 
 ## ENTITY EXTRACTION RULES:
@@ -151,7 +153,7 @@ class RouterAgent:
             )
 
         genai.configure(api_key=resolved_key)
-        self._model = genai.GenerativeModel(
+        self._primary_model = genai.GenerativeModel(
             model_name=model_name,
             system_instruction=ROUTER_SYSTEM_PROMPT,
             generation_config=genai.GenerationConfig(
@@ -167,7 +169,17 @@ class RouterAgent:
                 {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
             ]
         )
-        logger.info(f"RouterAgent initialized with model: {model_name}")
+        self._fallback_model = genai.GenerativeModel(
+            model_name="gemini-2.5-pro",
+            system_instruction=ROUTER_SYSTEM_PROMPT,
+            generation_config=genai.GenerationConfig(
+                temperature=0.1,
+                top_p=0.95,
+                max_output_tokens=512,
+                response_mime_type="application/json",
+            )
+        )
+        logger.info(f"RouterAgent initialized with primary: {model_name}, fallback: gemini-2.5-pro")
 
     def classify(self, user_input: str) -> RoutedIntent:
         """
@@ -191,7 +203,22 @@ class RouterAgent:
 
         try:
             logger.info(f"Classifying input: '{user_input[:80]}...'")
-            response = self._model.generate_content(user_input)
+            # Model Failover Chain
+            try:
+                response = self._primary_model.generate_content(user_input)
+            except Exception as e_primary:
+                logger.warning(f"Router Primary Model failed ({e_primary}). Attempting fallback to Pro...")
+                try:
+                    response = self._fallback_model.generate_content(user_input)
+                except Exception as e_fallback:
+                    logger.error(f"Router Fallback Model failed ({e_fallback}). Returning EMERGENCY UNKNOWN state.")
+                    return RoutedIntent(
+                        intent=IntentDomain.UNKNOWN.value,
+                        confidence=0.0,
+                        raw_input=user_input,
+                        suggested_action="Critical System Error: All AI models unreachable.",
+                        entities={"error": "llm_outage"}
+                    )
 
             # Parse the JSON from Gemini's response
             raw_text = response.text.strip()

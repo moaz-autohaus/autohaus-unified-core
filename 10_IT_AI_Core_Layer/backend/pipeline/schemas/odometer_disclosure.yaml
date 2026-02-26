@@ -1,0 +1,76 @@
+schema_id: ODOMETER_DISCLOSURE
+schema_version: "1.0"
+description: "Federal/Iowa odometer disclosure statement — required on all title transfers"
+confidence_threshold: 0.95
+kamm_must_review: true
+archive_folder: "08_Compliance"
+amendment_lock: true
+
+required_fields:
+  - name: vin
+    type: string
+    pattern: "^[A-HJ-NPR-Z0-9]{17}$"
+    authority_minimum: COMPLIANCE_VERIFIED
+
+  - name: odometer_reading
+    type: integer
+    authority_minimum: COMPLIANCE_VERIFIED
+
+  - name: odometer_designation
+    type: string
+    enum: [ACTUAL, EXEMPT, EXCEEDS_MECHANICAL_LIMITS, NOT_ACTUAL]
+
+  - name: seller_name
+    type: string
+
+  - name: buyer_name
+    type: string
+
+  - name: disclosure_date
+    type: date
+
+  - name: seller_signature_present
+    type: boolean
+
+  - name: buyer_signature_present
+    type: boolean
+
+optional_fields:
+  - name: vehicle_year
+    type: integer
+
+  - name: vehicle_make
+    type: string
+
+  - name: vehicle_model
+    type: string
+
+  - name: seller_address
+    type: string
+
+  - name: buyer_address
+    type: string
+
+  - name: previous_odometer_reading
+    type: integer
+
+  - name: discrepancy_flag
+    type: boolean
+
+  - name: exempt_reason
+    type: string
+    nullable: true
+
+  - name: dealer_number
+    type: string
+
+  - name: notarized
+    type: boolean
+
+entity_links:
+  - field: vin
+    entity_type: VEHICLE
+  - field: seller_name
+    entity_type: PERSON
+  - field: buyer_name
+    entity_type: PERSON

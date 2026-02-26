@@ -1,0 +1,13 @@
+Vehicle Title State of Iowa
+--------------------------------------------------
+Owner: JOHN DOE
+Address: 123 MAIN ST, DES MOINES, IA 50309
+Vehicle Description:
+Year: 2021
+Make: TOYOTA
+Model: CAMRY
+VIN: 4T1B11HK5MUXXXXXX
+Title Number: 77889900
+Lienholder: AUTO FINANCE CORP
+Date Issued: 2021-05-15
+--------------------------------------------------

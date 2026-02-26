@@ -46,10 +46,10 @@ If you install MyKaarma, you are renting their brain. Because AutoHaus is buildi
 
 ## 3. Immediate Action Plan for AutoHaus
 
-To leverage the insights from the MyKaarma demo, we must slightly adjust our near-term roadmap:
+To leverage the insights from the MyKaarma demo, we must slightly adjust our near-term roadmap into staged revenue timelines:
 
-1.  **Prioritize Omnichannel Ingestion:** We need to prioritize connecting Twilio (SMS/Voice) to the `POST /api/crm/intake` endpoint (Module 1). This establishes the "Single Number" dominance immediately.
-2.  **Add a "Customer Facing Quote" Plate:** We defined internal JIT Plates for you. We need to add a module to generate an interactive HTML Quote block that the CIL can text to a customer, allowing them to approve/decline line items on their phone (killing the need for MyKaarma's quote UI).
-3.  **AppSheet Integration:** For the "Wireless Payment Terminals" and "Tech Video recording" out in the yard, we should define a lightweight Google AppSheet connected directly to the CIL, giving your team native iOS/Android tools without writing heavy Swift code.
+1.  **P0 (This Week) - Omnichannel Ingestion:** Prioritize connecting Twilio (SMS/Voice) to the `POST /api/crm/intake` endpoint (Module 1). This establishes the "Single Number" dominance immediately. Every missed text is a missed sale today.
+2.  **P1 (Next Sprint) - Customer Facing Quote Plate:** We defined internal JIT Plates for you. We need to add a module to generate an interactive HTML Quote block that the CIL can text to a customer, allowing them to approve/decline line items on their phone (killing the need for MyKaarma's quote UI).
+3.  **P2 (Next Month) - AppSheet Integration:** For the "Wireless Payment Terminals" and "Tech Video recording" out in the yard, we should define a lightweight Google AppSheet connected directly to the CIL, giving your team native iOS/Android tools without writing heavy Swift code.
 
 **The Verdict:** MyKaarma proves you have the right business goals (unification, AI leverage). The C-OS proves you have a superior architectural strategy to achieve them without paying $3,000/month for rigid SaaS logic.

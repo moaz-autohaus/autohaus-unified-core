@@ -1,0 +1,43 @@
+schema_id: INSURANCE_CERT
+schema_version: "1.0"
+description: "Certificate of insurance or policy declaration page"
+confidence_threshold: 0.90
+kamm_must_review: false
+archive_folder: "04_Insurance"
+amendment_lock: false
+
+required_fields:
+  - name: policy_number
+    type: string
+
+  - name: carrier_name
+    type: string
+
+  - name: insured_entity
+    type: string
+
+  - name: coverage_type
+    type: string
+    enum: [GARAGEKEEPERS, BAILEE, FLEET, LOGISTICS, WORKERS_COMP, EPLI, LRO, PROPERTY]
+
+  - name: effective_date
+    type: date
+
+  - name: expiration_date
+    type: date
+
+optional_fields:
+  - name: policy_limit
+    type: decimal
+
+  - name: deductible
+    type: decimal
+
+  - name: additional_insured
+    type: array
+
+entity_links:
+  - field: insured_entity
+    entity_type: COMPANY
+  - field: carrier_name
+    entity_type: VENDOR

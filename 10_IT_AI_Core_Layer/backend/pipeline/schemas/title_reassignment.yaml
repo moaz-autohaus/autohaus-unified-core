@@ -1,0 +1,73 @@
+schema_id: TITLE_REASSIGNMENT
+schema_version: "1.0"
+description: "Vehicle title reassignment between entities or to buyer — Iowa title transfer documentation"
+confidence_threshold: 0.95
+kamm_must_review: true
+archive_folder: "02_Titles"
+amendment_lock: true
+
+required_fields:
+  - name: vin
+    type: string
+    pattern: "^[A-HJ-NPR-Z0-9]{17}$"
+    authority_minimum: COMPLIANCE_VERIFIED
+
+  - name: title_number
+    type: string
+    authority_minimum: VERIFIED
+
+  - name: assignor_name
+    type: string
+
+  - name: assignee_name
+    type: string
+
+  - name: reassignment_date
+    type: date
+
+  - name: odometer_reading
+    type: integer
+
+  - name: odometer_designation
+    type: string
+    enum: [ACTUAL, EXEMPT, EXCEEDS_MECHANICAL_LIMITS, NOT_ACTUAL]
+
+optional_fields:
+  - name: reassignment_number
+    type: integer
+
+  - name: purchase_price
+    type: decimal
+
+  - name: lien_holder
+    type: string
+    nullable: true
+
+  - name: state_of_issue
+    type: string
+    pattern: "^[A-Z]{2}$"
+
+  - name: assignor_signature_present
+    type: boolean
+
+  - name: assignee_signature_present
+    type: boolean
+
+  - name: notarized
+    type: boolean
+
+  - name: dealer_number
+    type: string
+
+  - name: power_of_attorney_present
+    type: boolean
+
+entity_links:
+  - field: vin
+    entity_type: VEHICLE
+  - field: assignor_name
+    entity_type: PERSON
+  - field: assignee_name
+    entity_type: PERSON
+  - field: lien_holder
+    entity_type: COMPANY

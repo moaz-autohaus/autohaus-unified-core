@@ -61,3 +61,34 @@ The Chatbot functions as an autonomous monitor for the ecosystem.
 ---
 
 *This document officially replaces the static dashboard "Hub-and-Spoke" model with the autonomous v3.1 Conversational Operating System (C-OS) paradigm.*
+
+---
+
+## 7. The Visual Orchestrator (Skin Engine)
+
+**Design Philosophy:** Veblen Stealth Luxury (Zinc-950 / Porsche Red)
+**Functional Role:** The "Face" of the Central Intelligence Layer (CIL)
+
+### A. Executive Summary
+The Visual Orchestrator is the presentation engine of the C-OS. Unlike a traditional dashboard that remains static, the Orchestrator is liquid. It is a stateless React framework that does not decide what to show on its own; instead, it waits for "Skin Directives" from the Intelligent Membrane. It transforms raw, structured data from the CIL into a specific human experience—whether that’s a high-density command center for the CEO or a simplified approval portal for a client.
+
+### B. Core Components
+1. **The Skin Registry (The Library)**: A collection of CSS-variable sets and layout templates. Instead of hardcoding colors and paddings, the UI uses "Themes" that can be swapped instantly (e.g., Zinc-950 Black, Porsche Red, Muted Gold).
+2. **The Plate Hydrator (The Mounting Engine)**: The CIL doesn't send "web pages"; it sends JIT Plates. The Hydrator connects the incoming JSON payload (containing a PLATE_ID) to the correct React component and animates it into the current skin.
+3. **The Attention Listener (The Receiver)**: A dedicated WebSocket hook connected to the Intelligent Membrane. It listens for `URGENCY_SCORE` and `UI_STRATEGY` flags to determine if the UI should remain silent or trigger a "Global Override".
+
+### C. Operational Logic (Intercept → Select → Render)
+1. **Intercept**: The Membrane generates an output (e.g., "Missing Title").
+2. **Select**: The Attention Dispatcher checks context (Desktop vs. Mobile site access) and sets the Skin payload.
+3. **Render**: The Orchestrator receives the directive, updates global CSS variables, and mounts the specific JIT Plate.
+
+### D. Expression Skins
+*   **The UCC "Super-Admin" Cockpit**: Dark, data-dense, multi-column. Used for morning briefings, audits, and ecosystem management.
+*   **The "Field Diagnostic"**: High-contrast, large touch-targets, Porsche Red alerts. Ideal for physical vehicle inspections.
+*   **The "Client Handshake"**: Minimalist, elegant, utilizing Muted Gold and White Space for digital quotes and approvals.
+*   **The "Ghost" Skin (Ambient)**: Silent background operation. The Orchestrator logs data to a System Ledger without pulling focus from the user.
+
+### E. Evaluation Framework
+*   **Context Accuracy**: Did it choose the right skin for the device I’m holding?
+*   **Information Density**: Is the data too overwhelming for a phone, or too thin for a desktop?
+*   **Action Velocity**: How many "taps" did it take to solve the anomaly presented?
