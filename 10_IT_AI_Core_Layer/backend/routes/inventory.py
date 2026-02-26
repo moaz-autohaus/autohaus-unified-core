@@ -9,7 +9,7 @@ inventory_router = APIRouter()
 import google.auth
 
 inventory_router = APIRouter()
-PROJECT_ID = "457080741078"
+PROJECT_ID = "autohaus-infrastructure"
 
 # --- Security Dependency (ADC with Impersonation) ---
 def get_bq_client():

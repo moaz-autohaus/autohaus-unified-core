@@ -36,9 +36,10 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import google.generativeai as genai
 
 # C-OS Modules
-from agents.router_agent import RouterAgent, RoutedIntent
 from memory.vector_vault import VectorVault
 from agents.iea_agent import InputEnrichmentAgent
+from agents.governance_agent import GovernanceAgent
+from models.cos_response import CoSResponse, UIStrategyModel
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("autohaus.chat_stream")
@@ -50,10 +51,11 @@ logger = logging.getLogger("autohaus.chat_stream")
 PLATE_MAP = {
     "FINANCE":    "FINANCE_CHART",
     "INVENTORY":  "INVENTORY_TABLE",
-    "SERVICE":    "SERVICE_TIMELINE",
-    "CRM":        "CRM_PROFILE",
-    "LOGISTICS":  "LOGISTICS_MAP",
-    "COMPLIANCE": "COMPLIANCE_CHECKLIST",
+    "SERVICE":    "CHAT_RESPONSE",
+    "CRM":        "CHAT_RESPONSE",
+    "LOGISTICS":  "LIVE_DISPATCH",
+    "COMPLIANCE": "ANOMALY_ALERT",
+    "GOVERNANCE": "GOVERNANCE_DASHBOARD",
     "UNKNOWN":    "CHAT_RESPONSE",
 }
 
@@ -161,7 +163,7 @@ def _resolve_skin(urgency_score: int, target_entity: str) -> dict:
 # ---------------------------------------------------------------------------
 # JIT Plate Builder
 # ---------------------------------------------------------------------------
-def build_plate_payload(routed: RoutedIntent, urgency_score: int = 5) -> dict:
+def build_plate_payload(routed: RoutedIntent, urgency_score: int = 5) -> CoSResponse:
     """
     Translate a RoutedIntent into a JIT Plate mount command for the React UI.
 
@@ -177,23 +179,21 @@ def build_plate_payload(routed: RoutedIntent, urgency_score: int = 5) -> dict:
     if routed.confidence < 0.7 and routed.intent != "UNKNOWN":
         plate_id = "AMBIGUITY_RESOLUTION"
 
-    # Backend resolves the skin — frontend is dumb
-    strategy = _resolve_skin(urgency_score, routed.target_entity)
+    strategy_dict = _resolve_skin(urgency_score, routed.target_entity)
+    strategy = UIStrategyModel(**strategy_dict)
 
-    payload = {
-        "type": "MOUNT_PLATE",
-        "plate_id": plate_id,
-        "intent": routed.intent,
-        "confidence": routed.confidence,
-        "entities": routed.entities,
-        "target_entity": routed.target_entity,
-        "suggested_action": routed.suggested_action,
-        "strategy": strategy,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "dataset": [],  # Placeholder: hydrated with BigQuery data in future modules
-    }
-
-    return payload
+    return CoSResponse(
+        type="MOUNT_PLATE",
+        plate_id=plate_id,
+        intent=routed.intent,
+        confidence=routed.confidence,
+        entities=routed.entities,
+        target_entity=routed.target_entity,
+        suggested_action=routed.suggested_action,
+        strategy=strategy,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        dataset=[]
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -222,19 +222,19 @@ async def process_incoming_message(websocket: WebSocket, client_id: str, text_da
     if iea_result.status == "INCOMPLETE":
         logger.warning(f"[WS] Membrane caught incomplete input: {iea_result.clarifying_question}")
         # If incomplete, bypass the Router and ask the user directly
-        clarification_payload = {
-            "type": "MOUNT_PLATE",
-            "plate_id": "CHAT_RESPONSE",
-            "intent": "CLARIFICATION_REQUIRED",
-            "confidence": 1.0,
-            "entities": iea_result.extracted_entities,
-            "target_entity": "CARBON_LLC",
-            "suggested_action": iea_result.clarifying_question,
-            "strategy": _resolve_skin(5, "CARBON_LLC"),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "dataset": []
-        }
-        await manager.send_personal_message(clarification_payload, client_id)
+        clarification_response = CoSResponse(
+            type="MOUNT_PLATE",
+            plate_id="CHAT_RESPONSE",
+            intent="CLARIFICATION_REQUIRED",
+            confidence=1.0,
+            entities=iea_result.extracted_entities,
+            target_entity="CARBON_LLC",
+            suggested_action=iea_result.clarifying_question,
+            strategy=UIStrategyModel(**_resolve_skin(5, "CARBON_LLC")),
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            dataset=[]
+        )
+        await manager.send_personal_message(clarification_response.model_dump(), client_id)
         return
 
     # 3. Classify structured input via RouterAgent
@@ -248,12 +248,31 @@ async def process_incoming_message(websocket: WebSocket, client_id: str, text_da
     dispatcher = AttentionDispatcher()
     attention_result = dispatcher.evaluate_event(enriched_input)
 
-    # 5. Generate the JIT Plate JSON payload
-    plate_payload = build_plate_payload(routed_intent, urgency_score=attention_result.urgency_score)
+    # 4.5. If GOVERNANCE, execute it now
+    if routed_intent.intent == "GOVERNANCE":
+        gov_agent = GovernanceAgent()
+        gov_res = gov_agent.evaluate_governance_command(text_data, client_id, "SYSTEM")
+        
+        # Override plate payload with Governance outputs
+        plate_payload = CoSResponse(
+            type="MOUNT_PLATE",
+            plate_id=gov_res.get("plate", "GOVERNANCE_DASHBOARD"),
+            intent="GOVERNANCE",
+            confidence=1.0,
+            entities=routed_intent.entities,
+            target_entity=routed_intent.target_entity,
+            suggested_action=gov_res.get("message", "Governance action executed"),
+            strategy=UIStrategyModel(**_resolve_skin(attention_result.urgency_score, "CARBON_LLC")),
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            dataset=gov_res.get("dataset", [])
+        )
+    else:
+        # 5. Generate the standard JIT Plate JSON payload
+        plate_payload = build_plate_payload(routed_intent, urgency_score=attention_result.urgency_score)
 
     # 6. Push payload back to the browser
-    logger.info(f"[WS] Pushing Plate: {plate_payload['plate_id']} (Intent: {plate_payload['intent']}, Skin: {plate_payload['strategy']['skin']}, Urgency: {attention_result.urgency_score})")
-    await manager.send_personal_message(plate_payload, client_id)
+    logger.info(f"[WS] Pushing Plate: {plate_payload.plate_id} (Intent: {plate_payload.intent}, Skin: {plate_payload.strategy.skin if plate_payload.strategy else 'UNKNOWN'}, Urgency: {attention_result.urgency_score})")
+    await manager.send_personal_message(plate_payload.model_dump(), client_id)
 
 
 # ---------------------------------------------------------------------------
@@ -276,15 +295,19 @@ async def websocket_chat_endpoint(websocket: WebSocket):
 
     await manager.connect(websocket, client_id)
 
-    # Send welcome handshake
-    await manager.send_personal_message({
-        "type": "SYSTEM",
-        "message": "AutoHaus C-OS v3.1 — Digital Chief of Staff connected.",
-        "connected_clients": manager.active_count,
-        "authority_state": "SOVEREIGN",
-        "legacy_sync": False,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }, client_id)
+    # Send welcome handshake with Governance Check
+    gov_agent = GovernanceAgent()
+    greeting_msg = gov_agent.generate_session_greeting()
+    
+    welcome_response = CoSResponse(
+        type="SYSTEM",
+        message=greeting_msg,
+        connected_clients=manager.active_count,
+        authority_state="SOVEREIGN",
+        legacy_sync=False,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+    )
+    await manager.send_personal_message(welcome_response.model_dump(), client_id)
 
     try:
         while True:
@@ -299,10 +322,11 @@ async def websocket_chat_endpoint(websocket: WebSocket):
                 user_message = raw_data.strip()
 
             if not user_message:
-                await manager.send_personal_message({
-                    "type": "ERROR",
-                    "message": "Empty command received. Please provide an instruction.",
-                }, client_id)
+                error_response = CoSResponse(
+                    type="ERROR",
+                    message="Empty command received. Please provide an instruction."
+                )
+                await manager.send_personal_message(error_response.model_dump(), client_id)
                 continue
 
             # Call the new message processing function

@@ -8,7 +8,7 @@
     "backend_primitives": {
         "semantic_catalog": {
             "status": "active",
-            "file": "10_IT_AI_Core_Layer/auth/business_ontology.json",
+            "file": "10_IT_AI_Core_Layer/backend/registry/business_ontology.json",
             "description": "Ontology mapping 7 entities + insurance logic for AI context injection."
         },
         "immutable_lineage_log": {
