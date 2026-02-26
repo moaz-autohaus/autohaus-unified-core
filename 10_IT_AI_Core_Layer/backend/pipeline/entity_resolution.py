@@ -27,6 +27,27 @@ from .truth_projection import project_entity_fact, rebuild_entity_facts
 
 logger = logging.getLogger("autohaus.entity_resolution")
 
+def _run_enrichment_background(bq_client, entity_type: str, entity_id: str, trigger: str, primary_key: str):
+    """Fires the Enrichment Engine asynchronously in a background thread so it doesn't block."""
+    def _worker():
+        try:
+            import asyncio
+            from enrichment.enrichment_engine import EnrichmentEngine
+            engine = EnrichmentEngine(bq_client)
+            asyncio.run(engine.enrich(
+                entity_type=entity_type,
+                entity_id=entity_id,
+                trigger=trigger,
+                primary_key=primary_key
+            ))
+        except Exception as e:
+            logger.error(f"[ENRICH] Background worker failed: {e}")
+            
+    import threading
+    t = threading.Thread(target=_worker)
+    t.start()
+
+
 # Internal companies — exact match only
 INTERNAL_COMPANIES = {
     "KAMM_LLC", "KAMM LLC", "KAMM",
@@ -178,6 +199,10 @@ def resolve_vehicle(bq_client, vin: str) -> Tuple[str, str, Dict[str, Any]]:
         logger.error(f"[ENTITY] Failed to project vehicle to master table (still exists in registry): {errors}")
     
     logger.info(f"[ENTITY] Created new STUB vehicle entity: {vehicle_id} (VIN: {vin})")
+    
+    # Phase 8 Enrichment Pipeline
+    _run_enrichment_background(bq_client, "VEHICLE", vehicle_id, "ENTITY_RESOLUTION_NEW_VIN", vin)
+    
     return vehicle_id, "AUTO_CREATED", row
 
 
@@ -266,6 +291,9 @@ def resolve_vendor(bq_client, raw_name: str) -> Tuple[str, str]:
 
     _create_vendor_alias(bq_client, raw_name, vendor_id, normalized)
     logger.info(f"[ENTITY] Created new vendor: {vendor_id} ({normalized})")
+
+    _run_enrichment_background(bq_client, "VENDOR", vendor_id, "ENTITY_RESOLUTION_NEW_VENDOR", normalized)
+
     return vendor_id, "AUTO_CREATED"
 
 
@@ -368,6 +396,9 @@ def resolve_person(bq_client, name: str, phone: Optional[str] = None, email: Opt
         logger.error(f"[ENTITY] Failed to project person to master table (still exists in registry): {errors}")
     
     logger.info(f"[ENTITY] Created new STUB person: {person_id} ({name})")
+
+    _run_enrichment_background(bq_client, "PERSON", person_id, "ENTITY_RESOLUTION_NEW_PERSON", email or phone or name)
+
     return person_id, "AUTO_CREATED", row
 
 
@@ -655,7 +686,7 @@ def _enrich_person_metadata(bq_client, person_id: str, current: dict, extracted:
     try:
         bq_client.query(query, job_config=bq.QueryJobConfig(query_parameters=params)).result()
         logger.info(f"[ENRICH] Person {person_id} enriched: {', '.join(enriched_fields)}")
-        _emit_enrichment_event(bq_client, "PERSON", person_id, enriched_fields, schema.get("schema_id"))
+        _emit_enrichment_event(bq_client, "PERSON", person_id, enriched_fields, schema.get("schema_id", "UNKNOWN"))
         
         # Rebuild facts (New Extraction trigger)
         rebuild_entity_facts(bq_client, person_id)
