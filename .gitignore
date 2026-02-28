@@ -22,3 +22,13 @@
 auth/
 *service_account.json
 *credentials.json
+gcp.json
+gcp_min.json
+
+# Replit Environment
+.replit
+replit.md
+replit.nix
+dist/
+attached_assets/
+uv.lock
