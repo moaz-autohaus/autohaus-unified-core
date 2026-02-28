@@ -104,21 +104,11 @@ app.include_router(finance_router, prefix="/api/finance")
 app.include_router(anomalies_router, prefix="/api/anomalies")
 app.include_router(media_router, prefix="/api/media")
 app.include_router(public_router, prefix="/api/public")
-app.include_router(legal_router) # Legal/Compliance routes (no prefix)
-app.include_router(security_router)
-app.include_router(drive_webhook_router)
-app.include_router(intel_router)
-app.include_router(deploy_router)
-
-
-# Governance Anchor Path
-@app.get("/api/heartbeat")
-async def get_heartbeat():
-    """Returns the pulse of the Core Backend to prevent the Kill Switch trigger."""
-    return {"status": "alive", "cil_connection": "verified"}
+# Legal/Compliance routes (no prefix)
+# MUST be registered before static mounts to prevent SPA catch-all interference
+app.include_router(legal_router)
 
 # Static Hosting for React Frontend
-# Points upward past `10_IT_AI_Core_Layer/backend` to the workspace root `dist/` directory
 DIST_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "dist")
 
 if os.path.exists(DIST_DIR):
@@ -126,19 +116,7 @@ if os.path.exists(DIST_DIR):
     if os.path.exists(assets_dir):
         app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
-# Content Governance / Admin Gate
-@app.api_route("/api/admin/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
-async def catch_admin(request: Request, path: str):
-    """
-    Enforces the Administrative Lockout for non-CIL entities.
-    Static redirects and governance overrides handled via Carbon LLC Orchestrator.
-    """
-    raise HTTPException(
-        status_code=403, 
-        detail="Governance Lockout: Administrative access restricted to autohausia.com Super Admin."
-    )
-
-# Fallback SPA Router
+# Fallback SPA Router - MUST come last
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
     index_path = os.path.join(DIST_DIR, "index.html")
