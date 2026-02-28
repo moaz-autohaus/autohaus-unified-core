@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle2, XCircle, Mail, Truck, DollarSign, Loader2, AlertCircle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, XCircle, Mail, DollarSign, Loader2, AlertCircle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface HitlEvent {
     id?: string;
