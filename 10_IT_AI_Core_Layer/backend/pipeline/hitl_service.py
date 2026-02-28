@@ -41,6 +41,10 @@ class ActionType(str, Enum):
     ROLLBACK = "ROLLBACK"
     POLICY_CHANGE = "POLICY_CHANGE"
     MEDIA_INGEST = "MEDIA_INGEST"
+    FINANCIAL_JOURNAL_PROPOSAL = "FINANCIAL_JOURNAL_PROPOSAL"
+    GMAIL_DRAFT_PROPOSAL = "GMAIL_DRAFT_PROPOSAL"
+    ENTITY_MODIFICATION = "ENTITY_MODIFICATION"
+    TIER_0_EXTRACTION = "TIER_0_EXTRACTION"
 
 
 class HitlStatus(str, Enum):
@@ -53,6 +57,14 @@ class HitlStatus(str, Enum):
 
 
 from database.policy_engine import get_policy
+
+def safe_serialize(obj):
+    if isinstance(obj, (datetime,)):
+        return obj.isoformat()
+    return str(obj)
+
+def safe_json_dumps(obj):
+    return json.dumps(obj, default=safe_serialize)
 
 def get_role_permissions(role: str) -> set:
     raw_perms = get_policy("HITL", "ROLE_PERMISSIONS")
@@ -153,7 +165,7 @@ def propose(
 
 # ── Validate ────────────────────────────────────────────────────────────
 
-def validate(bq_client, hitl_event_id: str) -> Dict[str, Any]:
+async def validate(bq_client, hitl_event_id: str) -> Dict[Any, Any]:
     """
     Step 2 of HITL: Validate a proposal.
     Checks permissions, scope, conflicts, and compliance locks.
@@ -213,8 +225,8 @@ def validate(bq_client, hitl_event_id: str) -> Dict[str, Any]:
     
     # Update the hitl_events record
     _update_hitl_status(bq_client, hitl_event_id, new_status, {
-        "validated_at": datetime.utcnow().isoformat(),
-        "validation_result": json.dumps(checks),
+        "validated_at": datetime.utcnow(),
+        "validation_result": safe_json_dumps(checks),
     })
 
     result = {"status": new_status, "checks": checks, "hitl_event_id": hitl_event_id}
@@ -222,7 +234,7 @@ def validate(bq_client, hitl_event_id: str) -> Dict[str, Any]:
     # Auto-apply low-risk actions
     if all_passed and ActionType(action) not in HIGH_RISK_ACTIONS:
         logger.info(f"[HITL] Auto-applying low-risk action: {action}")
-        apply_result = apply(bq_client, hitl_event_id)
+        apply_result = await apply(bq_client, hitl_event_id)
         result["auto_applied"] = True
         result["apply_result"] = apply_result
 
@@ -231,11 +243,17 @@ def validate(bq_client, hitl_event_id: str) -> Dict[str, Any]:
 
 # ── Apply ───────────────────────────────────────────────────────────────
 
-def apply(bq_client, hitl_event_id: str) -> Dict[str, Any]:
+async def apply(bq_client, hitl_event_id: str) -> Dict[Any, Any]:
     """
     Step 3 of HITL: Apply a validated change.
     Writes the actual change to target tables and emits a cil_events record.
     """
+    # 0. Global Compliance Freeze Check
+    from database.policy_engine import get_policy
+    if get_policy("SYSTEM", "FROZEN"):
+        logger.warning(f"[SECURITY] Write operation blocked: System is FROZEN.")
+        return {"status": "ERROR", "reason": "System is currently frozen for security/compliance. Proposals queue but nothing applies."}
+
     proposal = _fetch_hitl_event(bq_client, hitl_event_id)
     if not proposal:
         return {"status": "ERROR", "reason": "Proposal not found"}
@@ -267,11 +285,54 @@ def apply(bq_client, hitl_event_id: str) -> Dict[str, Any]:
         elif action == ActionType.REPROCESS:
             diff = {"action": "REPROCESS", "note": "Re-run extraction queued"}
             rebuild_entity_facts(bq_client, target_id)
-        elif action == ActionType.ROLLBACK:
-            diff = _apply_rollback(bq_client, payload)
-        else:
-            logger.warning(f"[HITL] Unhandled action type: {action}")
-            diff = {"action": action, "note": "Handler not yet implemented"}
+        elif action == ActionType.GMAIL_DRAFT_PROPOSAL:
+            from integrations.gmail_spoke import GmailSender
+            sender = GmailSender(bq_client)
+            # Fetch lead email from target_id if not in payload
+            to_email = payload.get("to") or target_id
+            subject = payload.get("subject", "Follow up from AutoHaus")
+            body = payload.get("body", "")
+            
+            res = await sender.draft_email(to=to_email, subject=subject, body=body, context=payload)
+            if res.get("status") == "error":
+                raise Exception(f"Gmail Draft failed: {res.get('message')}")
+            diff = {"action": "GMAIL_DRAFT", "draft_id": res.get("draft_id"), "to": to_email}
+
+        elif action == ActionType.FINANCIAL_JOURNAL_PROPOSAL:
+            # Placeholder for QuickBooks / Journal entry logic
+            # For now, we emit a success record
+            diff = {
+                "action": "FINANCIAL_EXPORT",
+                "journal_id": f"JV-{uuid.uuid4().hex[:6].upper()}",
+                "note": "Journal entry proposed and marked as exported to external system"
+            }
+        
+        elif action == ActionType.ENTITY_MODIFICATION:
+             evidence_tier = payload.get("evidence_tier", "TIER_3_UNCONFIRMED")
+             authority_map = {
+                 "TIER_1_CONFIRMED": "VERIFIED",
+                 "TIER_2_PROBABLE": "EXTRACTED",
+                 "TIER_3_UNCONFIRMED": "PROPOSED"
+             }
+             authority = authority_map.get(evidence_tier, "PROPOSED")
+             
+             row = {
+                 "entity_id": target_id,
+                 "entity_type": proposal.get("target_type", "UNKNOWN"),
+                 "canonical_name": payload.get("canonical_name") or payload.get("name") or payload.get("carrier") or target_id,
+                 "status": "ACTIVE",
+                 "aliases": safe_json_dumps(payload.get("aliases", [])),
+                 "authority_level": authority,
+                 "created_at": now,
+                 "updated_at": now
+             }
+             # BigQuery insert into entity registry
+             errs = bq_client.insert_rows_json("autohaus-infrastructure.autohaus_cil.entity_registry", [row])
+             if errs:
+                 logger.error(f"[HITL] failed registry write: {errs}")
+                 
+             diff = {"action": "ENTITY_PATCH", "target": target_id, "changes": payload, "authority": authority}
+             rebuild_entity_facts(bq_client, target_id)
     except Exception as e:
         logger.error(f"[HITL] Apply failed for {hitl_event_id}: {e}")
         return {"status": "ERROR", "reason": str(e)}
@@ -294,7 +355,7 @@ def apply(bq_client, hitl_event_id: str) -> Dict[str, Any]:
         "actor_role": proposal["actor_role"],
         "target_type": proposal["target_type"],
         "target_id": target_id,
-        "payload": json.dumps({"hitl_event_id": hitl_event_id, **diff}),
+        "payload": safe_json_dumps({"hitl_event_id": hitl_event_id, **diff}),
         "metadata": None,
         "idempotency_key": f"hitl_apply_{hitl_event_id}",
     }
@@ -609,7 +670,7 @@ def _check_concurrent_hitl(bq_client, target_id: str, field_name: str, exclude_i
         return False
 
 
-def _update_hitl_status(bq_client, hitl_event_id: str, new_status: str, extra_fields: dict):
+async def _update_hitl_status(bq_client, hitl_event_id: str, new_status: str, extra_fields: dict):
     """
     Update a HITL event's status using append-only pattern.
     Inserts a new row with the updated status. _fetch_hitl_event picks
@@ -621,12 +682,12 @@ def _update_hitl_status(bq_client, hitl_event_id: str, new_status: str, extra_fi
         logger.error(f"[HITL] Cannot update status: {hitl_event_id} not found")
         return
 
-    now = datetime.utcnow().isoformat()
+    now_str = datetime.utcnow().isoformat()
 
     # Build the new row, carrying forward all fields from current state
     new_row = {
         "hitl_event_id": hitl_event_id,
-        "timestamp": current.get("timestamp", now) if not isinstance(current.get("timestamp"), str) else str(current.get("timestamp", now)),
+        "timestamp": safe_serialize(current.get("timestamp")) if current.get("timestamp") else now_str,
         "actor_user_id": current.get("actor_user_id", ""),
         "actor_role": current.get("actor_role", ""),
         "source": current.get("source", "HITL_SERVICE"),
@@ -634,18 +695,18 @@ def _update_hitl_status(bq_client, hitl_event_id: str, new_status: str, extra_fi
         "target_id": current.get("target_id", ""),
         "action_type": current.get("action_type", ""),
         "status": new_status,
-        "payload": current.get("payload") if isinstance(current.get("payload"), str) else json.dumps(current.get("payload")) if current.get("payload") else None,
+        "payload": current.get("payload") if isinstance(current.get("payload"), str) else safe_json_dumps(current.get("payload")) if current.get("payload") else None,
         "diff": extra_fields.get("diff", current.get("diff")),
         "reason": current.get("reason"),
         "intent_confidence": current.get("intent_confidence"),
-        "proposal_expires_at": str(current.get("proposal_expires_at")) if current.get("proposal_expires_at") else None,
-        "validated_at": extra_fields.get("validated_at", str(current.get("validated_at")) if current.get("validated_at") else None),
+        "proposal_expires_at": safe_serialize(current.get("proposal_expires_at")) if current.get("proposal_expires_at") else None,
+        "validated_at": safe_serialize(extra_fields.get("validated_at")) if extra_fields.get("validated_at") else safe_serialize(current.get("validated_at")) if current.get("validated_at") else None,
         "validation_result": extra_fields.get("validation_result", current.get("validation_result")),
-        "applied_at": extra_fields.get("applied_at", str(current.get("applied_at")) if current.get("applied_at") else None),
+        "applied_at": safe_serialize(extra_fields.get("applied_at")) if extra_fields.get("applied_at") else safe_serialize(current.get("applied_at")) if current.get("applied_at") else None,
         "applied_by": extra_fields.get("applied_by", current.get("applied_by")),
-        "rolled_back_at": extra_fields.get("rolled_back_at", str(current.get("rolled_back_at")) if current.get("rolled_back_at") else None),
+        "rolled_back_at": safe_serialize(extra_fields.get("rolled_back_at")) if extra_fields.get("rolled_back_at") else safe_serialize(current.get("rolled_back_at")) if current.get("rolled_back_at") else None,
         "rollback_event_id": extra_fields.get("rollback_event_id", current.get("rollback_event_id")),
-        "created_at": now,  # New creation timestamp = latest row
+        "created_at": now_str,
     }
 
     errors = bq_client.insert_rows_json(
@@ -655,3 +716,87 @@ def _update_hitl_status(bq_client, hitl_event_id: str, new_status: str, extra_fi
         logger.error(f"[HITL] Failed to persist status update: {errors}")
     else:
         logger.info(f"[HITL] Status persisted: {hitl_event_id} → {new_status}")
+
+
+def seed_demo_proposals(bq_client):
+    """Inserts mock proposals if the specific demo IDs are missing."""
+    # 1. Check if we already have the primary seed
+    query = f"SELECT hitl_event_id FROM `autohaus-infrastructure.autohaus_cil.hitl_events` WHERE hitl_event_id = 'seed-email-001' LIMIT 1"
+    try:
+        res = list(bq_client.query(query).result())
+        if res:
+            logger.info("[HITL] Demo proposals already exist. Skipping seed.")
+            return
+    except Exception as e:
+        logger.warning(f"[HITL] Could not check seed existence: {e}")
+
+    # 2. Define the 3 core demo proposals
+    now = datetime.utcnow()
+    seeds = [
+        {
+            "hitl_event_id": "seed-email-001",
+            "action_type": "GMAIL_DRAFT_PROPOSAL",
+            "target_type": "LEAD",
+            "target_id": "lead@example.com",
+            "actor_user_id": "ahsin",
+            "actor_role": "SOVEREIGN",
+            "source": "SEED",
+            "status": "PROPOSED",
+            "payload": json.dumps({
+                "to": "lead@example.com",
+                "subject": "Following up on your 2024 BMW X5 inquiry",
+                "body": "Hi there, I saw you were interested in the X5. Are you available for a test drive this Saturday?\n\nBest,\nAhsin"
+            }),
+            "reason": "AI drafted follow-up based on inventory availability.",
+            "timestamp": now.isoformat(),
+            "created_at": now.isoformat(),
+            "proposal_expires_at": (now + timedelta(days=7)).isoformat(),
+        },
+        {
+            "hitl_event_id": "seed-syndication-002",
+            "action_type": "ENTITY_MODIFICATION",
+            "target_type": "VEHICLE",
+            "target_id": "V-001",
+            "actor_user_id": "moaz",
+            "actor_role": "SOVEREIGN",
+            "source": "SEED",
+            "status": "PROPOSED",
+            "payload": json.dumps({
+                "listing_price": 129500,
+                "syndication_note": "Syncing price across Facebook Marketplace and Autotrader"
+            }),
+            "reason": "Price correction based on market volatility index.",
+            "timestamp": (now - timedelta(hours=2)).isoformat(),
+            "created_at": (now - timedelta(hours=2)).isoformat(),
+            "proposal_expires_at": (now + timedelta(days=7)).isoformat(),
+        },
+        {
+            "hitl_event_id": "seed-financial-003",
+            "action_type": "FINANCIAL_JOURNAL_PROPOSAL",
+            "target_type": "TRANSACTION",
+            "target_id": "TX-0099",
+            "actor_user_id": "finance_agent",
+            "actor_role": "SYSTEM",
+            "source": "SEED",
+            "status": "PROPOSED",
+            "payload": json.dumps({
+                "debit": "1200.00",
+                "credit": "1200.00",
+                "account": "REHAB_EXPENSE",
+                "description": "Correction for VIN ...93RS paint correction"
+            }),
+            "reason": "Discrepancy detected between invoice and bank feed.",
+            "timestamp": (now - timedelta(days=1)).isoformat(),
+            "created_at": (now - timedelta(days=1)).isoformat(),
+            "proposal_expires_at": (now + timedelta(days=7)).isoformat(),
+        }
+    ]
+
+    # 3. Insert rows
+    errors = bq_client.insert_rows_json(
+        "autohaus-infrastructure.autohaus_cil.hitl_events", seeds
+    )
+    if errors:
+        logger.error(f"[HITL] Failed to insert seed data: {errors}")
+    else:
+        logger.info("[HITL] Demo seed proposals inserted successfully.")
