@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle2, XCircle, Mail, Truck, DollarSign, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle2, XCircle, Mail, Truck, DollarSign, Loader2, AlertCircle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface HitlEvent {
     id?: string;
@@ -28,12 +28,15 @@ interface ToastMessage {
     message: string;
 }
 
+function parsePayload(raw: string | Record<string, unknown>): Record<string, unknown> | string {
+    if (typeof raw !== 'string') return raw as Record<string, unknown>;
+    try { return JSON.parse(raw); } catch { return raw; }
+}
+
 function getTier(e: HitlEvent): string {
-    let p = e.payload;
-    if (typeof p === 'string') {
-        try { p = JSON.parse(p); } catch { return 'OTHER'; }
-    }
-    return ((p as Record<string, unknown>)?.evidence_tier as string) || 'OTHER';
+    const p = parsePayload(e.payload);
+    if (typeof p === 'string') return 'OTHER';
+    return (p?.evidence_tier as string) || 'OTHER';
 }
 
 export function ActionCenter() {
@@ -43,6 +46,7 @@ export function ActionCenter() {
     const [approvingId, setApprovingId] = useState<string | null>(null);
     const [rejectingId, setRejectingId] = useState<string | null>(null);
     const [selectedTier, setSelectedTier] = useState<string>('TIER_1_CONFIRMED');
+    const [expandedId, setExpandedId] = useState<string | null>(null);
 
     const dismissToast = (id: string) => setToasts(prev => prev.filter(t => t.id !== id));
 
@@ -57,7 +61,11 @@ export function ActionCenter() {
             const res = await fetch(`${getApiBase()}/api/hitl/queue`);
             if (!res.ok) throw new Error(`Queue fetch returned ${res.status}: ${res.statusText}`);
             const data: HitlEvent[] = await res.json();
-            setQueue(data);
+            const normalized = data.map(e => ({
+                ...e,
+                payload: parsePayload(e.payload),
+            }));
+            setQueue(normalized);
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : String(err);
             console.error('[ActionCenter] fetchQueue failed:', msg);
@@ -111,14 +119,16 @@ export function ActionCenter() {
         }
     };
 
-    const renderPayload = (event: HitlEvent) => {
-        let p = event.payload;
-        if (typeof p === 'string') {
-            try { p = JSON.parse(p as string); } catch {
-                return <pre style={{ fontSize: 14, fontFamily: 'monospace', color: '#a1a1aa', whiteSpace: 'pre-wrap' }}>{p as string}</pre>;
-            }
+    const renderPayload = (event: HitlEvent, isExpanded: boolean) => {
+        const parsed = parsePayload(event.payload);
+        if (typeof parsed === 'string') {
+            return (
+                <pre style={{ fontSize: 14, fontFamily: 'monospace', color: '#a1a1aa', background: '#0a0a0a', padding: 12, borderRadius: 6, overflow: 'auto', maxHeight: 200, whiteSpace: 'pre-wrap', margin: 0 }}>
+                    {parsed}
+                </pre>
+            );
         }
-        const payload = p as Record<string, unknown>;
+        const payload = parsed;
 
         if (event.action_type === 'GMAIL_DRAFT_PROPOSAL' || event.event_type === 'EMAIL_DRAFTED') {
             return (
@@ -127,12 +137,16 @@ export function ActionCenter() {
                         <Mail size={16} />
                         <span>To: {String(payload.recipient || payload.to || '')}</span>
                     </div>
-                    <div style={{ fontWeight: 600, color: '#e8e8e8', fontSize: 16 }}>
-                        Subject: {String(payload.subject || '')}
-                    </div>
-                    <div style={{ color: '#a1a1aa', fontSize: 14, lineHeight: 1.5, background: '#0a0a0a', padding: 12, borderRadius: 6, border: '1px solid #1c1c1c', fontStyle: 'italic' }}>
-                        "{String(payload.body || payload.content || '')}"
-                    </div>
+                    {isExpanded && (
+                        <>
+                            <div style={{ fontWeight: 600, color: '#e8e8e8', fontSize: 16 }}>
+                                Subject: {String(payload.subject || '')}
+                            </div>
+                            <div style={{ color: '#a1a1aa', fontSize: 14, lineHeight: 1.5, background: '#0a0a0a', padding: 12, borderRadius: 6, border: '1px solid #1c1c1c', fontStyle: 'italic' }}>
+                                "{String(payload.body || payload.content || '')}"
+                            </div>
+                        </>
+                    )}
                 </div>
             );
         }
@@ -144,14 +158,16 @@ export function ActionCenter() {
                         <DollarSign size={16} />
                         <span>QuickBooks Journal Entry</span>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {Object.entries(payload).map(([k, v]) => (
-                            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1c1c1c50', padding: '6px 0', fontSize: 14, alignItems: 'center', gap: 8 }}>
-                                <span style={{ color: '#a1a1aa', textTransform: 'uppercase', fontFamily: 'monospace', fontSize: 12 }}>{k}</span>
-                                <span style={{ color: '#e8e8e8', fontFamily: 'monospace' }}>{String(v)}</span>
-                            </div>
-                        ))}
-                    </div>
+                    {isExpanded && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {Object.entries(payload).map(([k, v]) => (
+                                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1c1c1c50', padding: '6px 0', fontSize: 14, alignItems: 'center', gap: 8 }}>
+                                    <span style={{ color: '#a1a1aa', textTransform: 'uppercase', fontFamily: 'monospace', fontSize: 12 }}>{k}</span>
+                                    <span style={{ color: '#e8e8e8', fontFamily: 'monospace' }}>{String(v)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -164,7 +180,8 @@ export function ActionCenter() {
             const docMentions = payload.doc_mentions as number | undefined;
             const relationshipType = payload.relationship_type as string | undefined;
             const evidenceTier = payload.evidence_tier as string | undefined;
-            const skipKeys = new Set(['evidence_chain', 'evidence_tier', 'conflict_detected', 'conflict_question', 'extracted_financials', 'doc_mentions', 'relationship_type']);
+            const roles = payload.roles as string[] | undefined;
+            const skipKeys = new Set(['evidence_chain', 'evidence_tier', 'conflict_detected', 'conflict_question', 'extracted_financials', 'doc_mentions', 'relationship_type', 'roles']);
             const entries = Object.entries(payload).filter(([k]) => !skipKeys.has(k));
 
             const financialColor = (line: string): string => {
@@ -195,53 +212,67 @@ export function ActionCenter() {
                         )}
                     </div>
 
+                    {roles && roles.length > 0 && (
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                            {roles.map((role, i) => (
+                                <span key={i} style={{ fontSize: 11, fontFamily: 'monospace', padding: '2px 6px', borderRadius: 3, background: '#52525210', border: '1px solid #52525233', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                    {role}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+
                     {docMentions != null && (
                         <span style={{ fontSize: 12, color: '#a1a1aa' }}>Referenced in {docMentions} document{docMentions !== 1 ? 's' : ''}</span>
                     )}
 
-                    {extractedFinancials && extractedFinancials.length > 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            {extractedFinancials.map((line, i) => (
-                                <div key={i} style={{ fontSize: 13, fontFamily: 'monospace', padding: '5px 8px', borderLeft: `3px solid ${financialColor(line)}`, color: financialColor(line), background: '#0a0a0a', borderRadius: '0 4px 4px 0' }}>
-                                    {line}
+                    {isExpanded && (
+                        <>
+                            {extractedFinancials && extractedFinancials.length > 0 && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                    {extractedFinancials.map((line, i) => (
+                                        <div key={i} style={{ fontSize: 13, fontFamily: 'monospace', padding: '5px 8px', borderLeft: `3px solid ${financialColor(line)}`, color: financialColor(line), background: '#0a0a0a', borderRadius: '0 4px 4px 0' }}>
+                                            {line}
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                            )}
 
-                    {conflictDetected && conflictQuestion && (
-                        <div style={{
-                            background: '#F59E0B10', border: '2px solid #F59E0B44', padding: 14, borderRadius: 8,
-                            display: 'flex', alignItems: 'flex-start', gap: 12,
-                        }}>
-                            <AlertCircle size={20} color="#F59E0B" style={{ flexShrink: 0, marginTop: 2 }} />
-                            <div>
-                                <span style={{ color: '#F59E0B', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Conflict Detected</span>
-                                <p style={{ color: '#e8e8e8', fontSize: 14, lineHeight: 1.5, margin: 0 }}>{conflictQuestion}</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {evidenceChain && evidenceChain.length > 0 && (
-                        <div style={{ background: '#0a0a0a', padding: 10, borderRadius: 6, border: '1px solid #1c1c1c' }}>
-                            <span style={{ fontSize: 11, color: '#a1a1aa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Evidence Chain</span>
-                            {evidenceChain.map((msgId, i) => (
-                                <div key={i} style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: 6, wordBreak: 'break-all' }}>
-                                    <span style={{ color: '#525252' }}>↳</span> {msgId}
+                            {conflictDetected && conflictQuestion && (
+                                <div style={{
+                                    background: '#F59E0B10', border: '2px solid #F59E0B44', padding: 14, borderRadius: 8,
+                                    display: 'flex', alignItems: 'flex-start', gap: 12,
+                                }}>
+                                    <AlertCircle size={20} color="#F59E0B" style={{ flexShrink: 0, marginTop: 2 }} />
+                                    <div>
+                                        <span style={{ color: '#F59E0B', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Conflict Detected</span>
+                                        <p style={{ color: '#e8e8e8', fontSize: 14, lineHeight: 1.5, margin: 0 }}>{conflictQuestion}</p>
+                                    </div>
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                            )}
 
-                    {entries.length > 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            {entries.map(([k, v]) => (
-                                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1c1c1c50', padding: '6px 0', fontSize: 13, alignItems: 'center', gap: 8 }}>
-                                    <span style={{ color: '#a1a1aa', textTransform: 'uppercase', flexShrink: 0, fontFamily: 'monospace', fontSize: 11 }}>{k}</span>
-                                    <span style={{ color: '#e8e8e8', fontFamily: 'monospace', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis' }}>{String(v)}</span>
+                            {evidenceChain && evidenceChain.length > 0 && (
+                                <div style={{ background: '#0a0a0a', padding: 10, borderRadius: 6, border: '1px solid #1c1c1c' }}>
+                                    <span style={{ fontSize: 11, color: '#a1a1aa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Evidence Chain</span>
+                                    {evidenceChain.map((msgId, i) => (
+                                        <div key={i} style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: 6, wordBreak: 'break-all' }}>
+                                            <span style={{ color: '#525252' }}>&#8627;</span> {msgId}
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
+                            )}
+
+                            {entries.length > 0 && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                    {entries.map(([k, v]) => (
+                                        <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1c1c1c50', padding: '6px 0', fontSize: 13, alignItems: 'center', gap: 8 }}>
+                                            <span style={{ color: '#a1a1aa', textTransform: 'uppercase', flexShrink: 0, fontFamily: 'monospace', fontSize: 11 }}>{k}</span>
+                                            <span style={{ color: '#e8e8e8', fontFamily: 'monospace', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis' }}>{Array.isArray(v) ? v.join(', ') : String(v)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             );
@@ -286,7 +317,7 @@ export function ActionCenter() {
                         >
                             {toast.type === 'error' ? <AlertCircle size={18} style={{ flexShrink: 0 }} /> : <CheckCircle2 size={18} style={{ flexShrink: 0 }} />}
                             {toast.message}
-                            <span style={{ marginLeft: 'auto', fontSize: 18, color: '#a1a1aa', flexShrink: 0 }}>✕</span>
+                            <span style={{ marginLeft: 'auto', fontSize: 18, color: '#a1a1aa', flexShrink: 0 }}>&#10005;</span>
                         </div>
                     ))}
                 </div>
@@ -303,7 +334,11 @@ export function ActionCenter() {
                             {queue.length} Pending
                         </span>
                     </h2>
-                    <p style={{ fontSize: 14, color: '#a1a1aa', marginTop: 4 }}>Sandbox governance queue. Review and authorize AI-proposed operations.</p>
+                    <p style={{ fontSize: 13, color: '#71717a', marginTop: 6, fontFamily: 'monospace', letterSpacing: '0.04em' }}>
+                        SANDBOX GOVERNANCE QUEUE
+                        <span style={{ color: '#525252', margin: '0 8px' }}>|</span>
+                        <span style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: 'normal', color: '#a1a1aa' }}>Review and authorize AI-proposed operations before execution.</span>
+                    </p>
                 </div>
                 <button
                     onClick={fetchQueue}
@@ -344,7 +379,7 @@ export function ActionCenter() {
             {!loading && filteredQueue.length === 0 && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}>
                     <CheckCircle2 size={48} color="#a1a1aa" />
-                    <p style={{ color: '#a1a1aa', fontFamily: 'monospace', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.15em', marginTop: 12 }}>INBOX ZERO — Category Empty</p>
+                    <p style={{ color: '#a1a1aa', fontFamily: 'monospace', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.15em', marginTop: 12 }}>INBOX ZERO &#8212; Category Empty</p>
                 </div>
             )}
 
@@ -354,16 +389,24 @@ export function ActionCenter() {
                     const isApproving = approvingId === eid;
                     const isRejecting = rejectingId === eid;
                     const isProcessing = isApproving || isRejecting;
+                    const isExpanded = expandedId === eid;
                     return (
                         <div
                             key={eid}
                             style={{
-                                background: '#0f0f0f', border: '1px solid #1c1c1c', borderRadius: 12,
+                                background: '#0f0f0f', border: `1px solid ${isExpanded ? '#C5A05944' : '#1c1c1c'}`, borderRadius: 12,
                                 display: 'flex', flexDirection: 'column', overflow: 'hidden',
                                 opacity: isProcessing ? 0.6 : 1,
+                                transition: 'border-color 0.2s, box-shadow 0.2s',
+                                boxShadow: isExpanded ? '0 0 0 1px #C5A05922' : 'none',
                             }}
                         >
-                            <div style={{ padding: 16, borderBottom: '1px solid #1c1c1c', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div
+                                onClick={() => setExpandedId(isExpanded ? null : eid)}
+                                style={{ padding: 16, borderBottom: '1px solid #1c1c1c', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', cursor: 'pointer', transition: 'background 0.15s' }}
+                                onMouseEnter={e => { e.currentTarget.style.background = '#141414'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                            >
                                 <div>
                                     <span style={{ fontSize: 12, fontFamily: 'monospace', fontWeight: 700, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 4 }}>
                                         {event.action_type}
@@ -371,60 +414,67 @@ export function ActionCenter() {
                                     <h3 style={{ color: 'white', fontWeight: 700, fontSize: 18, margin: 0 }}>
                                         {event.target_id}
                                     </h3>
-                                    <span style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace', display: 'block', marginTop: 2 }} title={eid}>
-                                        {eid}
-                                    </span>
+                                    {isExpanded && (
+                                        <span style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace', display: 'block', marginTop: 2 }} title={eid}>
+                                            {eid}
+                                        </span>
+                                    )}
                                 </div>
-                                <span style={{ fontSize: 13, color: '#a1a1aa', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
-                                    {new Date(event.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                    <span style={{ fontSize: 13, color: '#a1a1aa', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                                        {new Date(event.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    {isExpanded ? <ChevronUp size={16} color="#a1a1aa" /> : <ChevronDown size={16} color="#525252" />}
+                                </div>
                             </div>
 
                             <div style={{ padding: 16, flex: 1 }}>
-                                {renderPayload(event)}
-                                {event.reason && (
+                                {renderPayload(event, isExpanded)}
+                                {isExpanded && event.reason && (
                                     <p style={{ marginTop: 14, fontSize: 14, color: '#a1a1aa', fontStyle: 'italic', borderLeft: '3px solid #242424', paddingLeft: 12, lineHeight: 1.5 }}>
                                         "{event.reason}"
                                     </p>
                                 )}
                             </div>
 
-                            <div style={{ padding: 12, borderTop: '1px solid #1c1c1c', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                                <button
-                                    id={`reject-${eid}`}
-                                    onClick={() => handleReject(event)}
-                                    disabled={isProcessing}
-                                    style={{
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                                        minHeight: 44, borderRadius: 8, border: '1px solid #E3061333',
-                                        background: 'transparent', color: '#E30613', fontSize: 13,
-                                        fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em',
-                                        cursor: isProcessing ? 'not-allowed' : 'pointer', opacity: isProcessing ? 0.5 : 1,
-                                    }}
-                                    onMouseEnter={e => { if (!isProcessing) e.currentTarget.style.background = '#E306130d'; }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-                                >
-                                    {isRejecting ? <Loader2 size={16} /> : <XCircle size={16} />}
-                                    {isRejecting ? 'Archiving...' : 'Reject'}
-                                </button>
-                                <button
-                                    id={`approve-${eid}`}
-                                    onClick={() => handleApprove(event)}
-                                    disabled={isProcessing}
-                                    style={{
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                                        minHeight: 44, borderRadius: 8, border: '1px solid #C5A05933',
-                                        background: '#C5A0590d', color: '#C5A059', fontSize: 13,
-                                        fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em',
-                                        cursor: isProcessing ? 'not-allowed' : 'pointer', opacity: isProcessing ? 0.5 : 1,
-                                    }}
-                                    onMouseEnter={e => { if (!isProcessing) e.currentTarget.style.background = '#C5A0591a'; }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = '#C5A0590d'; }}
-                                >
-                                    {isApproving ? <Loader2 size={16} /> : <CheckCircle2 size={16} />}
-                                    {isApproving ? 'Applying...' : 'Approve'}
-                                </button>
-                            </div>
+                            {isExpanded && (
+                                <div style={{ padding: 12, borderTop: '1px solid #1c1c1c', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                                    <button
+                                        id={`reject-${eid}`}
+                                        onClick={(e) => { e.stopPropagation(); handleReject(event); }}
+                                        disabled={isProcessing}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                                            minHeight: 44, borderRadius: 8, border: '1px solid #E3061333',
+                                            background: 'transparent', color: '#E30613', fontSize: 13,
+                                            fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em',
+                                            cursor: isProcessing ? 'not-allowed' : 'pointer', opacity: isProcessing ? 0.5 : 1,
+                                        }}
+                                        onMouseEnter={e => { if (!isProcessing) e.currentTarget.style.background = '#E306130d'; }}
+                                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                                    >
+                                        {isRejecting ? <Loader2 size={16} /> : <XCircle size={16} />}
+                                        {isRejecting ? 'Archiving...' : 'Reject'}
+                                    </button>
+                                    <button
+                                        id={`approve-${eid}`}
+                                        onClick={(e) => { e.stopPropagation(); handleApprove(event); }}
+                                        disabled={isProcessing}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                                            minHeight: 44, borderRadius: 8, border: '1px solid #C5A05933',
+                                            background: '#C5A0590d', color: '#C5A059', fontSize: 13,
+                                            fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em',
+                                            cursor: isProcessing ? 'not-allowed' : 'pointer', opacity: isProcessing ? 0.5 : 1,
+                                        }}
+                                        onMouseEnter={e => { if (!isProcessing) e.currentTarget.style.background = '#C5A0591a'; }}
+                                        onMouseLeave={e => { e.currentTarget.style.background = '#C5A0590d'; }}
+                                    >
+                                        {isApproving ? <Loader2 size={16} /> : <CheckCircle2 size={16} />}
+                                        {isApproving ? 'Applying...' : 'Approve'}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     );
                 })}
