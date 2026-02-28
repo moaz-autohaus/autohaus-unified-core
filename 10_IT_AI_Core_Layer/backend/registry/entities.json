@@ -3,7 +3,16 @@
         "id": "KAMM_LLC",
         "name": "KAMM LLC",
         "role": "Owner/Inventory",
-        "description": "Unified Entity - Inventory Ownership & Strategic Capital"
+        "description": "Unified Entity - Inventory Ownership & Strategic Capital",
+        "anchors": {
+            "CIL_OPS": "+13193007709",
+            "A2P": {
+                "brand_sid": "BN5b385ff6d76c9a7c7f7bfb6e7dc6f510",
+                "trust_bundle_sid": "BU589ff4081a62f5a27db74760369853ec",
+                "customer_profile_sid": "BU8cffa57716e9d6d5fac1681b0085ba69",
+                "external_brand_id": "BQ7IRE3"
+            }
+        }
     },
     {
         "id": "AUTOHAUS_SERVICES",

@@ -6,7 +6,7 @@ from typing import Dict, Any, List
 
 from database.policy_engine import get_policy
 from database.bigquery_client import BigQueryClient
-from .twilio_spoke import TwilioSpoke
+from services.twilio_service import TwilioService
 
 logger = logging.getLogger("autohaus.notification")
 
@@ -79,14 +79,10 @@ class NotificationRouter:
     async def _dispatch(self, channel: str, recipient_id: str, subject: str, body: str) -> dict:
         """Call the actual spoke."""
         if channel == "SMS":
-            # Twilio Spoke logic
-            spoke = TwilioSpoke()
-            # If recipient_id is just a name/id, we might need to resolve phone number
-            # For now, assume it's just a placeholder or resolve via metadata if needed
-            # In setup, we notified Moaz, so we need his phone.
-            # Mocking phone lookup for Moaz specifically for the test case
+            # Twilio Service logic (A2P Anchored)
+            svc = TwilioService()
             recipient_phone = recipient_id if recipient_id.startswith("+") else "+14124991241"
-            return await spoke.send_sms(to_number=recipient_phone, message=body, purpose="CIL_OPS")
+            return await svc.send_sms(to_number=recipient_phone, message=body, purpose="CIL_OPS")
         elif channel == "EMAIL":
             # Draft email via Gmail Spoke
             from .gmail_spoke import GmailSender
