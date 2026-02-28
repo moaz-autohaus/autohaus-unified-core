@@ -55,7 +55,7 @@ export function CommandCenter({ onNavigate }: { onNavigate?: (v: string) => void
 
         <div style={{ width: plate ? (fieldMode ? "100%" : "40%") : "56%", display: "flex", flexDirection: "column", borderRight: `1px solid ${T.border}`, transition: "width 0.35s cubic-bezier(0.4,0,0.2,1)", minWidth: 300 }}>
 
-          <QuickCommands onSend={(cmd) => sendMessage(cmd)} user={user} />
+          <QuickCommands onSend={(cmd) => sendMessage(cmd)} user={user} onNavigate={onNavigate} />
 
           <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "20px 18px" }}>
             {mode === "AMBIENT" ? (

@@ -177,7 +177,7 @@ export function AmbientLog() {
   );
 }
 
-export function QuickCommands({ onSend, user }: { onSend: (cmd: string) => void; user: { access: string; role: string } }) {
+export function QuickCommands({ onSend, user, onNavigate }: { onSend: (cmd: string) => void; user: { access: string; role: string }; onNavigate?: (v: string) => void }) {
   const cmds = user.access === "SOVEREIGN"
     ? [
         { label: "KAMM Financials", cmd: "Show me KAMM financials" },
@@ -207,6 +207,14 @@ export function QuickCommands({ onSend, user }: { onSend: (cmd: string) => void;
           {c.label}
         </button>
       ))}
+      {onNavigate && user.access === "SOVEREIGN" && (
+        <button onClick={() => onNavigate("action")}
+          onMouseEnter={e => { (e.target as HTMLButtonElement).style.borderColor = "#22c55e"; (e.target as HTMLButtonElement).style.color = "#22c55e"; (e.target as HTMLButtonElement).style.background = "#22c55e0f"; }}
+          onMouseLeave={e => { (e.target as HTMLButtonElement).style.borderColor = "#22c55e55"; (e.target as HTMLButtonElement).style.color = "#22c55e"; (e.target as HTMLButtonElement).style.background = "#22c55e08"; }}
+          style={{ padding: "4px 10px", background: "#22c55e08", border: "1px solid #22c55e55", borderRadius: 20, color: "#22c55e", fontSize: 10, fontFamily: "monospace", cursor: "pointer", letterSpacing: "0.04em", fontWeight: 700, transition: "all 0.15s" }}>
+          Action Center
+        </button>
+      )}
     </div>
   );
 }
