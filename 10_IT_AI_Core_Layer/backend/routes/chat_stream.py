@@ -38,6 +38,7 @@ import google.generativeai as genai
 # C-OS Modules
 from memory.vector_vault import VectorVault
 from agents.iea_agent import InputEnrichmentAgent
+from agents.router_agent import RouterAgent, RoutedIntent
 from agents.governance_agent import GovernanceAgent
 from models.cos_response import CoSResponse, UIStrategyModel
 

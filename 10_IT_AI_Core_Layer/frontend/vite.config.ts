@@ -2,14 +2,29 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     tailwindcss(),
     react()
   ],
   server: {
-    allowedHosts: true, // Allow Replit URLs and other external hosts for Vite dev server
-    host: '0.0.0.0'
-  }
+    host: '0.0.0.0',
+    port: 5000,
+    allowedHosts: true,
+    proxy: {
+      '/ws': {
+        target: 'http://localhost:8000',
+        ws: true,
+        changeOrigin: true,
+      },
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
+  },
+  build: {
+    outDir: '../../dist',
+    emptyOutDir: true,
+  },
 })

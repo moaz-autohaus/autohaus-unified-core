@@ -120,6 +120,7 @@ async def apply_hitl(request: HitlActionRequest):
     except Exception as e:
         logger.error(f"HITL apply failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 @hitl_router.get("/hitl/queue")
 async def get_hitl_queue():
     """Returns the pending HITL approval queue."""
@@ -150,7 +151,6 @@ async def get_hitl_queue():
         queue = []
         for row in results:
             item = dict(row)
-            # Replit UI compatibility: provide both 'id' and 'hitl_event_id'
             item["id"] = item["hitl_event_id"]
             queue.append(item)
             
@@ -171,7 +171,6 @@ async def approve_hitl_event(event_id: str):
         
         bq = BigQueryClient()
         
-        # 0. Fetch current status
         from pipeline.hitl_service import _fetch_hitl_event
         current = _fetch_hitl_event(bq.client, event_id)
         if not current:
@@ -179,7 +178,6 @@ async def approve_hitl_event(event_id: str):
              
         status = current.get("status")
         
-        # 1. Validate if needed
         if status == "PROPOSED":
             v_res = await validate(bq.client, event_id)
             logger.info(f"[HITL] Validation result for {event_id}: {v_res}")
@@ -189,7 +187,6 @@ async def approve_hitl_event(event_id: str):
                 return serialize_hitl({"status": "APPLIED", "hitl_event_id": event_id, "detail": "Auto-applied during validation"})
             status = v_res.get("status")
         
-        # 2. Apply if Validated
         if status == "VALIDATED":
             a_res = await apply(bq.client, event_id)
             logger.info(f"[HITL] Manual apply result for {event_id}: {a_res.get('status')}")
@@ -199,8 +196,8 @@ async def approve_hitl_event(event_id: str):
              return serialize_hitl({"status": "APPLIED", "hitl_event_id": event_id, "detail": "Already applied"})
 
         raise HTTPException(status_code=400, detail=f"Cannot approve from state: {status}")
-            
-        return serialize_hitl(v_res)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Approve failed for {event_id}: {e}")
         error_trace = traceback.format_exc()

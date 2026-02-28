@@ -63,14 +63,17 @@ async def lifespan(app: FastAPI):
     else:
         logger.warning("[LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.")
     
-    # 3. Seed HITL Proposals (Option A+B bridge)
-    try:
-        from database.bigquery_client import BigQueryClient
-        from pipeline.hitl_service import seed_demo_proposals
-        bq = BigQueryClient()
-        seed_demo_proposals(bq.client)
-    except Exception as e:
-        logger.error(f"[BOOT] HITL seeding failed: {e}")
+    # 3. Seed HITL Proposals (Option A+B bridge) — skip if no GCP credentials
+    if os.environ.get("GCP_SERVICE_ACCOUNT_JSON"):
+        try:
+            from database.bigquery_client import BigQueryClient
+            from pipeline.hitl_service import seed_demo_proposals
+            bq = BigQueryClient()
+            seed_demo_proposals(bq.client)
+        except Exception as e:
+            logger.error(f"[BOOT] HITL seeding failed: {e}")
+    else:
+        logger.info("[BOOT] No GCP credentials — HITL BQ seeding skipped. Using in-memory queue.")
 
     yield
     

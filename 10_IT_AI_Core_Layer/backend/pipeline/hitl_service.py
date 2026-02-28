@@ -20,7 +20,6 @@ Every APPLIED action emits a cil_events record (single audit spine rule).
 import uuid
 import json
 import logging
-import asyncio
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, Tuple
 from enum import Enum
@@ -113,22 +112,6 @@ def propose(
     Step 1 of HITL: Create a proposal.
     Returns the proposal record with hitl_event_id and status.
     """
-    from intelligence.checkpoint import checkpoint
-    
-    # Run intelligence check
-    try:
-        # Since propose is synchronous but check_fact is async, we run it in the event loop
-        # In a real FastAPI context, propose should ideally be async
-        loop = asyncio.get_event_loop()
-        check_result = loop.run_until_complete(checkpoint.check_fact(target_type, target_id, payload))
-        
-        if not check_result.get("clear"):
-            payload["conflict_detected"] = True
-            payload["conflict_question"] = " | ".join(check_result.get("questions", []))
-            payload["intelligence_conflicts"] = check_result.get("conflicts", [])
-    except Exception as e:
-        logger.warning(f"[HITL] Intelligence checkpoint failed: {e}")
-
     action = ActionType(action_type)
     
     # Permission check
