@@ -109,23 +109,11 @@ app.include_router(public_router, prefix="/api/public")
 app.include_router(legal_router)
 
 # Static Hosting for React Frontend
+# MUST be the absolute last mount — serves dist/ with html=True for SPA + legal pages
 DIST_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "dist")
 
 if os.path.exists(DIST_DIR):
-    assets_dir = os.path.join(DIST_DIR, "assets")
-    if os.path.exists(assets_dir):
-        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
-
-# Fallback SPA Router - MUST come last
-@app.get("/{full_path:path}")
-async def serve_spa(full_path: str):
-    index_path = os.path.join(DIST_DIR, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return JSONResponse(
-        status_code=404, 
-        content={"message": "Frontend UI framework initializing. Stateless deployment pending."}
-    )
+    app.mount("/", StaticFiles(directory=DIST_DIR, html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
