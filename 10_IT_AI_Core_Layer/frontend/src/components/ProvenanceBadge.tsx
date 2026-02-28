@@ -1,125 +1,91 @@
-/**
- * ProvenanceBadge — Phase 9, Task 1
- * Displays the data authority level of a field/entity.
- * Authority hierarchy: SOVEREIGN > VERIFIED > AUTO_ENRICHED > EXTRACTED > PROPOSED > UNVERIFIED
- */
-import { Crown, ShieldCheck, Shield, FileText, Eye, HelpCircle } from 'lucide-react';
+import { useState } from "react";
+import { Crown, ShieldCheck, Shield, FileText, Eye, HelpCircle } from "lucide-react";
+import { T } from "../tokens";
 
-export type AuthorityLevel =
-    | 'SOVEREIGN'
-    | 'VERIFIED'
-    | 'AUTO_ENRICHED'
-    | 'EXTRACTED'
-    | 'PROPOSED'
-    | 'UNVERIFIED';
+export type AuthorityLevel = "SOVEREIGN" | "VERIFIED" | "AUTO_ENRICHED" | "EXTRACTED" | "PROPOSED" | "UNVERIFIED";
 
 interface ProvenanceBadgeProps {
-    authority_level: AuthorityLevel;
-    source_type?: string;   // e.g. "NHTSA", "State Registry"
-    corroboration_count?: number;
-    showLabel?: boolean;
+  authority: AuthorityLevel;
+  sourceType?: string;
+  corroborationCount?: number;
+  size?: number;
 }
 
-const CONFIGS: Record<
-    AuthorityLevel,
-    { icon: React.ComponentType<{ className?: string }>; label: string; colorClass: string; bgClass: string; pulse: boolean }
-> = {
-    SOVEREIGN: {
-        icon: Crown,
-        label: 'Sovereign',
-        colorClass: 'text-yellow-400',
-        bgClass: 'bg-yellow-400/10 border-yellow-400/30',
-        pulse: false,
-    },
-    VERIFIED: {
-        icon: ShieldCheck,
-        label: 'Verified',
-        colorClass: 'text-green-400',
-        bgClass: 'bg-green-400/10 border-green-400/30',
-        pulse: false,
-    },
-    AUTO_ENRICHED: {
-        icon: Shield,
-        label: 'Auto-Enriched',
-        colorClass: 'text-blue-400',
-        bgClass: 'bg-blue-400/10 border-blue-400/30',
-        pulse: false,
-    },
-    EXTRACTED: {
-        icon: FileText,
-        label: 'Extracted',
-        colorClass: 'text-purple-400',
-        bgClass: 'bg-purple-400/10 border-purple-400/30',
-        pulse: false,
-    },
-    PROPOSED: {
-        icon: Eye,
-        label: 'Proposed',
-        colorClass: 'text-yellow-300',
-        bgClass: 'bg-yellow-300/10 border-yellow-300/30',
-        pulse: true,
-    },
-    UNVERIFIED: {
-        icon: HelpCircle,
-        label: 'Unverified',
-        colorClass: 'text-zinc-500',
-        bgClass: 'bg-zinc-500/10 border-zinc-500/20',
-        pulse: false,
-    },
+const BADGE_CONFIG: Record<AuthorityLevel, { color: string; label: string; Icon: typeof Crown }> = {
+  SOVEREIGN: { color: T.gold, label: "Sovereign Override", Icon: Crown },
+  VERIFIED: { color: T.green, label: "Verified", Icon: ShieldCheck },
+  AUTO_ENRICHED: { color: T.blue, label: "Auto-Enriched", Icon: Shield },
+  EXTRACTED: { color: T.purple, label: "AI Extracted", Icon: FileText },
+  PROPOSED: { color: "#eab308", label: "Proposed", Icon: Eye },
+  UNVERIFIED: { color: T.dim, label: "Unverified", Icon: HelpCircle },
 };
 
-export function ProvenanceBadge({
-    authority_level,
-    source_type,
-    corroboration_count,
-    showLabel = false,
-}: ProvenanceBadgeProps) {
-    const config = CONFIGS[authority_level] ?? CONFIGS.UNVERIFIED;
-    const Icon = config.icon;
+export function ProvenanceBadge({ authority, sourceType, corroborationCount, size = 14 }: ProvenanceBadgeProps) {
+  const [hover, setHover] = useState(false);
+  const config = BADGE_CONFIG[authority] || BADGE_CONFIG.UNVERIFIED;
+  const Icon = config.Icon;
 
-    const tooltip = source_type
-        ? `Verified by ${source_type}${corroboration_count !== undefined ? ` · ${corroboration_count} corroborations` : ''}`
-        : `${config.label}${corroboration_count !== undefined ? ` · ${corroboration_count} corroborations` : ''}`;
+  const tooltipText = authority === "AUTO_ENRICHED" && sourceType
+    ? `Verified by ${sourceType}`
+    : corroborationCount && corroborationCount > 1
+    ? `${config.label} · ${corroborationCount} sources`
+    : config.label;
 
-    return (
-        <span
-            title={tooltip}
-            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[10px] font-semibold uppercase tracking-wider cursor-default select-none
-                ${config.colorClass} ${config.bgClass}`}
-        >
-            <Icon className={`w-3 h-3 flex-shrink-0 ${config.pulse ? 'animate-pulse' : ''}`} />
-            {showLabel && <span>{config.label}</span>}
+  return (
+    <span
+      style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "default" }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      <span style={{
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        animation: authority === "PROPOSED" ? "pulse-dot 2s infinite" : undefined,
+      }}>
+        <Icon size={size} color={config.color} strokeWidth={2.2} />
+      </span>
+
+      {corroborationCount !== undefined && corroborationCount > 0 && (
+        <span style={{
+          position: "absolute", top: -4, right: -6,
+          background: config.color, color: "#000", fontSize: 7,
+          fontFamily: "monospace", fontWeight: 800, borderRadius: "50%",
+          width: 12, height: 12, display: "flex", alignItems: "center", justifyContent: "center",
+          lineHeight: 1,
+        }}>
+          {corroborationCount}
         </span>
-    );
+      )}
+
+      {hover && (
+        <span style={{
+          position: "absolute", bottom: "calc(100% + 6px)", left: "50%", transform: "translateX(-50%)",
+          background: T.elevated, border: `1px solid ${T.border2}`, borderRadius: 4,
+          padding: "3px 8px", whiteSpace: "nowrap",
+          color: config.color, fontSize: 9, fontFamily: "monospace", fontWeight: 600,
+          letterSpacing: "0.04em", zIndex: 1000, pointerEvents: "none",
+          boxShadow: `0 4px 12px rgba(0,0,0,0.5)`,
+        }}>
+          {tooltipText}
+        </span>
+      )}
+    </span>
+  );
 }
 
-/**
- * ProvenanceField — wraps a value with a ProvenanceBadge inline.
- * Usage: <ProvenanceField value="WP0AB2A93RS" authority_level="VERIFIED" />
- */
-interface ProvenanceFieldProps {
-    value: string | number;
-    authority_level: AuthorityLevel;
-    source_type?: string;
-    corroboration_count?: number;
-    className?: string;
-}
-
-export function ProvenanceField({
-    value,
-    authority_level,
-    source_type,
-    corroboration_count,
-    className = '',
-}: ProvenanceFieldProps) {
-    return (
-        <span className={`inline-flex items-center gap-1.5 ${className}`}>
-            <span>{value}</span>
-            <ProvenanceBadge
-                authority_level={authority_level}
-                source_type={source_type}
-                corroboration_count={corroboration_count}
-            />
-        </span>
-    );
+export function ProvenanceField({ label, value, authority, sourceType, corroborationCount }: {
+  label: string;
+  value: string;
+  authority: AuthorityLevel;
+  sourceType?: string;
+  corroborationCount?: number;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "4px 0" }}>
+      <span style={{ color: T.dim, fontSize: 9, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ color: T.text, fontSize: 10, fontFamily: "monospace" }}>{value}</span>
+        <ProvenanceBadge authority={authority} sourceType={sourceType} corroborationCount={corroborationCount} />
+      </div>
+    </div>
+  );
 }

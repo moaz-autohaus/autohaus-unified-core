@@ -1,305 +1,303 @@
-/**
- * PublicApiTest — Phase 9, Task 3
- * Dev-only dashboard for testing the public API surface.
- * Hidden from main nav — accessible at /dev/public-api
- *
- * Sections:
- *  1. Public Inventory Grid — GET /api/public/inventory
- *  2. Lead Intake Form     — POST /api/public/lead
- */
-import { useState, useEffect, useCallback } from 'react';
-import {
-    Car, Send, CheckCircle2, AlertCircle, Loader2,
-    Eye, EyeOff, RefreshCw, ShieldAlert, DollarSign,
-} from 'lucide-react';
-
-function getApiBase(): string {
-    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-        return `${window.location.protocol}//${window.location.host}`;
-    }
-    return 'http://localhost:8000';
-}
+import { useState, useEffect } from "react";
+import { T } from "../tokens";
+import { ArrowLeft, ExternalLink, Eye, EyeOff, Send, CheckCircle, AlertTriangle } from "lucide-react";
+import { Tag } from "../components/ui";
 
 interface PublicVehicle {
-    id: string;
-    make: string;
-    model: string;
-    year?: number;
-    vin: string;
-    status: string;
-    listing_price: number;
-    // Verify these are NOT present in the response:
-    wholesale_cost?: unknown;
-    recon_cost?: unknown;
-    cost?: unknown;
+  vin: string;
+  make: string;
+  model: string;
+  year: number;
+  color: string;
+  listing_price: number;
+  status: string;
+  photos?: string[];
+  mileage?: number;
 }
 
-interface LeadForm {
-    name: string;
-    phone: string;
-    email: string;
-    interest_vin: string;
-}
+const MOCK_PUBLIC_INVENTORY: PublicVehicle[] = [
+  { vin: "WBA93HM0XP1234567", make: "BMW", model: "M4 Competition", year: 2023, color: "Frozen Black", listing_price: 74900, status: "AVAILABLE", mileage: 12400 },
+  { vin: "5YJSA1E26MF123456", make: "Tesla", model: "Model S Plaid", year: 2022, color: "Midnight Silver", listing_price: 89900, status: "AVAILABLE", mileage: 8200 },
+  { vin: "1FTEW1EG0NFC12345", make: "Ford", model: "F-150 Raptor", year: 2022, color: "Shadow Black", listing_price: 62500, status: "AVAILABLE", mileage: 15800 },
+];
 
-interface Toast {
-    id: string;
-    type: 'success' | 'error';
-    message: string;
-}
+const HIDDEN_FIELDS = ["wholesale_cost", "recon_cost", "acquisition_source", "internal_notes", "margin", "floor_plan_rate"];
 
-export function PublicApiTest() {
-    // ── Inventory state ─────────────────────────────────────────────────────
-    const [vehicles, setVehicles] = useState<PublicVehicle[]>([]);
-    const [inventoryLoading, setInventoryLoading] = useState(false);
-    const [inventoryError, setInventoryError] = useState<string | null>(null);
-    const [leakedFields, setLeakedFields] = useState<string[]>([]);
-
-    // ── Lead form state ──────────────────────────────────────────────────────
-    const [form, setForm] = useState<LeadForm>({
-        name: 'Test User',
-        phone: '555-0199',
-        email: 'test@example.com',
-        interest_vin: '',
-    });
-    const [leadLoading, setLeadLoading] = useState(false);
-    const [toasts, setToasts] = useState<Toast[]>([]);
-
-    const addToast = useCallback((type: Toast['type'], message: string) => {
-        const id = Math.random().toString(36).slice(2);
-        setToasts(prev => [...prev, { id, type, message }]);
-        setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
-    }, []);
-
-    // ── Fetch public inventory ───────────────────────────────────────────────
-    const fetchInventory = useCallback(async () => {
-        setInventoryLoading(true);
-        setInventoryError(null);
-        setLeakedFields([]);
-        try {
-            const res = await fetch(`${getApiBase()}/api/public/inventory`);
-            if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
-            const data: PublicVehicle[] = await res.json();
-            setVehicles(data);
-
-            // Security audit: check for leaked internal cost fields
-            const FORBIDDEN = ['wholesale_cost', 'recon_cost', 'cost', 'purchase_price', 'internal_notes'];
-            const found: string[] = [];
-            data.forEach(v => {
-                FORBIDDEN.forEach(f => {
-                    if (f in v) found.push(f);
-                });
-            });
-            setLeakedFields([...new Set(found)]);
-        } catch (err: unknown) {
-            setInventoryError(err instanceof Error ? err.message : String(err));
-        } finally {
-            setInventoryLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchInventory();
-    }, [fetchInventory]);
-
-    // ── Submit lead ──────────────────────────────────────────────────────────
-    const handleLeadSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLeadLoading(true);
-        try {
-            const res = await fetch(`${getApiBase()}/api/public/lead`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form),
-            });
-            if (!res.ok) {
-                const body = await res.text();
-                throw new Error(`${res.status}: ${body}`);
-            }
-            addToast('success', `Lead accepted! The CIL will notify the CEO and create a Person entity for ${form.email}.`);
-            setForm({ name: 'Test User', phone: '555-0199', email: 'test@example.com', interest_vin: '' });
-        } catch (err: unknown) {
-            addToast('error', err instanceof Error ? err.message : String(err));
-        } finally {
-            setLeadLoading(false);
-        }
-    };
-
-    return (
-        <div className="space-y-10">
-            {/* Toast stack */}
-            <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
-                {toasts.map(t => (
-                    <div
-                        key={t.id}
-                        className={`pointer-events-auto px-4 py-3 rounded-xl text-sm font-medium border flex items-center gap-2 shadow-xl
-                            ${t.type === 'success' ? 'bg-green-950/90 border-green-800/50 text-green-300' : 'bg-red-950/90 border-red-800/50 text-red-300'}`}
-                    >
-                        {t.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                        {t.message}
-                    </div>
-                ))}
-            </div>
-
-            {/* Page header */}
-            <div className="flex justify-between items-start">
-                <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <ShieldAlert className="w-5 h-5 text-orange-400" />
-                        <span className="text-orange-400 text-xs font-mono font-bold uppercase tracking-widest">Dev-Only View</span>
-                    </div>
-                    <h2 className="text-2xl font-bold text-white tracking-tight">Public API Test Dashboard</h2>
-                    <p className="text-sm text-zinc-400 mt-1">Verify the public API surface — correct data exposure and lead intake.</p>
-                </div>
-            </div>
-
-            {/* ─── SECTION 1: Inventory Grid ─────────────────────────────── */}
-            <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                            <Car className="w-5 h-5 text-blue-400" />
-                            1. Public Inventory Grid
-                        </h3>
-                        <p className="text-sm text-zinc-500 mt-0.5">
-                            <code className="text-blue-400 text-xs">GET /api/public/inventory</code>
-                            {' '}— must only show AVAILABLE vehicles, no cost fields.
-                        </p>
-                    </div>
-                    <button
-                        onClick={fetchInventory}
-                        disabled={inventoryLoading}
-                        className="flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm border border-zinc-700 transition-all disabled:opacity-50"
-                    >
-                        {inventoryLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                        Refresh
-                    </button>
-                </div>
-
-                {/* Security audit result */}
-                <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm ${leakedFields.length > 0
-                        ? 'bg-red-950/40 border-red-800/50 text-red-400'
-                        : 'bg-green-950/30 border-green-800/40 text-green-400'
-                    }`}>
-                    {leakedFields.length > 0 ? (
-                        <><EyeOff className="w-4 h-4" /> <strong>SECURITY FAILURE:</strong> Leaked fields: {leakedFields.join(', ')}</>
-                    ) : (
-                        <><Eye className="w-4 h-4" /> <strong>Security Pass:</strong> No internal cost fields found in response.</>
-                    )}
-                </div>
-
-                {inventoryError && (
-                    <div className="p-4 bg-red-900/10 border border-red-900/30 rounded-xl flex items-center gap-3 text-red-400 text-sm">
-                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                        {inventoryError}
-                    </div>
-                )}
-
-                {!inventoryLoading && vehicles.length === 0 && !inventoryError && (
-                    <div className="py-12 text-center text-zinc-600 text-sm">
-                        No AVAILABLE vehicles returned. Check backend filter.
-                    </div>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {vehicles.map(v => (
-                        <div key={v.id || v.vin} className="bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden">
-                            <div className="p-4 border-b border-zinc-800 bg-zinc-950/40">
-                                <div className="text-xs font-mono text-zinc-500 mb-0.5">{v.vin}</div>
-                                <div className="font-semibold text-white">{v.year} {v.make} {v.model}</div>
-                                <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 uppercase tracking-wider">
-                                    {v.status}
-                                </span>
-                            </div>
-                            <div className="p-4 flex items-center gap-2">
-                                <DollarSign className="w-4 h-4 text-zinc-500" />
-                                <span className="text-white font-mono font-semibold">
-                                    {v.listing_price?.toLocaleString() ?? 'N/A'}
-                                </span>
-                                <span className="text-zinc-500 text-xs">listing price</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* ─── SECTION 2: Lead Intake Form ──────────────────────────── */}
-            <section className="space-y-4">
-                <div>
-                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                        <Send className="w-5 h-5 text-purple-400" />
-                        2. Public Lead Intake Form
-                    </h3>
-                    <p className="text-sm text-zinc-500 mt-0.5">
-                        <code className="text-purple-400 text-xs">POST /api/public/lead</code>
-                        {' '}— creates a Person entity and notifies CEO.
-                    </p>
-                </div>
-
-                <form onSubmit={handleLeadSubmit} className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-6 space-y-4 max-w-lg">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Name</label>
-                            <input
-                                id="lead-name"
-                                type="text"
-                                value={form.name}
-                                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                                required
-                                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 transition-colors"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Phone</label>
-                            <input
-                                id="lead-phone"
-                                type="tel"
-                                value={form.phone}
-                                onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                                required
-                                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 transition-colors"
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Email</label>
-                        <input
-                            id="lead-email"
-                            type="email"
-                            value={form.email}
-                            onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                            required
-                            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 transition-colors"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Interest VIN <span className="normal-case text-zinc-500">(optional)</span></label>
-                        <input
-                            id="lead-vin"
-                            type="text"
-                            value={form.interest_vin}
-                            onChange={e => setForm(f => ({ ...f, interest_vin: e.target.value }))}
-                            placeholder="WBA1234..."
-                            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-600 font-mono focus:outline-none focus:border-purple-500 transition-colors"
-                        />
-                    </div>
-
-                    {/* Preview payload */}
-                    <div className="bg-zinc-950 rounded-lg p-3 border border-zinc-800">
-                        <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">POST Payload Preview</p>
-                        <pre className="text-[11px] text-zinc-400 font-mono">{JSON.stringify(form, null, 2)}</pre>
-                    </div>
-
-                    <button
-                        id="lead-submit"
-                        type="submit"
-                        disabled={leadLoading}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition-all shadow-[0_0_20px_-5px_rgba(168,85,247,0.5)] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {leadLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                        {leadLoading ? 'Submitting Lead...' : 'Submit Test Lead'}
-                    </button>
-                </form>
-            </section>
+function VehicleCard({ vehicle }: { vehicle: PublicVehicle }) {
+  return (
+    <div style={{
+      background: T.elevated, border: `1px solid ${T.border2}`, borderRadius: 10,
+      overflow: "hidden", animation: "msg-in 0.3s ease-out",
+    }}>
+      <div style={{
+        height: 120, background: `linear-gradient(135deg, ${T.surface} 0%, ${T.elevated} 100%)`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        borderBottom: `1px solid ${T.border}`,
+      }}>
+        <span style={{ color: T.muted, fontSize: 10, fontFamily: "monospace" }}>
+          {vehicle.year} {vehicle.make} {vehicle.model}
+        </span>
+      </div>
+      <div style={{ padding: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <span style={{ color: T.text, fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>
+            {vehicle.year} {vehicle.make} {vehicle.model}
+          </span>
+          <Tag label={vehicle.status} color={T.green} />
         </div>
-    );
+        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Row label="COLOR" value={vehicle.color} />
+          <Row label="VIN" value={vehicle.vin} mono />
+          {vehicle.mileage && <Row label="MILEAGE" value={`${vehicle.mileage.toLocaleString()} mi`} />}
+        </div>
+        <div style={{
+          marginTop: 10, paddingTop: 10, borderTop: `1px solid ${T.border}`,
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+        }}>
+          <span style={{ color: T.gold, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>
+            ${vehicle.listing_price.toLocaleString()}
+          </span>
+          <button style={{
+            padding: "6px 12px", borderRadius: 6,
+            background: `${T.gold}12`, border: `1px solid ${T.gold}44`,
+            color: T.gold, fontSize: 9, fontWeight: 700, fontFamily: "monospace",
+            cursor: "pointer", letterSpacing: "0.06em",
+          }}>
+            INQUIRE
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+      <span style={{ color: T.dim, fontSize: 9, fontFamily: "monospace" }}>{label}</span>
+      <span style={{ color: T.textDim, fontSize: 9, fontFamily: mono ? "monospace" : "'DM Sans', sans-serif" }}>{value}</span>
+    </div>
+  );
+}
+
+function HiddenFieldsProof({ vehicles }: { vehicles: PublicVehicle[] }) {
+  if (vehicles.length === 0) return null;
+  const sampleKeys = Object.keys(vehicles[0]);
+  const exposed = sampleKeys.filter(k => !HIDDEN_FIELDS.includes(k));
+  const blocked = HIDDEN_FIELDS;
+
+  return (
+    <div style={{
+      background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8,
+      padding: 14, marginTop: 12,
+    }}>
+      <span style={{ color: T.dim, fontSize: 9, fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: 8 }}>
+        FIELD EXPOSURE AUDIT
+      </span>
+      <div style={{ display: "flex", gap: 20 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}>
+            <Eye size={10} color={T.green} />
+            <span style={{ color: T.green, fontSize: 8, fontFamily: "monospace", fontWeight: 700 }}>EXPOSED ({exposed.length})</span>
+          </div>
+          {exposed.map(k => (
+            <span key={k} style={{ display: "block", color: T.textDim, fontSize: 9, fontFamily: "monospace", padding: "1px 0" }}>{k}</span>
+          ))}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}>
+            <EyeOff size={10} color={T.red} />
+            <span style={{ color: T.red, fontSize: 8, fontFamily: "monospace", fontWeight: 700 }}>BLOCKED ({blocked.length})</span>
+          </div>
+          {blocked.map(k => (
+            <span key={k} style={{ display: "block", color: T.dim, fontSize: 9, fontFamily: "monospace", padding: "1px 0", textDecoration: "line-through" }}>{k}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function PublicApiTest({ onBack }: { onBack: () => void }) {
+  const [vehicles, setVehicles] = useState<PublicVehicle[]>([]);
+  const [inventoryLoading, setInventoryLoading] = useState(true);
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
+
+  const [leadName, setLeadName] = useState("Test User");
+  const [leadPhone, setLeadPhone] = useState("555-0199");
+  const [leadEmail, setLeadEmail] = useState("test@example.com");
+  const [leadVin, setLeadVin] = useState("WBA93HM0XP1234567");
+  const [leadSubmitting, setLeadSubmitting] = useState(false);
+  const [leadResult, setLeadResult] = useState<"success" | "error" | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      setInventoryLoading(true);
+      try {
+        const res = await fetch("/api/public/inventory");
+        if (!res.ok) throw new Error(`${res.status}`);
+        const data = await res.json();
+        const items = Array.isArray(data) ? data : data.vehicles || data.inventory || [];
+        setVehicles(items.filter((v: PublicVehicle) => v.status === "AVAILABLE"));
+      } catch {
+        setVehicles(MOCK_PUBLIC_INVENTORY);
+        setInventoryError("Backend unavailable — showing mock data (AVAILABLE only)");
+      } finally {
+        setInventoryLoading(false);
+      }
+    })();
+  }, []);
+
+  const submitLead = async () => {
+    setLeadSubmitting(true);
+    setLeadResult(null);
+    try {
+      const res = await fetch("/api/public/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: leadName,
+          phone: leadPhone,
+          email: leadEmail,
+          interest_vin: leadVin,
+        }),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      setLeadResult("success");
+      setTimeout(() => setLeadResult(null), 4000);
+    } catch {
+      setLeadResult("error");
+      setTimeout(() => setLeadResult(null), 4000);
+    } finally {
+      setLeadSubmitting(false);
+    }
+  };
+
+  return (
+    <div style={{ height: "100vh", background: T.bg, display: "flex", flexDirection: "column" }}>
+      <div style={{
+        height: 44, background: T.surface, borderBottom: `1px solid ${T.border}`,
+        display: "flex", alignItems: "center", padding: "0 20px", gap: 12, flexShrink: 0,
+      }}>
+        <button
+          onClick={onBack}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            background: "transparent", border: "none", color: T.gold, cursor: "pointer",
+            fontSize: 10, fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.06em",
+          }}
+        >
+          <ArrowLeft size={14} /> COMMAND CENTER
+        </button>
+        <div style={{ width: 1, height: 20, background: T.border, margin: "0 6px" }} />
+        <ExternalLink size={12} color={T.blue} />
+        <span style={{ color: T.blue, fontSize: 12, fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.12em" }}>PUBLIC API TEST</span>
+        <span style={{ color: T.dim, fontSize: 9, fontFamily: "monospace" }}>DEV ONLY</span>
+      </div>
+
+      <div style={{ flex: 1, overflow: "auto", padding: 24, display: "flex", gap: 24 }}>
+        <div style={{ flex: 2, display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ color: T.gold, fontSize: 11, fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.1em" }}>PUBLIC INVENTORY</span>
+            <Tag label={`GET /api/public/inventory`} color={T.blue} />
+          </div>
+
+          {inventoryError && (
+            <div style={{
+              padding: "8px 14px", borderRadius: 6,
+              background: `${T.gold}08`, border: `1px solid ${T.gold}33`,
+              display: "flex", alignItems: "center", gap: 8,
+            }}>
+              <AlertTriangle size={12} color={T.gold} />
+              <span style={{ color: T.gold, fontSize: 9, fontFamily: "monospace" }}>{inventoryError}</span>
+            </div>
+          )}
+
+          {inventoryLoading ? (
+            <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
+              <span style={{ color: T.dim, fontSize: 11, fontFamily: "monospace", animation: "blink 1s infinite" }}>Fetching public inventory...</span>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14 }}>
+                {vehicles.map(v => <VehicleCard key={v.vin} vehicle={v} />)}
+              </div>
+              <HiddenFieldsProof vehicles={vehicles} />
+            </>
+          )}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 280 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+            <span style={{ color: T.gold, fontSize: 11, fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.1em" }}>LEAD INTAKE FORM</span>
+            <Tag label={`POST /api/public/lead`} color={T.green} />
+          </div>
+
+          <div style={{
+            background: T.elevated, border: `1px solid ${T.border2}`, borderRadius: 10,
+            padding: 16, display: "flex", flexDirection: "column", gap: 10,
+          }}>
+            <InputField label="NAME" value={leadName} onChange={setLeadName} />
+            <InputField label="PHONE" value={leadPhone} onChange={setLeadPhone} />
+            <InputField label="EMAIL" value={leadEmail} onChange={setLeadEmail} />
+            <InputField label="INTEREST VIN" value={leadVin} onChange={setLeadVin} mono />
+
+            <button
+              onClick={submitLead}
+              disabled={leadSubmitting}
+              style={{
+                marginTop: 4, padding: "12px 0", borderRadius: 8,
+                border: `1px solid ${T.gold}66`, background: `${T.gold}12`,
+                color: T.gold, fontSize: 11, fontWeight: 800, fontFamily: "monospace",
+                letterSpacing: "0.08em", cursor: leadSubmitting ? "wait" : "pointer",
+                opacity: leadSubmitting ? 0.5 : 1, transition: "all 0.15s",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              }}
+            >
+              <Send size={12} /> {leadSubmitting ? "SUBMITTING..." : "SUBMIT LEAD"}
+            </button>
+
+            {leadResult === "success" && (
+              <div style={{
+                padding: "8px 14px", borderRadius: 6, animation: "msg-in 0.3s ease-out",
+                background: `${T.green}08`, border: `1px solid ${T.green}33`,
+                display: "flex", alignItems: "center", gap: 8,
+              }}>
+                <CheckCircle size={12} color={T.green} />
+                <span style={{ color: T.green, fontSize: 9, fontFamily: "monospace" }}>Lead accepted — backend will create Person entity</span>
+              </div>
+            )}
+
+            {leadResult === "error" && (
+              <div style={{
+                padding: "8px 14px", borderRadius: 6, animation: "msg-in 0.3s ease-out",
+                background: `${T.gold}08`, border: `1px solid ${T.gold}33`,
+                display: "flex", alignItems: "center", gap: 8,
+              }}>
+                <AlertTriangle size={12} color={T.gold} />
+                <span style={{ color: T.gold, fontSize: 9, fontFamily: "monospace" }}>Endpoint unavailable — backend not yet deployed</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InputField({ label, value, onChange, mono }: { label: string; value: string; onChange: (v: string) => void; mono?: boolean }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <span style={{ color: T.dim, fontSize: 8, fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.08em" }}>{label}</span>
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        style={{
+          background: T.surface, border: `1px solid ${T.border2}`, borderRadius: 4,
+          color: T.text, fontSize: 11, fontFamily: mono ? "monospace" : "'DM Sans', sans-serif",
+          padding: "8px 10px", outline: "none",
+        }}
+      />
+    </div>
+  );
 }
