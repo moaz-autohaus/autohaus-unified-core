@@ -159,13 +159,25 @@ export function ActionCenter() {
 
         if (event.action_type === 'ENTITY_MODIFICATION' || event.action_type === 'FIELD_OVERRIDE') {
             const evidenceChain = payload.evidence_chain as string[] | undefined;
-            const entries = Object.entries(payload).filter(([k]) => k !== 'evidence_chain' && k !== 'evidence_tier');
+            const conflictDetected = payload.conflict_detected as boolean | undefined;
+            const conflictQuestion = payload.conflict_question as string | undefined;
+            const entries = Object.entries(payload).filter(([k]) => k !== 'evidence_chain' && k !== 'evidence_tier' && k !== 'conflict_detected' && k !== 'conflict_question');
+
             return (
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-zinc-400 text-[11px]">
                         <Car className="w-3 h-3" />
                         <span>Target: {event.target_id} ({event.target_type})</span>
                     </div>
+                    {conflictDetected && conflictQuestion && (
+                        <div className="bg-orange-950/40 border border-orange-700/50 p-3 rounded-lg flex items-start gap-3 my-2">
+                            <AlertCircle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                            <div>
+                                <span className="text-orange-400 font-bold text-[10px] uppercase tracking-wider mb-1 block">Conflict Detected</span>
+                                <p className="text-orange-200 text-xs leading-relaxed">{conflictQuestion}</p>
+                            </div>
+                        </div>
+                    )}
                     {evidenceChain && evidenceChain.length > 0 && (
                         <div className="bg-zinc-950/50 p-2 rounded border border-zinc-800/80 my-2">
                             <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1 block">Evidence Chain</span>
