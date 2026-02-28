@@ -24,6 +24,7 @@ from routes.security_access import security_router
 from routes.drive_webhooks import drive_webhook_router
 from routes.intel_routes import intel_router
 from routes.deploy_routes import deploy_router
+from routes.legal import legal_router
 
 logger = logging.getLogger("autohaus.main")
 
@@ -103,6 +104,7 @@ app.include_router(finance_router, prefix="/api/finance")
 app.include_router(anomalies_router, prefix="/api/anomalies")
 app.include_router(media_router, prefix="/api/media")
 app.include_router(public_router, prefix="/api/public")
+app.include_router(legal_router) # Legal/Compliance routes (no prefix)
 app.include_router(security_router)
 app.include_router(drive_webhook_router)
 app.include_router(intel_router)
