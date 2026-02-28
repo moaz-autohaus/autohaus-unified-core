@@ -53,17 +53,13 @@ Output: {"action": "CONFIRM_PROPOSAL", "parameters": {}}
 class GovernanceAgent:
     def __init__(self, bq_client=None, api_key=None, model_name="gemini-2.5-flash"):
         if not bq_client:
-            from google.auth import default
-            credentials, project = default(
-                scopes=[
-                    "https://www.googleapis.com/auth/cloud-platform",
-                    "https://www.googleapis.com/auth/bigquery",
-                ]
-            )
-            # Try impersonation wrapper if needed
-            if hasattr(credentials, "with_subject"):
-                credentials = credentials.with_subject("moaz@autohausia.com")
-            self.bq_client = bigquery.Client(credentials=credentials, project="autohaus-infrastructure")
+            try:
+                from database.bigquery_client import BigQueryClient
+                bq_wrapper = BigQueryClient()
+                self.bq_client = bq_wrapper.client
+            except Exception as e:
+                logger.warning(f"[GOVERNANCE] BigQuery client init failed: {e}")
+                self.bq_client = None
         else:
             self.bq_client = bq_client
 
@@ -102,6 +98,8 @@ class GovernanceAgent:
         """
         Dynamically query the views and open_questions table to render a quick string.
         """
+        if not self.bq_client:
+            return "AutoHaus C-OS v3.1 — Digital Chief of Staff connected. (Governance metrics unavailable)."
         try:
             # 1. Active Open Questions
             q_query = "SELECT priority, COUNT(*) as c FROM `autohaus-infrastructure.autohaus_cil.open_questions` WHERE status = 'OPEN' GROUP BY priority"
