@@ -25,10 +25,22 @@ class DriveEar:
         self._inbox_id = None
         self.processed_files = set() # Optional: BigQuery is better for persistence
         
-        # Neural Stack
-        self.router = RouterAgent()
-        self.iea = InputEnrichmentAgent()
-        self.dispatcher = AttentionDispatcher()
+        # Neural Stack — gracefully degrade if GEMINI_API_KEY not configured
+        try:
+            self.router = RouterAgent()
+        except EnvironmentError as e:
+            logger.warning(f"[DRIVE EAR] RouterAgent unavailable: {e}")
+            self.router = None
+        try:
+            self.iea = InputEnrichmentAgent()
+        except EnvironmentError as e:
+            logger.warning(f"[DRIVE EAR] IEA unavailable: {e}")
+            self.iea = None
+        try:
+            self.dispatcher = AttentionDispatcher()
+        except EnvironmentError as e:
+            logger.warning(f"[DRIVE EAR] AttentionDispatcher unavailable: {e}")
+            self.dispatcher = None
 
     @property
     def service(self):
@@ -134,4 +146,8 @@ class DriveEar:
         logger.info(f"[DRIVE EAR] Broadcasing Plate: {plate_payload.plate_id} | Urgency: {attention_result.urgency_score}")
         await manager.broadcast(plate_payload.model_dump())
 
-drive_ear = DriveEar()
+try:
+    drive_ear = DriveEar()
+except Exception as e:
+    logger.warning(f"[DRIVE EAR] Failed to initialize DriveEar: {e}")
+    drive_ear = None

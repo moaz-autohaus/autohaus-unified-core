@@ -30,9 +30,18 @@ class WorkspaceService:
             info = json.loads(sa_json)
             creds = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
         else:
-            key_path = "/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/auth/replit-sa-key.json"
+            local_paths = [
+                os.path.join(os.path.dirname(__file__), "..", "auth", "replit-sa-key.json"),
+                "/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/auth/replit-sa-key.json",
+            ]
+            key_path = next((p for p in local_paths if os.path.exists(p)), None)
+            if key_path is None:
+                logger.warning("No GCP credentials found (GCP_SERVICE_ACCOUNT_JSON not set, key file not found). Google Workspace features will be unavailable.")
+                return None
             creds = service_account.Credentials.from_service_account_file(key_path, scopes=SCOPES)
-        
+
+        if creds is None:
+            return None
         # If impersonation is required (for Gmail/Calendar access on a specific user)
         if self.user_email and "@autohausia.com" in self.user_email:
             return creds.with_subject(self.user_email)

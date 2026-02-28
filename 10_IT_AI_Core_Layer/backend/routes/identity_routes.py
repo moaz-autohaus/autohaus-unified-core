@@ -8,7 +8,12 @@ from agents.attention_dispatcher import AttentionDispatcher
 from routes.chat_stream import manager, _resolve_skin
 
 identity_router = APIRouter()
-attention_dispatcher = AttentionDispatcher()
+try:
+    attention_dispatcher = AttentionDispatcher()
+except EnvironmentError as e:
+    import logging
+    logging.getLogger("autohaus.identity").warning(f"AttentionDispatcher not available: {e}")
+    attention_dispatcher = None
 
 class LeadIntakeRequest(BaseModel):
     source: str

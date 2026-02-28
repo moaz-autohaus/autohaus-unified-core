@@ -37,8 +37,8 @@ class BigQueryClient:
                 self.credentials = service_account.Credentials.from_service_account_file(local_key_path)
                 self.client = bigquery.Client(credentials=self.credentials, project=self.project_id)
             else:
-                logger.warning("No GCP_SERVICE_ACCOUNT_JSON in env and no local fallback found. BigQuery client will use default credentials.")
-                self.client = bigquery.Client(project=self.project_id)
+                logger.warning("No GCP_SERVICE_ACCOUNT_JSON in env and no local fallback found. BigQuery unavailable.")
+                self.client = None
 
     def execute_query(self, query: str, parameters: list = None):
         """Execute a general query (DDL or DML)."""
