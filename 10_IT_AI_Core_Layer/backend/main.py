@@ -98,7 +98,7 @@ app.include_router(logistics_router, prefix="/api/logistics")
 app.include_router(identity_router, prefix="/api/crm")
 app.include_router(pipeline_router, prefix="/api")
 # HITL Governance — BigQuery Persistent Layer
-app.include_router(hitl_router, prefix="/api")
+app.include_router(hitl_router, prefix="/api/hitl")
 app.include_router(finance_router, prefix="/api/finance")
 app.include_router(anomalies_router, prefix="/api/anomalies")
 app.include_router(media_router, prefix="/api/media")

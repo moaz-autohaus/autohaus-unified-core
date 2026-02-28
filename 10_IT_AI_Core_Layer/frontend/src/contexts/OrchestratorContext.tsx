@@ -149,7 +149,7 @@ export const OrchestratorProvider = ({ children }: { children: ReactNode }) => {
     const [isConnected, setIsConnected] = useState(false);
     const [user, setUser] = useState<User>(USERS.AHSIN);
     const [mode, setMode] = useState("STANDARD");
-    const [anomalyCount, setAnomalyCount] = useState(1);
+    const [anomalyCount] = useState(1);
     const [messages, setMessages] = useState<ChatMessage[]>([{
         id: 0, isBot: true, time: "09:41",
         text: `Good morning, Ahsin. System primitives active. Neural Membrane monitoring 00_Inbox. How would you like to begin?`,

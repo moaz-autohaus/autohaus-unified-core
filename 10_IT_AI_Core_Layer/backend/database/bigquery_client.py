@@ -4,7 +4,13 @@ import uuid
 import logging
 from google.cloud import bigquery
 from google.oauth2 import service_account
-from ..models.events import CILEvent
+try:
+    from ..models.events import CILEvent
+except (ImportError, ValueError):
+    try:
+        from models.events import CILEvent
+    except ImportError:
+        CILEvent = None # Fallback for simple scripts
 
 logger = logging.getLogger(__name__)
 
@@ -113,5 +119,10 @@ class BigQueryClient:
         logger.info(f"Successfully inserted event {row_to_insert['event_id']} of type {row_to_insert['event_type']}")
         return True
 
-# Simple test/initialization
-# bq_client = BigQueryClient()
+def get_database():
+    """Dependency to provide a BigQuery client."""
+    bq = BigQueryClient()
+    if bq.client:
+        yield bq.client
+    else:
+        raise Exception("BigQuery client initialization failed")

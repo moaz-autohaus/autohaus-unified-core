@@ -39,6 +39,7 @@ import google.generativeai as genai
 from memory.vector_vault import VectorVault
 from agents.iea_agent import InputEnrichmentAgent
 from agents.governance_agent import GovernanceAgent
+from agents.router_agent import RouterAgent, RoutedIntent
 from models.cos_response import CoSResponse, UIStrategyModel
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")

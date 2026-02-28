@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Activity, DatabaseZap } from 'lucide-react';
+import { useState } from 'react';
+import { DatabaseZap } from 'lucide-react';
 
 interface AuditLog {
     event_id: string;
@@ -18,7 +18,7 @@ const MOCK_LEDGER: AuditLog[] = [
 ];
 
 export function SystemLedger() {
-    const [logs, setLogs] = useState<AuditLog[]>(MOCK_LEDGER);
+    const [logs] = useState<AuditLog[]>(MOCK_LEDGER);
 
     return (
         <div className="space-y-6 h-full flex flex-col">
@@ -58,8 +58,8 @@ export function SystemLedger() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border ${log.actor.includes('System') || log.actor.includes('Agent')
-                                                ? 'bg-blue-900/10 text-blue-400 border-blue-900/30'
-                                                : 'bg-zinc-800 text-zinc-300 border-zinc-700'
+                                            ? 'bg-blue-900/10 text-blue-400 border-blue-900/30'
+                                            : 'bg-zinc-800 text-zinc-300 border-zinc-700'
                                             }`}>
                                             {log.actor}
                                         </span>

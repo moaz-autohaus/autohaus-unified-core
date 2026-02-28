@@ -8,6 +8,8 @@ from .connectors.nhtsa_vpic import NHTSAVpicConnector
 from .connectors.nhtsa_recalls import NHTSARecallsConnector
 from .connectors.nhtsa_complaints import NHTSAComplaintsConnector
 from .connectors.nhtsa_safety import NHTSASafetyConnector
+from .connectors.market_data import MarketDataConnector
+from database.policy_engine import get_policy
 
 logger = logging.getLogger("autohaus.enrichment.vin")
 
@@ -18,6 +20,7 @@ class VinEnrichmentCascade:
         self.recalls = NHTSARecallsConnector(bq_client)
         self.complaints = NHTSAComplaintsConnector(bq_client)
         self.safety = NHTSASafetyConnector(bq_client)
+        self.market_data = MarketDataConnector(bq_client)
 
     async def enrich_vehicle(self, entity_id: str, vin: str) -> Dict[str, Any]:
         """Runs the enrichment cascade for a VIN."""
@@ -122,5 +125,15 @@ class VinEnrichmentCascade:
             })
         else:
             results["sources_failed"].append("NHTSA_SAFETY")
+            
+        # Step 5 - Market Data (Scheduled / On Demand)
+        scheduled_sources = get_policy("ENRICHMENT", "VIN.SCHEDULED_SOURCES") or []
+        if "MARKET_VALUES" in scheduled_sources:
+            market_res = await self.market_data.get_values(entity_id=entity_id, vin=vin, year=year, make=make, model=model)
+            if "error" in market_res:
+                results["sources_failed"].append("MARKET_VALUES")
+            else:
+                results["sources_succeeded"].append("MARKET_VALUES")
+                # facts written here once we have a real implementation
 
         return results

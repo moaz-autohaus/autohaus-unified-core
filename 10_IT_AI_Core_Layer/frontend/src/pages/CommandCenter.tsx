@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Zap, ShieldAlert, FileText, CheckCircle2, ChevronRight, MapPin, Clock, DollarSign, Package } from 'lucide-react';
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useState, useEffect, useRef } from 'react';
+import { Send, Zap, ShieldAlert, ChevronRight } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useOrchestrator, USERS } from '../contexts/OrchestratorContext';
 import type { ChatMessage as ChatMessageType, PlatePayload } from '../contexts/OrchestratorContext';
 import { clsx } from 'clsx';
@@ -34,12 +34,6 @@ const FINANCE_DATA = [
     { week: "W6", AutoHaus: 19700, KAMM: 12400, AstroLogistics: 9100, Carlux: 6100 },
 ];
 
-const TWIN_FLAGS = [
-    { zone: "Engine Bay", issue: "Oil seepage detected — valve cover gasket", severity: "RED", source: "Mechanic Audio", confidence: 94 },
-    { zone: "Subframe", issue: "Surface oxidation — minor rust present", severity: "YELLOW", source: "Gemini Veo", confidence: 88 },
-    { zone: "Front Bumper", issue: "Paint chip 2cm — door ding pattern", severity: "YELLOW", source: "Visual Scribe", confidence: 91 },
-    { zone: "Tires", issue: "7/32 tread depth — within acceptable range", severity: "GREEN", source: "Walk-around", confidence: 97 },
-];
 
 const PRIMITIVES = [
     { id: "identity_engine", label: "Identity Engine", status: "ACTIVE" },
@@ -77,7 +71,7 @@ function ActionBtn({ label, color, onClick }: { label: string, color: string, on
 }
 
 // ─── CHAT MESSAGE ────────────────────────────────────────────────────────────
-function ChatMessage({ msg, isLatest, user }: { msg: ChatMessageType, isLatest: boolean, user: any }) {
+function ChatMessage({ msg, user }: { msg: ChatMessageType, isLatest: boolean, user: any }) {
     const isBot = msg.isBot;
     return (
         <div className={clsx("flex flex-col mb-5 animate-in fade-in slide-in-from-bottom-2", isBot ? "items-start" : "items-end")}>
@@ -111,11 +105,10 @@ function ChatMessage({ msg, isLatest, user }: { msg: ChatMessageType, isLatest: 
 
 // ─── STATUS BAR ─────────────────────────────────────────────────────────────
 function StatusBar() {
-    const { user, wsState, anomalyCount, mode, setMode, setUser } = useOrchestrator();
+    const { user, wsState, mode, setMode, setUser } = useOrchestrator();
     const [time, setTime] = useState(new Date());
     useEffect(() => { const t = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(t); }, []);
 
-    const modeColors: Record<string, string> = { STANDARD: T.gold, FIELD: "#3b82f6", AMBIENT: T.dim };
 
     return (
         <div className="h-11 bg-zinc-900 border-b border-zinc-800 flex items-center px-5 gap-0 flex-shrink-0 relative z-50">
@@ -155,7 +148,7 @@ function StatusBar() {
 }
 
 // ─── PLATES ────────────────────────────────────────────────────────────────
-function FinancePlate({ payload, onClose }: { payload: PlatePayload, onClose: () => void }) {
+function FinancePlate({ onClose }: { onClose: () => void }) {
     return (
         <div className="h-full flex flex-col p-6 overflow-hidden">
             <div className="flex justify-between items-start mb-6 border-b border-zinc-800 pb-4">
@@ -261,9 +254,61 @@ function FallbackPlate({ payload, onClose }: { payload: PlatePayload, onClose: (
     );
 }
 
+function LogisticsPlate({ payload, onClose }: { payload: PlatePayload, onClose: () => void }) {
+    return (
+        <div className="h-full flex flex-col p-6">
+            <div className="flex justify-between items-start mb-6 border-b border-zinc-800 pb-4">
+                <div>
+                    <Tag label="LOGISTICS" color={T.green} />
+                    <h2 className="text-white text-sm font-bold font-mono tracking-wider mt-2">LIVE DISPATCH</h2>
+                    <p className="text-zinc-500 text-[11px] mt-1">Movement status for {payload.target_entity}</p>
+                </div>
+                <button onClick={onClose} className="text-zinc-600 hover:text-zinc-400">✕</button>
+            </div>
+            <div className="flex-1 bg-zinc-900 rounded-lg border border-zinc-800 relative overflow-hidden flex items-center justify-center p-12 text-center">
+                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "linear-gradient(#444 1px, transparent 1px), linear-gradient(90deg, #444 1px, transparent 1px)", backgroundSize: "20px 20px" }}></div>
+                <div>
+                    <p className="text-zinc-400 font-mono text-[10px] mb-4">MAP_STREAM_ACTIVE</p>
+                    <p className="text-white text-sm font-bold">{payload.suggested_action}</p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function GovernancePlate({ payload, onClose }: { payload: PlatePayload, onClose: () => void }) {
+    return (
+        <div className="h-full flex flex-col p-6">
+            <div className="flex justify-between items-start mb-6 border-b border-zinc-800 pb-4">
+                <div>
+                    <Tag label="GOVERNANCE" color={T.purple} />
+                    <h2 className="text-white text-sm font-bold font-mono tracking-wider mt-2">POLICY OVERRIDE</h2>
+                    <p className="text-zinc-500 text-[11px] mt-1">System-level directive execution</p>
+                </div>
+                <button onClick={onClose} className="text-zinc-600 hover:text-zinc-400">✕</button>
+            </div>
+            <div className="flex-1 space-y-4">
+                {payload.dataset && payload.dataset.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-4">
+                        {payload.dataset.map((item, i) => (
+                            <div key={i} className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg">
+                                <KV k={item.key || "FIELD"} v={String(item.value)} color={T.purple} />
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="p-6 bg-purple-950/10 border border-purple-500/20 rounded-xl">
+                        <p className="text-purple-300 text-sm font-mono">{payload.suggested_action}</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export function CommandCenter() {
-    const { user, mode, messages, latestPlate, setPlate, sendMessage, isConnected } = useOrchestrator();
+    const { user, messages, latestPlate, setPlate, sendMessage, isConnected } = useOrchestrator();
     const [input, setInput] = useState("");
     const chatRef = useRef<HTMLDivElement>(null);
 
@@ -290,7 +335,15 @@ export function CommandCenter() {
         }
 
         if (latestPlate.plate_id === 'FINANCE_CHART' || latestPlate.plate_id === 'FINANCE') {
-            return <FinancePlate payload={latestPlate} onClose={() => setPlate(null)} />;
+            return <FinancePlate onClose={() => setPlate(null)} />;
+        }
+
+        if (latestPlate.plate_id === 'LIVE_DISPATCH') {
+            return <LogisticsPlate payload={latestPlate} onClose={() => setPlate(null)} />;
+        }
+
+        if (latestPlate.plate_id === 'GOVERNANCE_DASHBOARD') {
+            return <GovernancePlate payload={latestPlate} onClose={() => setPlate(null)} />;
         }
 
         return <GenericPlate payload={latestPlate} onClose={() => setPlate(null)} />;

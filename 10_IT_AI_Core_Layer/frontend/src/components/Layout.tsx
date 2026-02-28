@@ -1,13 +1,18 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Database, LayoutDashboard, Car, Activity, Terminal } from 'lucide-react';
+import { Database, LayoutDashboard, Car, Activity, Terminal, FlaskConical } from 'lucide-react';
 import clsx from 'clsx';
 import { useOrchestrator } from '../contexts/OrchestratorContext';
 
 const NAV_ITEMS = [
     { name: 'Command Center', path: '/', icon: LayoutDashboard },
+    { name: 'Action Center', path: '/actions', icon: Activity },
     { name: 'Inventory Matrix', path: '/inventory', icon: Car },
     { name: 'System Ledger', path: '/ledger', icon: Database },
     { name: 'Brain Feed', path: '/feed', icon: Terminal },
+];
+
+const DEV_NAV_ITEMS = [
+    { name: 'Public API Test', path: '/dev/public-api', icon: FlaskConical },
 ];
 
 export function Layout() {
@@ -55,6 +60,33 @@ export function Layout() {
                             );
                         })}
                     </ul>
+                    {/* Dev-only nav */}
+                    {!isFieldSkin && (
+                        <div className="mt-6 px-3">
+                            <p className="text-[9px] text-zinc-600 uppercase tracking-widest font-mono mb-2 px-0">Dev Tools</p>
+                            <ul className="space-y-1">
+                                {DEV_NAV_ITEMS.map((item) => {
+                                    const isActive = location.pathname === item.path;
+                                    return (
+                                        <li key={item.name}>
+                                            <Link
+                                                to={item.path}
+                                                className={clsx(
+                                                    'flex items-center py-2 px-3 text-sm font-medium rounded-md transition-colors',
+                                                    isActive
+                                                        ? 'bg-orange-900/30 text-orange-300'
+                                                        : 'text-zinc-600 hover:bg-zinc-800/30 hover:text-zinc-400'
+                                                )}
+                                            >
+                                                <item.icon className={clsx('h-5 w-5 shrink-0 mr-3', isActive ? 'text-orange-400' : 'text-zinc-600')} />
+                                                <span className="whitespace-nowrap">{item.name}</span>
+                                            </Link>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    )}
                 </nav>
 
                 <div className="p-4 border-t border-[var(--brand-border)]">
@@ -77,7 +109,7 @@ export function Layout() {
                 {/* Topbar */}
                 <header className="h-16 flex items-center justify-between px-8 border-b border-[var(--brand-border)] shrink-0 bg-[var(--bg-primary)] backdrop-blur-sm transition-colors">
                     <h1 className="text-lg font-medium text-[var(--text-primary)]">
-                        {NAV_ITEMS.find(i => i.path === location.pathname)?.name || 'Command Center'}
+                        {[...NAV_ITEMS, ...DEV_NAV_ITEMS].find(i => i.path === location.pathname)?.name || 'Command Center'}
                     </h1>
                     <div className="flex items-center space-x-4">
                         <span className="flex h-2 w-2 relative">

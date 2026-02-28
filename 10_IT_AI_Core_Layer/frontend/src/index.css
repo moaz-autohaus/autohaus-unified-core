@@ -30,6 +30,51 @@
     --accent-primary: #f87171;
     --accent-secondary: #fca5a5;
   }
+
+  .theme-client_handshake {
+    --bg-primary: #ffffff;
+    --bg-card: #f9f9f9;
+    --text-primary: #1c1c1c;
+    --brand-border: #e2e2e2;
+    --accent-primary: #C5A059;
+    --accent-secondary: #000000;
+  }
+
+  .theme-ghost {
+    --bg-primary: #000000;
+    --bg-card: #050505;
+    --text-primary: #444444;
+    --brand-border: #111111;
+    --accent-primary: #222222;
+    --accent-secondary: #000000;
+  }
+
+  .theme-ambient_recon {
+    --bg-primary: #00000a;
+    --bg-card: #05051a;
+    --text-primary: #e0e0ff;
+    --brand-border: #1e1e3f;
+    --accent-primary: #a78bfa;
+    --accent-secondary: #7c3aed;
+  }
+
+  .theme-premium_stealth {
+    --bg-primary: #0a0a0a;
+    --bg-card: #1a1a1a;
+    --text-primary: #f0f0f0;
+    --brand-border: #333333;
+    --accent-primary: #666666;
+    --accent-secondary: #444444;
+  }
+
+  .theme-luxury {
+    --bg-primary: #121212;
+    --bg-card: #1e1e1e;
+    --text-primary: #f5f5f5;
+    --brand-border: #4a4a4a;
+    --accent-primary: #d4af37;
+    --accent-secondary: #b8860b;
+  }
 }
 
 @keyframes pulse-dot {

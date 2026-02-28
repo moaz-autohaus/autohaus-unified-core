@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Check, Clock, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Clock } from 'lucide-react';
+import { ProvenanceField, type AuthorityLevel } from '../components/ProvenanceBadge';
 
 interface Vehicle {
     id: string;
@@ -9,12 +10,14 @@ interface Vehicle {
     price: number;
     status: 'PENDING' | 'LIVE';
     entity: string;
+    authority_level: AuthorityLevel;
+    source_type?: string;
 }
 
 const MOCK_INVENTORY: Vehicle[] = [
-    { id: 'V-001', make: 'Porsche', model: '911 Carrera T', vin: 'WP0AB2A93RS', price: 128500, status: 'PENDING', entity: 'KAMM_LLC' },
-    { id: 'V-002', make: 'BMW', model: 'M4 Competition', vin: 'WBS43AZ0XNC', price: 84000, status: 'LIVE', entity: 'KAMM_LLC' },
-    { id: 'V-003', make: 'Ford', model: 'Transit 250', vin: '1FTBR1CM4PK', price: 42000, status: 'LIVE', entity: 'FLUIDITRUCK_LLC' },
+    { id: 'V-001', make: 'Porsche', model: '911 Carrera T', vin: 'WP0AB2A93RS', price: 128500, status: 'PENDING', entity: 'KAMM_LLC', authority_level: 'PROPOSED', source_type: undefined },
+    { id: 'V-002', make: 'BMW', model: 'M4 Competition', vin: 'WBS43AZ0XNC', price: 84000, status: 'LIVE', entity: 'KAMM_LLC', authority_level: 'AUTO_ENRICHED', source_type: 'NHTSA' },
+    { id: 'V-003', make: 'Ford', model: 'Transit 250', vin: '1FTBR1CM4PK', price: 42000, status: 'LIVE', entity: 'FLUIDITRUCK_LLC', authority_level: 'VERIFIED', source_type: 'Master Registry' },
 ];
 
 export function InventoryMatrix() {
@@ -23,17 +26,27 @@ export function InventoryMatrix() {
 
     const handlePromote = async (id: string) => {
         setLoadingId(id);
+        try {
+            const apiBase = window.location.hostname.includes('replit')
+                ? `${window.location.protocol}//${window.location.host}`
+                : 'http://localhost:8000';
 
-        // Simulate backend handshake
-        // endpoint: POST /api/inventory/promote
-        // payload: { vehicle_id: id, actor_id: "UI_Agent" }
+            const res = await fetch(`${apiBase}/api/inventory/promote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vehicle_id: id, actor_id: "UI_Agent" })
+            });
 
-        setTimeout(() => {
+            if (!res.ok) throw new Error(`Promotion failed: ${res.statusText}`);
+
             setVehicles(prev => prev.map(v =>
                 v.id === id ? { ...v, status: 'LIVE' } : v
             ));
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
             setLoadingId(null);
-        }, 1000);
+        }
     };
 
     return (
@@ -63,7 +76,13 @@ export function InventoryMatrix() {
                         {vehicles.map((v) => (
                             <tr key={v.id} className="hover:bg-zinc-800/50 transition-colors">
                                 <td className="px-6 py-4">
-                                    <div className="font-medium text-zinc-100">{v.make} {v.model}</div>
+                                    <div className="font-medium text-zinc-100">
+                                        <ProvenanceField
+                                            value={`${v.make} ${v.model}`}
+                                            authority_level={v.authority_level}
+                                            source_type={v.source_type}
+                                        />
+                                    </div>
                                     <div className="text-zinc-500 font-mono text-xs mt-1">{v.vin}</div>
                                 </td>
                                 <td className="px-6 py-4">

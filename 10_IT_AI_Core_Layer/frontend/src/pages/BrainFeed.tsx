@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Terminal, Cpu } from 'lucide-react';
 
 interface TelemetryLog {
@@ -36,7 +36,7 @@ const MOCK_TELEMETRY: TelemetryLog[] = [
 ];
 
 export function BrainFeed() {
-    const [logs, setLogs] = useState<TelemetryLog[]>(MOCK_TELEMETRY);
+    const [logs] = useState<TelemetryLog[]>(MOCK_TELEMETRY);
 
     return (
         <div className="h-full flex flex-col space-y-4">

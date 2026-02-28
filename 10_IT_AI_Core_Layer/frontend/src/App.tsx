@@ -9,7 +9,6 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<CommandCenter />} />
-          {/* C-OS Primarily uses the unified CommandCenter view */}
           <Route path="*" element={<CommandCenter />} />
         </Routes>
       </Router>

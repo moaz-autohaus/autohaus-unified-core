@@ -45,7 +45,7 @@ class HitlActionRequest(BaseModel):
     hitl_event_id: str
 
 
-@hitl_router.post("/hitl/propose")
+@hitl_router.post("/propose")
 async def propose_hitl(request: HitlProposeRequest):
     """Create a new HITL proposal."""
     try:
@@ -78,7 +78,7 @@ async def propose_hitl(request: HitlProposeRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@hitl_router.post("/hitl/validate")
+@hitl_router.post("/validate")
 async def validate_hitl(request: HitlActionRequest):
     """Validate a pending HITL proposal."""
     try:
@@ -101,7 +101,7 @@ async def validate_hitl(request: HitlActionRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@hitl_router.post("/hitl/apply")
+@hitl_router.post("/apply")
 async def apply_hitl(request: HitlActionRequest):
     """Apply a validated HITL change (for high-risk actions requiring confirmation)."""
     try:
@@ -120,7 +120,7 @@ async def apply_hitl(request: HitlActionRequest):
     except Exception as e:
         logger.error(f"HITL apply failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-@hitl_router.get("/hitl/queue")
+@hitl_router.get("/queue")
 async def get_hitl_queue():
     """Returns the pending HITL approval queue."""
     try:
@@ -161,7 +161,7 @@ async def get_hitl_queue():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@hitl_router.post("/hitl/{event_id}/approve")
+@hitl_router.post("/{event_id}/approve")
 async def approve_hitl_event(event_id: str):
     """Convenience endpoint for the UI to approve and execute a proposal."""
     logger.info(f"[HITL] UI Request: Approve {event_id}")
@@ -208,7 +208,7 @@ async def approve_hitl_event(event_id: str):
         raise HTTPException(status_code=500, detail=error_trace)
 
 
-@hitl_router.post("/hitl/{event_id}/reject")
+@hitl_router.post("/{event_id}/reject")
 async def reject_hitl_event(event_id: str, reason: Optional[str] = "Rejected by user"):
     """Manually reject a proposal."""
     try:

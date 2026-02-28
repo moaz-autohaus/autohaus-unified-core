@@ -187,6 +187,15 @@ async def _process_job(drive_service, bq_client, job: PipelineJob):
                         links = link_document_entities(bq_client, document_id, fields, schema)
                         logger.info(f"[PIPELINE] Created {len(links)} links for {document_id}")
 
+                    # 6. Financial Ledger Dispatching (Phase 8 Shadow Ledger)
+                    try:
+                        from finance.financial_dispatcher import FinancialDispatcher
+                        fin_dispatcher = FinancialDispatcher(bq_client)
+                        # Fire and forget / await the proposal creation
+                        await fin_dispatcher.propose_entries_from_doc(document_id, doc_type, fields)
+                    except Exception as fe:
+                        logger.error(f"[PIPELINE] Financial dispatch failed for {document_id}: {fe}")
+
                 # Emit INGESTION_RUN_COMPLETED event (receipt)
                 try:
                     event_id = str(uuid.uuid4())

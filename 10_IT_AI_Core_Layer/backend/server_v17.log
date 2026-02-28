@@ -1,0 +1,68 @@
+/Users/moazsial/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+2026-02-27 22:51:32,900 [INFO] Attention Dispatcher initialized with failover support.
+2026-02-27 22:51:32,933 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-02-27 22:51:32,933 [INFO] IEA Membrane initialized with failover support.
+2026-02-27 22:51:32,933 [INFO] Attention Dispatcher initialized with failover support.
+INFO:     Will watch for changes in these directories: ['/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [94986] using WatchFiles
+/Users/moazsial/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+2026-02-27 22:51:34,029 [INFO] Attention Dispatcher initialized with failover support.
+2026-02-27 22:51:34,077 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-02-27 22:51:34,077 [INFO] IEA Membrane initialized with failover support.
+2026-02-27 22:51:34,077 [INFO] Attention Dispatcher initialized with failover support.
+INFO:     Started server process [95099]
+INFO:     Waiting for application startup.
+2026-02-27 22:51:34,454 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-02-27 22:51:34,454 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-02-27 22:51:34,901 [INFO] 1 change detected
+2026-02-27 22:51:35,927 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+INFO:     Application startup complete.
+2026-02-27 22:51:36,813 [INFO] 2 changes detected
+2026-02-27 22:51:37,593 [INFO] 1 change detected
+2026-02-27 22:51:39,184 [INFO] 1 change detected
+2026-02-27 22:51:43,149 [INFO] 1 change detected
+2026-02-27 22:51:43,515 [INFO] 1 change detected
+2026-02-27 22:51:45,487 [INFO] 1 change detected
+2026-02-27 22:51:47,130 [INFO] 1 change detected
+WARNING:  WatchFiles detected changes in 'routes/hitl_routes.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-02-27 22:51:47,238 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [95099]
+/Users/moazsial/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+2026-02-27 22:51:48,005 [INFO] Attention Dispatcher initialized with failover support.
+2026-02-27 22:51:48,037 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-02-27 22:51:48,038 [INFO] IEA Membrane initialized with failover support.
+2026-02-27 22:51:48,038 [INFO] Attention Dispatcher initialized with failover support.
+INFO:     Started server process [95604]
+INFO:     Waiting for application startup.
+2026-02-27 22:51:48,430 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-02-27 22:51:48,430 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-02-27 22:51:48,542 [INFO] 1 change detected
+2026-02-27 22:51:49,446 [INFO] 3 changes detected
+WARNING:  WatchFiles detected changes in 'routes/hitl_routes.py'. Reloading...
+2026-02-27 22:51:49,625 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-02-27 22:51:49,828 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [95604]
+/Users/moazsial/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+2026-02-27 22:51:50,609 [INFO] Attention Dispatcher initialized with failover support.
+2026-02-27 22:51:50,634 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-02-27 22:51:50,634 [INFO] IEA Membrane initialized with failover support.
+2026-02-27 22:51:50,634 [INFO] Attention Dispatcher initialized with failover support.
+INFO:     Started server process [95693]
+INFO:     Waiting for application startup.
+2026-02-27 22:51:50,968 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-02-27 22:51:50,968 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-02-27 22:51:50,979 [INFO] 1 change detected
+2026-02-27 22:51:52,326 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+INFO:     Application startup complete.

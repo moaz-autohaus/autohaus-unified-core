@@ -20,6 +20,12 @@ def project_entity_fact(bq_client, entity_id: str, entity_type: str, field_name:
     if not new_value:
         return
 
+    # 0. Global Compliance Freeze Check
+    from database.policy_engine import get_policy
+    if get_policy("SYSTEM", "FROZEN"):
+        logger.warning(f"[SECURITY] Truth projection blocked: System is FROZEN.")
+        return
+
     # 1. Fetch current active facts for this field
     query = """
         SELECT value, confidence_score, source_type, status 

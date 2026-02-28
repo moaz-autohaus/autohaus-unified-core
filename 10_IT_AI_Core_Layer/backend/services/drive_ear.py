@@ -1,8 +1,8 @@
 
 import os
-import time
 import json
 import logging
+import uuid
 import asyncio
 from datetime import datetime, timezone
 from googleapiclient.discovery import build
@@ -12,24 +12,35 @@ from google.oauth2 import service_account
 from agents.router_agent import RouterAgent
 from agents.iea_agent import InputEnrichmentAgent
 from agents.attention_dispatcher import AttentionDispatcher
-from routes.chat_stream import manager, build_plate_payload, _resolve_skin
+from routes.chat_stream import manager, build_plate_payload
 
 logger = logging.getLogger("autohaus.drive_ear")
 
 # Configuration
 INBOX_FOLDER_NAME = "00_Inbox"
-POLL_INTERVAL = 30  # seconds
 
 class DriveEar:
     def __init__(self):
-        self.service = self._get_drive_service()
-        self.inbox_id = self._find_folder_id(INBOX_FOLDER_NAME)
-        self.processed_files = set()
+        self._service = None
+        self._inbox_id = None
+        self.processed_files = set() # Optional: BigQuery is better for persistence
         
         # Neural Stack
         self.router = RouterAgent()
         self.iea = InputEnrichmentAgent()
         self.dispatcher = AttentionDispatcher()
+
+    @property
+    def service(self):
+        if not self._service:
+            self._service = self._get_drive_service()
+        return self._service
+
+    @property
+    def inbox_id(self):
+        if not self._inbox_id:
+            self._inbox_id = self._find_folder_id(INBOX_FOLDER_NAME)
+        return self._inbox_id
 
     def _get_drive_service(self):
         sa_json = os.environ.get("GCP_SERVICE_ACCOUNT_JSON")
@@ -62,61 +73,65 @@ class DriveEar:
             logger.error(f"[DRIVE EAR] Folder Discovery Failed: {e}")
             return None
 
-    async def poll_forever(self):
-        """The main ambient listening loop."""
-        logger.info(f"[DRIVE EAR] Neural Membrane monitoring started on {INBOX_FOLDER_NAME}")
+    async def register_watch(self, webhook_url: str):
+        """Registers a push notification channel with Google Drive."""
+        if not self.inbox_id:
+            logger.error("[DRIVE EAR] Cannot register watch: Inbox ID not found.")
+            return
+
+        channel_id = str(uuid.uuid4())
+        body = {
+            "id": channel_id,
+            "type": "web_hook",
+            "address": webhook_url
+        }
         
-        while True:
-            if not self.service or not self.inbox_id:
-                # Try to re-discover periodically if missing
-                self.service = self._get_drive_service()
-                self.inbox_id = self._find_folder_id(INBOX_FOLDER_NAME)
-                await asyncio.sleep(POLL_INTERVAL)
-                continue
+        try:
+            logger.info(f"[DRIVE EAR] Registering watch on {self.inbox_id} for {webhook_url}")
+            res = self.service.files().watch(fileId=self.inbox_id, body=body).execute()
+            logger.info(f"[DRIVE EAR] Watch registered. Channel ID: {res.get('id')}")
+            return res
+        except Exception as e:
+            logger.error(f"[DRIVE EAR] Watch registration failed: {e}")
+            return None
 
-            try:
-                query = f"'{self.inbox_id}' in parents and trashed = false"
-                results = self.service.files().list(q=query, fields="files(id, name, createdTime)").execute()
-                files = results.get('files', [])
+    async def check_for_new_files(self):
+        """Manually trigger a check of the inbox folder (called by webhook)."""
+        if not self.inbox_id: return
 
-                for f in files:
-                    file_id = f['id']
-                    if file_id not in self.processed_files:
-                        logger.info(f"[DRIVE EAR] Ambient Discovery: New file detected: {f['name']}")
-                        await self.process_ambient_file(f)
-                        self.processed_files.add(file_id)
+        try:
+            query = f"'{self.inbox_id}' in parents and trashed = false"
+            results = self.service.files().list(q=query, fields="files(id, name, createdTime)").execute()
+            files = results.get('files', [])
 
-            except Exception as e:
-                logger.error(f"[DRIVE EAR] Polling Error: {e}")
-
-            await asyncio.sleep(POLL_INTERVAL)
+            for f in files:
+                file_id = f['id']
+                # In production, we'd check a database instead of a local set
+                if file_id not in self.processed_files:
+                    logger.info(f"[DRIVE EAR] Internal discovery: {f['name']}")
+                    await self.process_ambient_file(f)
+                    self.processed_files.add(file_id)
+        except Exception as e:
+            logger.error(f"[DRIVE EAR] Listing failed: {e}")
 
     async def process_ambient_file(self, file_metadata):
         """Routes file discovery through the full C-OS neural pipeline."""
         filename = file_metadata['name']
         discovery_text = f"Ambient Discovery in Drive: New file '{filename}' dropped in {INBOX_FOLDER_NAME}."
         
-        # 1. IEA Classification
         iea_result = self.iea.evaluate(discovery_text)
-        
-        # 2. Router Intent Extraction
         routed_intent = self.router.classify(discovery_text)
-        
-        # 3. Attention Dispatcher
         attention_result = self.dispatcher.evaluate_event(discovery_text)
         
-        # 4. WebSocket Push (High Urgency)
-        # Even if urgency is low, we push for ambient awareness
         plate_payload = build_plate_payload(routed_intent, urgency_score=attention_result.urgency_score)
-        plate_payload["origin"] = "AMBIENT_DISCOVERY"
-        plate_payload["suggested_action"] = f"Action Item: {attention_result.synthesized_message}"
+        plate_payload.origin = "AMBIENT_DISCOVERY"
+        plate_payload.suggested_action = f"Action Item: {attention_result.synthesized_message}"
         
-        # Force a specific color/skin for discovery if not high urgency
         if attention_result.urgency_score < 8:
-             plate_payload["strategy"]["skin"] = "AMBIENT_RECON"
-             plate_payload["strategy"]["overlay"] = "ambient-discovery-shimmer"
+             plate_payload.strategy.skin = "AMBIENT_RECON"
+             plate_payload.strategy.overlay = "ambient-discovery-shimmer"
 
-        logger.info(f"[DRIVE EAR] Broadcasing Plate: {plate_payload['plate_id']} | Urgency: {attention_result.urgency_score}")
-        await manager.broadcast(plate_payload)
+        logger.info(f"[DRIVE EAR] Broadcasing Plate: {plate_payload.plate_id} | Urgency: {attention_result.urgency_score}")
+        await manager.broadcast(plate_payload.model_dump())
 
 drive_ear = DriveEar()

@@ -1,50 +1,44 @@
-import os
-import httpx
 from fastapi import APIRouter, Request, HTTPException
+import logging
+import base64
+import json
 
+from integrations.gmail_spoke import GmailMonitor
+from database.bigquery_client import BigQueryClient
+
+logger = logging.getLogger("autohaus.webhooks")
 webhook_router = APIRouter()
 
-# --- Relay Infrastructure ---
-async def send_to_ingestion_layer(payload_type: str, data: dict):
-    webhook_url = os.environ.get("CIL_WEBHOOK_URL")
-    if not webhook_url:
-        print("[ERROR] CIL_WEBHOOK_URL is not set.")
-        return {"status": "Error. Webhook URL missing."}
-
-    payload = {
-        "type": payload_type,
-        "data": data
-    }
-
-    print(f"[RELAY] Forwarding '{payload_type}' to Unified Webhook: {webhook_url}")
+@webhook_router.post("/google-workspace")
+async def google_workspace_webhook(request: Request):
+    """
+    Endpoint for Google Cloud Pub/Sub push notifications.
+    These are triggered by Gmail 'watch' or Drive change notifications.
+    """
+    body = await request.json()
+    
+    # 1. Pub/Sub envelope extraction
+    message = body.get("message", {})
+    data_b64 = message.get("data")
+    
+    if not data_b64:
+        return {"status": "ignored", "reason": "no data"}
     
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(webhook_url, json=payload, timeout=10.0)
-            response.raise_for_status()
-            return {"status": "Success", "response": response.json()}
+        data_raw = base64.b64decode(data_b64).decode("utf-8")
+        payload = json.loads(data_raw)
+        
+        logger.info(f"[WEBHOOK] Received push notification: {payload}")
+        
+        # 2. Route to Gmail Monitor
+        # Note: Payload for Gmail watch includes: {"emailAddress": "...", "historyId": ...}
+        if "emailAddress" in payload:
+            monitor = GmailMonitor()
+            res = await monitor.process_incoming_webhook(payload)
+            return res
+            
+        return {"status": "unrecognized_payload"}
+        
     except Exception as e:
-        print(f"[ERROR] Failed to forward payload: {e}")
-        return {"status": "Error", "detail": str(e)}
-
-
-@webhook_router.post("/leads")
-async def process_lead(request: Request):
-    """Forward Lead Capture Payload securely."""
-    try:
-        data = await request.json()
-        await send_to_ingestion_layer("Trade-in / Lead Payload", data)
-        return {"relay": "success"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="Invalid Stateless Payload")
-
-
-@webhook_router.post("/appointments")
-async def process_book(request: Request):
-    """Forward Service Schedule Action."""
-    try:
-        data = await request.json()
-        await send_to_ingestion_layer("Service Booking Payload", data)
-        return {"relay": "success"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="Invalid Stateless Payload")
+        logger.error(f"[WEBHOOK] Processing failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
