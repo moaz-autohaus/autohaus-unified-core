@@ -3,6 +3,7 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -18,6 +19,11 @@ from routes.hitl_routes import hitl_router
 from routes.finance import finance_router
 from routes.anomalies import anomalies_router
 from routes.media_routes import media_router
+from routes.public_routes import public_router
+from routes.security_access import security_router
+from routes.drive_webhooks import drive_webhook_router
+from routes.intel_routes import intel_router
+from routes.deploy_routes import deploy_router
 
 logger = logging.getLogger("autohaus.main")
 
@@ -47,19 +53,40 @@ async def lifespan(app: FastAPI):
     anomaly_task = asyncio.create_task(anomaly_sweep_loop())
     logger.info("[LIFESPAN] Anomaly sweep scheduler started (every 30 min).")
     
-    # 2. Drive Ear (Ambient Listening)
+    # 2. Drive Ear (Cloud-Native Watch)
     from services.drive_ear import drive_ear
-    drive_task = asyncio.create_task(drive_ear.poll_forever())
-    logger.info("[LIFESPAN] Drive Ear (Neural Membrane) active.")
+    public_url = os.environ.get("PUBLIC_URL")
+    if public_url:
+        webhook_url = f"{public_url.rstrip('/')}/api/webhooks/drive/push"
+        asyncio.create_task(drive_ear.register_watch(webhook_url))
+        logger.info(f"[LIFESPAN] Drive Ear Push Registration dispatched to {webhook_url}.")
+    else:
+        logger.warning("[LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.")
     
+    # 3. Seed HITL Proposals (Option A+B bridge)
+    try:
+        from database.bigquery_client import BigQueryClient
+        from pipeline.hitl_service import seed_demo_proposals
+        bq = BigQueryClient()
+        seed_demo_proposals(bq.client)
+    except Exception as e:
+        logger.error(f"[BOOT] HITL seeding failed: {e}")
+
     yield
     
     anomaly_task.cancel()
-    drive_task.cancel()
     logger.info("[LIFESPAN] Background services stopped.")
 
 
 app = FastAPI(title="AutoHaus CIL Bridge - Unified", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # API Routing
 app.include_router(inventory_router, prefix="/api/inventory")
@@ -70,10 +97,16 @@ app.include_router(quote_router, prefix="/api")   # Quote Portal at /api/public/
 app.include_router(logistics_router, prefix="/api/logistics")
 app.include_router(identity_router, prefix="/api/crm")
 app.include_router(pipeline_router, prefix="/api")
+# HITL Governance — BigQuery Persistent Layer
 app.include_router(hitl_router, prefix="/api")
 app.include_router(finance_router, prefix="/api/finance")
 app.include_router(anomalies_router, prefix="/api/anomalies")
 app.include_router(media_router, prefix="/api/media")
+app.include_router(public_router, prefix="/api/public")
+app.include_router(security_router)
+app.include_router(drive_webhook_router)
+app.include_router(intel_router)
+app.include_router(deploy_router)
 
 
 # Governance Anchor Path
