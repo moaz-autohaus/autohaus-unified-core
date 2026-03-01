@@ -18,6 +18,11 @@ Violating these rules breaks the production environment:
 
 ---
 
+## 2.1 ARCHITECTURE INVARIANTS
+* **Doctrine Rule 12 (Human Assertions):** Human-provided information enters as HUMAN_ASSERTED. Verifiable facts require specific documentary evidence to reach VERIFIED. Intent and context require a supporting evidence structure to reach CORROBORATED. Every document ingestion checks both the PENDING_VERIFICATION queue for exact matches and the PENDING_CORROBORATION queue for supporting evidence accumulation. Contradictions in either queue surface to HITL with the stated assertion and the conflicting evidence presented together.
+
+---
+
 ## 3. UI / UX DESIGN SYSTEM (Frontend Agents)
 If you are generating or modifying the React/Tailwind frontend, enforce this strict high-end automotive aesthetic:
 * **Backgrounds & Surfaces**: Use ultra-dark themes. The standard background should be pure black (`bg-black` or `bg-zinc-950`). Use `bg-zinc-900` for elevated cards.

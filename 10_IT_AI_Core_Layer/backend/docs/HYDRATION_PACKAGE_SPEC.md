@@ -56,3 +56,11 @@ This document outlines the field-level definition of the structured Context Pack
 * **Empty/Fallback State:** `[]`
 * **Downstream Consumer:**
   * `iea_agent.py` / `governance_agent.py` to understand if an action the human is attempting is already staging hardware approval by another actor.
+
+## 7. Pending Human Assertions (`pending_assertions`)
+* **Source:** BigQuery `human_assertions` table (Phase 2).
+* **Query Pattern:** `WHERE target_entity_id IN (@resolved_entity_ids) AND verification_status IN ('PENDING_VERIFICATION', 'PENDING_CORROBORATION')`
+* **Required:** Optional.
+* **Empty/Fallback State:** `[]` (Log as INFO if empty: "human_assertions table pending Phase 2").
+* **Downstream Consumer:**
+  * `conflict_detector.py` (Phase 2) will check new document claims against this list on every ingestion to assess if documentary evidence corroborates or validates an unverified human fact.

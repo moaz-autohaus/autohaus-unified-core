@@ -50,6 +50,16 @@ This implementation brief maps the Governing Doctrine and Five-Phase Retrofit St
 * **Status:** VIOLATED
 * **Evidence:** In `identity_routes.py`, `trigger_membrane_attention` is fired using the unhydrated prompt string of the inbound payload.
 
+**12. Human-provided information enters as HUMAN_ASSERTED.**
+* **Status:** NEW INVARIANT added
+* **Evidence:** Verifiable facts require specific documentary evidence to reach VERIFIED. Intent and context require a supporting evidence structure to reach CORROBORATED. Every document ingestion checks both the PENDING_VERIFICATION queue for exact matches and the PENDING_CORROBORATION queue for supporting evidence accumulation. Contradictions in either queue surface to HITL with the stated assertion and the conflicting evidence presented together.
+
+---
+
+## 2. ARCHITECTURE INVARIANTS
+
+* **Doctrine Rule 12**: "Human-provided information enters as HUMAN_ASSERTED. Verifiable facts require specific documentary evidence to reach VERIFIED. Intent and context require a supporting evidence structure to reach CORROBORATED. Every document ingestion checks both the PENDING_VERIFICATION queue for exact matches and the PENDING_CORROBORATION queue for supporting evidence accumulation. Contradictions in either queue surface to HITL with the stated assertion and the conflicting evidence presented together."
+
 ---
 
 ## 2. PHASE 1 TASK BREAKDOWN: Structural Foundation
