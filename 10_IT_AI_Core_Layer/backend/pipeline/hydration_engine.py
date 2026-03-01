@@ -1,13 +1,13 @@
-# INTEGRATION VALIDATION PENDING
-# Pydantic model validation: COMPLETE (commit 0ff9ef4)
-# BigQuery integration validation: PENDING FIRST SEED
-# Required tests on first seed:
-#   - resolved_entities against known VIN
-#   - resolved_entities against known email
-#   - applicable_policies non-empty for one domain
-#   - recent_claims returns empty list with INFO log
-# Do not mark hydration engine FULLY VALIDATED 
-# until these pass against live BigQuery data.
+# INTEGRATION STATUS
+# Pydantic model validation: COMPLETE
+# BigQuery tables provisioned: COMPLETE
+#   - extraction_claims: ACTIVE
+#   - human_assertions: ACTIVE (3 seed records)
+#   - pending_verification_queue: VIEW ACTIVE
+# BigQuery integration validation: 
+#   READY FOR LIVE SEED TEST
+# Run validation against first controlled 
+# seed when Tier A test data is introduced.
 
 import logging
 import uuid
