@@ -207,3 +207,28 @@ MASTER > SOVEREIGN > HUMAN_ASSERTED > VERIFIED > AUTO_ENRICHED > EXTRACTED > PRO
 *Location:* `backend/agents/attention_dispatcher.py` AND `backend/agents/iea_agent.py`
 *Complexity:* MEDIUM
 *Description:* Refactor system logic so `AttentionDispatcher` queries `policy_engine.py` for its SMS routing threshold (>7) and `IEA/HITL` checks global confidence rules before routing.
+
+## SECTION 13: POLICY REGISTRY INVENTORY (SEEDED TASK 2.5)
+The following keys are actively queried by system nodes.
+
+DOMAINS:
+**PIPELINE**
+* `critical_fields`: Fields where any variance triggers CRITICAL severity. Evaluated by Conflict Detector. Value: `["ein", "vin", "policy_number", "ownership_pct", "license_number"]`
+* `conflict_tolerance_VEHICLE_price`: Allowed price variance as decimal fraction. Value: `0.05`
+* `conflict_tolerance_PERSON_email`: Exact match required. Value: `0.0`
+* `conflict_tolerance_ENTITY_ein`: Exact match required. Value: `0.0`
+* `question_sla_hours_CONFLICT`: Hours before conflict question is overdue. Value: `24`
+* `question_sla_hours_ASSERTION`: Hours before assertion question is overdue. Value: `72`
+* `question_sla_hours_IEA`: Hours before IEA clarification question is overdue. Value: `4`
+* `question_sla_hours_MANUAL`: Hours before manually created question is overdue. Value: `48`
+
+**AGENTS**
+* `attention_sms_threshold`: Urgency score at or above which SMS is triggered instead of WebSocket. Consumed by AttentionDispatcher. Value: `7`
+* `attention_urgency_scale`: Urgency score bands and their operational meaning. Consumed by AttentionDispatcher.
+* `iea_confidence_threshold`: Minimum confidence score for IEA to classify a command as COMPLETE. Consumed by IEA Agent. Value: `0.7`
+* `iea_required_fields_INVENTORY`: Fields IEA requires for INVENTORY commands. Value: `["vin", "entity"]`
+* `iea_required_fields_FINANCE`: Fields IEA requires for FINANCE commands. Value: `["entity", "time_period"]`
+* `iea_required_fields_LOGISTICS`: Fields IEA requires for LOGISTICS commands. Value: `["driver_id", "vehicle_id"]`
+* `iea_required_fields_SERVICE`: Fields IEA requires for SERVICE commands. Value: `["vin", "service_type"]`
+* `iea_required_fields_CRM`: Fields IEA requires for CRM commands. Value: `["contact_identifier"]`
+* `iea_required_fields_COMPLIANCE`: Fields IEA requires for COMPLIANCE commands. Value: `["entity", "document_type"]`
