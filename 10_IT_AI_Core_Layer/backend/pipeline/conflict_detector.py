@@ -321,17 +321,31 @@ async def process_claim(
                     reason="Material conflict detected against existing fact or entity"
                 )
                 
-                # 2. Write to open_questions (bypass for now since Task 2.3 handles this properly)
-                q_id = str(uuid.uuid4())
-                row_q = {
-                    "question_id": q_id,
-                    "target_entity": claim.target_entity_id,
-                    "context": f"Conflict on {claim.target_field}: Expected {conflict_res.existing_value}, got {claim.extracted_value}",
-                    "status": "OPEN",
-                    "created_at": timestamp,
-                    "updated_at": timestamp
+                # 2. Call create_question from backend.database.open_questions
+                from database.open_questions import create_question
+                
+                content = f"Conflict detected: {claim.target_field} for entity {claim.target_entity_id}. " \
+                          f"Existing value: {conflict_res.existing_value} ({conflict_res.existing_authority}). " \
+                          f"New claim: {claim.extracted_value} (confidence: {claim.confidence})"
+                
+                lineage_pointer = {
+                    "source_type": "CONFLICT",
+                    "source_id": str(claim.claim_id),
+                    "conflict_outcome": conflict_res.outcome.value,
+                    "assertion_type": None
                 }
-                client.insert_rows_json(f"{PROJECT_ID}.{DATASET_ID}.open_questions", [row_q])
+                
+                create_question(
+                    content=content,
+                    source_type="CONFLICT",
+                    source_id=str(claim.claim_id),
+                    owner_role="STANDARD",
+                    dependency_list=[],
+                    lineage_pointer=lineage_pointer,
+                    conflict_outcome=conflict_res.outcome.value,
+                    assertion_type=None,
+                    bq_client=client
+                )
                 
                 # 3. Log to cil_events
                 event_row = {
