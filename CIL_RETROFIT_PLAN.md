@@ -118,7 +118,11 @@ This implementation brief maps the Governing Doctrine and Five-Phase Retrofit St
 
 ### PHASE 3: Intelligence Consolidation
 * **Requirements to Begin:** Phase 1 (Hydration Engine in production) and Phase 2 (Extraction Claims/Conflict Detection active) must be fully online.
-* **Current Readiness:** **NOT READY.** The system still relies heavily on bespoke intelligence nodes routing off raw inputs via websocket strings.
+* **Current Readiness:** **NOT READY.** The following specific, measurable conditions must be demonstrably true before Intelligence Consolidation begins:
+  - Claims table has processed 500 real extractions without schema violations.
+  - Conflict detector has surfaced 20 genuine material conflicts safely to HITL.
+  - Hydration engine has assembled context packages for 1,000 sequential inputs with zero fallback-only results (proving entity matching succeeds).
+  - All three VIOLATED doctrine rules (Rules 3, 4, 11) confirmed COMPLIANT by a post-Phase 2 re-audit.
 
 ### PHASE 4: Policy Registry Completion
 * **Requirements to Begin:** Phase 2 Task 2.5 must be completed, ensuring nodes actually look for policies before acting. Standardized taxonomy required.
@@ -132,8 +136,10 @@ This implementation brief maps the Governing Doctrine and Five-Phase Retrofit St
 
 ## 5. RISK FLAGS
 
-* **WebSocket UX Degradation:** Moving the IEA string-clarification phase (Phase 2.4) behind a rigid `OpenQuestion` database object risks adding significant UI latency to the frontend's previously instantaneous "Agentic Router" replies. Ensure WebSocket optimistic UI patterns accommodate database polling.
+* **WebSocket UX Degradation:** Moving the IEA string-clarification phase (Phase 2.4) behind a rigid `OpenQuestion` database object risks adding significant UI latency to the frontend's previously instantaneous "Agentic Router" replies. 
+  * **COORDINATION FLAG FOR REPLIT:** The frontend WebSocket optimistic UI pattern must be designed to accommodate database-backed question objects before the IEA routing change is made on the backend. The frontend should render the question immediately on optimistic assumption while the database write completes in the background, otherwise the change will introduce visible latency. **Do not begin Task 2.4 until Replit has confirmed the optimistic UI pattern is in place.**
 * **In-Place Mutation Conflicts:** The current Logistics `update_location` and Inventory `promote_vehicle` routes employ instant `UPDATE` queries against target tables before registering the events. Transitioning to a strict "Event Spine -> Projection" model during the Retrofit might break the frontend states displaying static React component values.
+  * **SECOND COORDINATION FLAG FOR REPLIT:** The in-place mutation inversion (event spine before table mutation) requires React components that currently read directly from inventory_master and the audit ledger to read from projected state instead. **Do not invert mutation order on these routes until Replit confirms frontend state reads are projection-ready.**
 
 ---
 
