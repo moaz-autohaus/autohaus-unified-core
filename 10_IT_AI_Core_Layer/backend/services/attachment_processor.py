@@ -11,10 +11,37 @@ from datetime import datetime, timezone
 from database.bigquery_client import BigQueryClient
 from integrations.google_workspace_service import WorkspaceService
 from pipeline.hitl_service import propose
+from models.claims import ExtractedClaim, ClaimSource
 import google.generativeai as genai
 from google.cloud import bigquery
 
 logger = logging.getLogger("autohaus.attachment_processor")
+
+def unpack_to_claims(raw_response: dict, 
+                     source: ClaimSource,
+                     extractor_identity: str,
+                     input_reference: str,
+                     source_lineage: dict) -> List[ExtractedClaim]:
+    claims = []
+    for key, val in raw_response.items():
+        if isinstance(val, list):
+            for item in val:
+                if isinstance(item, dict) and "extracted_value" in item:
+                    try:
+                        claim_data = {
+                            "source": source.value if hasattr(source, "value") else source,
+                            "extractor_identity": extractor_identity,
+                            "input_reference": input_reference,
+                            "source_lineage": source_lineage,
+                            "entity_type": item.get("entity_type", "UNKNOWN"),
+                            "target_field": item.get("target_field", key),
+                            "extracted_value": str(item.get("extracted_value", "")),
+                            "confidence": float(item.get("confidence", 1.0))
+                        }
+                        claims.append(ExtractedClaim.from_gemini_response(claim_data))
+                    except Exception as e:
+                        logger.error(f"Failed to unpack claim from {item}: {e}")
+    return claims
 
 class AttachmentProcessor:
     def __init__(self):
@@ -79,6 +106,19 @@ class AttachmentProcessor:
                 data = await self._extract_tier0_metrics(file_bytes, filename, sender, subject)
                 logger.info(f"[ATTACHMENTS] Extracted: {json.dumps(data)}")
                 if data:
+                    lineage = {
+                        "model": "gemini-2.5-flash",
+                        "timestamp": datetime.now(timezone.utc).isoformat()
+                    }
+                    claims = unpack_to_claims(
+                        raw_response=data,
+                        source=ClaimSource.ATTACHMENT,
+                        extractor_identity="attachment_processor._extract_tier0_metrics",
+                        input_reference=message_id,
+                        source_lineage=lineage
+                    )
+                    # Task 1.2 fulfilled for attachment extraction
+                    
                     data['filename'] = filename
                     data['source_message_id'] = message_id
                     extracted_data.append(data)
@@ -103,13 +143,28 @@ Sender: {sender}
 Subject: {subject}
 Filename: {filename}
 
-Return valid JSON ONLY:
+Return valid JSON ONLY, using arrays of extracted fact objects.
+Each extracted fact object MUST include exactly these fields:
+  - confidence (float between 0.0 and 1.0)
+  - entity_type (must be one of: VEHICLE, PERSON, VENDOR, DOCUMENT, UNKNOWN)
+  - target_field (string, e.g., 'vin', 'transport_cost', 'start_date')
+  - extracted_value (string, the asserted value)
+
+Example output:
 {{
-  "doc_type": "...",
-  "vins": [],
-  "financials": [{{ "amount": 0.0, "purpose": "..." }}],
-  "entities": [{{ "name": "...", "role": "..." }}],
-  "dates": [{{ "date": "...", "label": "..." }}]
+  "doc_type": "AUCTION_RECEIPT",
+  "vins": [
+    {{"extracted_value": "12345678901234567", "confidence": 0.99, "entity_type": "VEHICLE", "target_field": "vin"}}
+  ],
+  "financials": [
+    {{"extracted_value": "500.0", "confidence": 1.0, "entity_type": "DOCUMENT", "target_field": "transport_cost"}}
+  ],
+  "entities": [
+    {{"extracted_value": "Carrier ABC", "confidence": 0.9, "entity_type": "VENDOR", "target_field": "transport_carrier"}}
+  ],
+  "dates": [
+    {{"extracted_value": "2026-02-21", "confidence": 1.0, "entity_type": "DOCUMENT", "target_field": "purchase_date"}}
+  ]
 }}"""
         try:
             # Inline bytes to Gemini
@@ -126,7 +181,9 @@ Return valid JSON ONLY:
     async def _create_proposal(self, data: Dict, sender: str, subject: str, message_id: str):
         """Stages the extraction result in the HITL Governance system."""
         # Check for VINs to target vehicles
-        vins = data.get("vins", [])
+        def get_val(x): return x.get("extracted_value") if isinstance(x, dict) else x
+        
+        vins = [get_val(v) for v in data.get("vins", [])]
         target_id = vins[0] if vins else message_id
         target_type = "VEHICLE" if vins else "EMAIL_ATTACHMENT"
         
