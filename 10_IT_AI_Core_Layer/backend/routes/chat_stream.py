@@ -75,17 +75,29 @@ class ConnectionManager:
 
     def __init__(self):
         self._active_connections: dict[str, WebSocket] = {}
+        self._client_meta: dict[str, dict] = {}
 
-    async def connect(self, websocket: WebSocket, client_id: str):
-        """Accept and register a new WebSocket connection."""
+    async def connect(self, websocket: WebSocket, client_id: str, access: str = "FIELD"):
+        """Accept and register a new WebSocket connection with access level (default: least privilege)."""
         await websocket.accept()
         self._active_connections[client_id] = websocket
-        logger.info(f"Client connected: {client_id} (Total: {len(self._active_connections)})")
+        self._client_meta[client_id] = {"access": access}
+        logger.info(f"Client connected: {client_id} access={access} (Total: {len(self._active_connections)})")
 
     def disconnect(self, client_id: str):
         """Remove a disconnected client."""
         self._active_connections.pop(client_id, None)
+        self._client_meta.pop(client_id, None)
         logger.info(f"Client disconnected: {client_id} (Total: {len(self._active_connections)})")
+
+    def set_client_access(self, client_id: str, access: str):
+        """Update the access level for a connected client."""
+        if client_id in self._client_meta:
+            self._client_meta[client_id]["access"] = access
+
+    def get_clients_with_access(self) -> dict[str, dict]:
+        """Return all client metadata for role-based broadcast filtering."""
+        return dict(self._client_meta)
 
     async def send_personal_message(self, message: dict, client_id: str):
         """Push a JSON message to a specific connected client."""
@@ -310,16 +322,28 @@ async def websocket_chat_endpoint(websocket: WebSocket):
     )
     await manager.send_personal_message(welcome_response.model_dump(), client_id)
 
+    USER_ACCESS_MAP = {
+        "AHSIN_CEO": "SOVEREIGN",
+        "ASIM_SALES": "STANDARD",
+        "MOHSIN_OPS": "STANDARD",
+        "MOAZ_LOGISTICS": "FIELD",
+    }
+
     try:
         while True:
-            # Wait for inbound message from the React UI
             raw_data = await websocket.receive_text()
 
             try:
                 data = json.loads(raw_data)
-                user_message = data.get("message", "").strip()
+                incoming_user_id = data.get("user_id", "")
+                if incoming_user_id:
+                    access = USER_ACCESS_MAP.get(incoming_user_id, "FIELD")
+                    manager.set_client_access(client_id, access)
+                    logger.info(f"[{client_id}] Access set to {access} for user {incoming_user_id}")
+                if data.get("type") == "identify":
+                    continue
+                user_message = data.get("message", data.get("text", "")).strip()
             except json.JSONDecodeError:
-                # Fallback: treat raw text as the message
                 user_message = raw_data.strip()
 
             if not user_message:
@@ -330,7 +354,6 @@ async def websocket_chat_endpoint(websocket: WebSocket):
                 await manager.send_personal_message(error_response.model_dump(), client_id)
                 continue
 
-            # Call the new message processing function
             await process_incoming_message(websocket, client_id, user_message)
 
     except WebSocketDisconnect:

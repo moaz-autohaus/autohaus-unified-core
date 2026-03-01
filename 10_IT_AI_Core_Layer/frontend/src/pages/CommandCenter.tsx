@@ -4,6 +4,7 @@ import { StatusBar, PrimitivesBar } from "../components/StatusBar";
 import { QuickCommands, StagedAttachments, Processing, AmbientLog } from "../components/ui";
 import { ChatMessage } from "../components/ChatMessage";
 import { FinancePlate, TwinPlate, AnomalyPlate, CollisionPlate, InventoryPlate, LogisticPlate, EmptyPlate } from "../components/plates";
+import { QuestionPanel } from "./QuestionCard";
 
 export function CommandCenter({ onNavigate }: { onNavigate?: (v: string) => void }) {
   const {
@@ -62,6 +63,7 @@ export function CommandCenter({ onNavigate }: { onNavigate?: (v: string) => void
               <AmbientLog />
             ) : (
               <>
+                <QuestionPanel />
                 {messages.map((msg, i) => (
                   <ChatMessage key={msg.id} msg={msg} isLatest={i === messages.length - 1 && msg.isBot} user={user} />
                 ))}

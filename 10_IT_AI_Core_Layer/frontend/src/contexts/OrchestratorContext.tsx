@@ -54,6 +54,18 @@ export interface ChatMessage {
   findings?: Finding[];
 }
 
+export interface OpenQuestion {
+  question_id: string;
+  content: string;
+  owner_role: "SOVEREIGN" | "STANDARD" | "FIELD";
+  source_type: "CONFLICT" | "ASSERTION" | "IEA" | "MANUAL";
+  sla_hours: number;
+  due_at: string;
+  dependency_list: string[];
+  created_at: string;
+  status: "OPEN" | "ANSWERED" | "DEFERRED";
+}
+
 export interface Primitive {
   id: string;
   label: string;
@@ -291,6 +303,9 @@ interface OrchestratorState {
   handleDrop: (e: React.DragEvent) => void;
   handleResolve: (vehicle: EntityOption) => void;
   handleAnomalyDecision: (type: string) => void;
+  openQuestions: OpenQuestion[];
+  answerQuestion: (id: string) => void;
+  deferQuestion: (id: string) => void;
   chatRef: React.RefObject<HTMLDivElement | null>;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
@@ -317,6 +332,7 @@ export function OrchestratorProvider({ children }: { children: React.ReactNode }
   const [anomalyCount] = useState(1);
   const [stagedFiles, setStagedFiles] = useState<StagedFile[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [openQuestions, setOpenQuestions] = useState<OpenQuestion[]>([]);
   const chatRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -332,7 +348,10 @@ export function OrchestratorProvider({ children }: { children: React.ReactNode }
     const ws = new WebSocket(`${proto}//${window.location.host}/ws/chat`);
     wsRef.current = ws;
 
-    ws.onopen = () => setWsState("LIVE");
+    ws.onopen = () => {
+      setWsState("LIVE");
+      ws.send(JSON.stringify({ type: "identify", user_id: user.id }));
+    };
     ws.onclose = () => setWsState("CONNECTING");
     ws.onerror = () => setWsState("CONNECTING");
 
@@ -352,6 +371,23 @@ export function OrchestratorProvider({ children }: { children: React.ReactNode }
               updated[0] = { ...updated[0], text: data.text };
             }
             return updated;
+          });
+        }
+        if (data.type === "OPEN_QUESTION" && data.question_id) {
+          const q: OpenQuestion = {
+            question_id: data.question_id,
+            content: data.content,
+            owner_role: data.owner_role,
+            source_type: data.source_type,
+            sla_hours: data.sla_hours,
+            due_at: data.due_at,
+            dependency_list: data.dependency_list || [],
+            created_at: data.created_at,
+            status: "OPEN",
+          };
+          setOpenQuestions(prev => {
+            if (prev.some(existing => existing.question_id === q.question_id)) return prev;
+            return [q, ...prev];
           });
         }
       } catch { /* ignore non-JSON */ }
@@ -420,6 +456,24 @@ export function OrchestratorProvider({ children }: { children: React.ReactNode }
     }, 800);
   }, []);
 
+  const answerQuestion = useCallback((id: string) => {
+    setOpenQuestions(prev => prev.map(q => q.question_id === id ? { ...q, status: "ANSWERED" as const } : q));
+    setMessages(p => [...p, {
+      id: Date.now(), isBot: true, time: now(),
+      text: `Open question ${id.slice(0, 8)}… marked as ANSWERED. Resolution recorded in governance ledger.`,
+      intent: "GOVERNANCE", entity: "CIL", confidence: 100,
+    }]);
+  }, []);
+
+  const deferQuestion = useCallback((id: string) => {
+    setOpenQuestions(prev => prev.map(q => q.question_id === id ? { ...q, status: "DEFERRED" as const } : q));
+    setMessages(p => [...p, {
+      id: Date.now(), isBot: true, time: now(),
+      text: `Open question ${id.slice(0, 8)}… deferred. SLA timer paused — will resurface on next governance sweep.`,
+      intent: "GOVERNANCE", entity: "CIL", confidence: 100,
+    }]);
+  }, []);
+
   return (
     <OrchestratorContext.Provider value={{
       user, setUser, messages, setMessages, input, setInput,
@@ -427,6 +481,7 @@ export function OrchestratorProvider({ children }: { children: React.ReactNode }
       wsState, anomalyCount, stagedFiles, setStagedFiles,
       dragOver, setDragOver, sendMessage, stageFiles,
       removeStaged, handleDrop, handleResolve, handleAnomalyDecision,
+      openQuestions, answerQuestion, deferQuestion,
       chatRef, fileInputRef,
     }}>
       {children}
