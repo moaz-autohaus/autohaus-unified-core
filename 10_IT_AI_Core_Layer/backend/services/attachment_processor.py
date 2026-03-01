@@ -118,6 +118,13 @@ class AttachmentProcessor:
                         source_lineage=lineage
                     )
                     # Task 1.2 fulfilled for attachment extraction
+                    from pipeline.conflict_detector import process_claim, log_claim_processing_result
+                    for claim in claims:
+                        try:
+                            result = await process_claim(claim, self.bq)
+                            log_claim_processing_result(result)
+                        except Exception as e:
+                            logger.error(f"[ATTACHMENTS] Conflict detector error on claim {claim.claim_id}: {e}")
                     
                     data['filename'] = filename
                     data['source_message_id'] = message_id

@@ -179,6 +179,13 @@ class GmailIntelService:
                 source_lineage=lineage
             )
             # Claims are assembled; Task 1.2 completed for this node. Pipeline will handle database persistence in Task 2.
+            from pipeline.conflict_detector import process_claim, log_claim_processing_result
+            for claim in claims:
+                try:
+                    result = await process_claim(claim, self.bq)
+                    log_claim_processing_result(result)
+                except Exception as e:
+                    logger.error(f"[GMAIL INTEL] Conflict detector error on claim {claim.claim_id}: {e}")
 
         # 4. Attachments
         attachments = self._get_attachments(msg)
