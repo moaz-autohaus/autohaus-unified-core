@@ -166,14 +166,7 @@ export const FLOWS = {
   } as Record<string, { text: string; plate: string; intent: string; entity: string; confidence: number }>,
 };
 
-interface MediaResponse {
-  text: string;
-  findings?: Finding[];
-  intent: string;
-  entity: string;
-  confidence: number;
-  mediaType?: string;
-}
+
 
 
 
