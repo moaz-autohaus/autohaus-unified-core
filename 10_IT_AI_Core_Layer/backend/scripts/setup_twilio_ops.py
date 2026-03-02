@@ -11,8 +11,8 @@ logger = logging.getLogger("setup_twilio_ops")
 
 async def run_setup():
     bq = BigQueryClient()
-    twilio_number = "+13193007709"
-    twilio_sid = "PN21d71b7892c4fd3591d5ebd0367257bf"
+    twilio_number = os.environ.get("TWILIO_PHONE_NUMBER", "+13193007709")
+    twilio_sid = os.environ.get("TWILIO_PHONE_PN_SID", "PN21d71b7892c4fd3591d5ebd0367257bf")
     moaz_phone = "+14124991241"
     
     # 1. Update/Registry KAMM LLC
