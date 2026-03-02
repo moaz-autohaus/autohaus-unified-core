@@ -7,7 +7,7 @@ echo "========================================================="
 
 # 1. Dependency Installation
 echo "[SYSTEM] Resolving Python dependencies..."
-pip install -r backend/requirements.txt
+pip install -r 10_IT_AI_Core_Layer/backend/requirements.txt --break-system-packages
 
 # 2. Scope & Environment Pathing
 export PYTHONPATH="${PYTHONPATH}:$(pwd)/backend"
