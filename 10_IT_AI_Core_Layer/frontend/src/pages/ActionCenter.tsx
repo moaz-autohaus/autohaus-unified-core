@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle2, XCircle, Mail, DollarSign, Loader2, AlertCircle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface HitlEvent {
     id?: string;
@@ -18,467 +17,296 @@ function getEventId(event: HitlEvent): string {
     return event.hitl_event_id || event.id || '';
 }
 
-function getApiBase(): string {
-    return '';
-}
-
-interface ToastMessage {
-    id: string;
-    type: 'error' | 'success';
-    message: string;
-}
-
 function parsePayload(raw: string | Record<string, unknown>): Record<string, unknown> | string {
     if (typeof raw !== 'string') return raw as Record<string, unknown>;
     try { return JSON.parse(raw); } catch { return raw; }
 }
 
-function getTier(e: HitlEvent): string {
-    const p = parsePayload(e.payload);
-    if (typeof p === 'string') return 'OTHER';
-    return (p?.evidence_tier as string) || 'OTHER';
-}
+const T = {
+    bg: '#0a0a0a', surface: '#111', card: '#141414', border: '#1e1e1e',
+    text: '#e8e8e8', dim: '#888', muted: '#555',
+    gold: '#C5A059', red: '#E30613', green: '#22C55E', blue: '#3B82F6',
+};
+
+const PAGE_SIZE = 15;
 
 export function ActionCenter() {
     const [queue, setQueue] = useState<HitlEvent[]>([]);
     const [loading, setLoading] = useState(true);
-    const [toasts, setToasts] = useState<ToastMessage[]>([]);
-    const [approvingId, setApprovingId] = useState<string | null>(null);
-    const [rejectingId, setRejectingId] = useState<string | null>(null);
-    const [selectedTier, setSelectedTier] = useState<string>('TIER_1_CONFIRMED');
+    const [toast, setToast] = useState<{ type: string; msg: string } | null>(null);
+    const [busyId, setBusyId] = useState<string | null>(null);
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [page, setPage] = useState(0);
+    const [filterType, setFilterType] = useState<string>('ALL');
+    const [search, setSearch] = useState('');
 
-    const dismissToast = (id: string) => setToasts(prev => prev.filter(t => t.id !== id));
-
-    const addToast = useCallback((type: 'error' | 'success', message: string) => {
-        const id = Math.random().toString(36).slice(2);
-        setToasts(prev => [...prev, { id, type, message }]);
-    }, []);
+    const showToast = (type: string, msg: string) => {
+        setToast({ type, msg });
+        setTimeout(() => setToast(null), 4000);
+    };
 
     const fetchQueue = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${getApiBase()}/api/hitl/queue`);
-            if (!res.ok) throw new Error(`Queue fetch returned ${res.status}: ${res.statusText}`);
+            const res = await fetch('/api/hitl/queue');
+            if (!res.ok) throw new Error(`${res.status}`);
             const data: HitlEvent[] = await res.json();
-            const normalized = data.map(e => ({
-                ...e,
-                payload: parsePayload(e.payload),
-            }));
-            setQueue(normalized);
+            setQueue(data.map(e => ({ ...e, payload: parsePayload(e.payload) })));
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : String(err);
-            console.error('[ActionCenter] fetchQueue failed:', msg);
-            addToast('error', `Governance Sync Failed: ${msg}`);
+            showToast('error', `Failed to load queue: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
             setLoading(false);
         }
-    }, [addToast]);
+    }, []);
 
-    useEffect(() => {
-        fetchQueue();
-    }, [fetchQueue]);
+    useEffect(() => { fetchQueue(); }, [fetchQueue]);
 
-    const handleApprove = async (event: HitlEvent) => {
+    const handleAction = async (event: HitlEvent, action: 'approve' | 'reject') => {
         const eid = getEventId(event);
-        setApprovingId(eid);
+        setBusyId(eid);
         try {
-            const res = await fetch(`${getApiBase()}/api/hitl/${eid}/approve`, { method: 'POST' });
-            if (!res.ok) {
-                const errBody = await res.text();
-                throw new Error(`${res.status}: ${errBody}`);
-            }
+            const res = await fetch(`/api/hitl/${eid}/${action}`, { method: 'POST' });
+            if (!res.ok) throw new Error(await res.text());
             setQueue(prev => prev.filter(e => getEventId(e) !== eid));
-            addToast('success', 'Proposal approved and applied.');
+            showToast('success', action === 'approve' ? 'Approved and applied.' : 'Rejected and archived.');
+            if (expandedId === eid) setExpandedId(null);
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : String(err);
-            console.error('[ActionCenter] approve failed:', msg);
-            addToast('error', `Governance Sync Failed: ${msg}`);
+            showToast('error', `Action failed: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
-            setApprovingId(null);
+            setBusyId(null);
         }
     };
 
-    const handleReject = async (event: HitlEvent) => {
-        const eid = getEventId(event);
-        setRejectingId(eid);
-        try {
-            const res = await fetch(`${getApiBase()}/api/hitl/${eid}/reject`, { method: 'POST' });
-            if (!res.ok) {
-                const errBody = await res.text();
-                throw new Error(`${res.status}: ${errBody}`);
-            }
-            setQueue(prev => prev.filter(e => getEventId(e) !== eid));
-            addToast('success', 'Proposal rejected and archived.');
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : String(err);
-            console.error('[ActionCenter] reject failed:', msg);
-            addToast('error', `Governance Sync Failed: ${msg}`);
-        } finally {
-            setRejectingId(null);
+    const actionTypes = ['ALL', ...Array.from(new Set(queue.map(e => e.action_type)))];
+
+    const filtered = queue.filter(e => {
+        if (filterType !== 'ALL' && e.action_type !== filterType) return false;
+        if (search) {
+            const s = search.toLowerCase();
+            const eid = getEventId(e).toLowerCase();
+            const tid = e.target_id.toLowerCase();
+            const payStr = typeof e.payload === 'string' ? e.payload.toLowerCase() : JSON.stringify(e.payload).toLowerCase();
+            if (!eid.includes(s) && !tid.includes(s) && !e.action_type.toLowerCase().includes(s) && !payStr.includes(s)) return false;
         }
+        return true;
+    });
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const safePage = Math.min(page, totalPages - 1);
+    const paged = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+
+    const actionLabel = (t: string) => t.replace(/_/g, ' ');
+    const actionColor = (t: string) => {
+        if (t.includes('EMAIL') || t.includes('GMAIL')) return T.blue;
+        if (t.includes('FINANCIAL') || t.includes('JOURNAL')) return T.green;
+        if (t.includes('MEDIA') || t.includes('INGEST')) return '#A855F7';
+        if (t.includes('POLICY')) return '#F59E0B';
+        return T.dim;
     };
-
-    const renderPayload = (event: HitlEvent, isExpanded: boolean) => {
-        const parsed = parsePayload(event.payload);
-        if (typeof parsed === 'string') {
-            return (
-                <pre style={{ fontSize: 14, fontFamily: 'monospace', color: '#a1a1aa', background: '#0a0a0a', padding: 12, borderRadius: 6, overflow: 'auto', maxHeight: 200, whiteSpace: 'pre-wrap', margin: 0 }}>
-                    {parsed}
-                </pre>
-            );
-        }
-        const payload = parsed;
-
-        if (event.action_type === 'GMAIL_DRAFT_PROPOSAL' || event.event_type === 'EMAIL_DRAFTED') {
-            return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#a1a1aa', fontSize: 14 }}>
-                        <Mail size={16} />
-                        <span>To: {String(payload.recipient || payload.to || '')}</span>
-                    </div>
-                    {isExpanded && (
-                        <>
-                            <div style={{ fontWeight: 600, color: '#e8e8e8', fontSize: 16 }}>
-                                Subject: {String(payload.subject || '')}
-                            </div>
-                            <div style={{ color: '#a1a1aa', fontSize: 14, lineHeight: 1.5, background: '#0a0a0a', padding: 12, borderRadius: 6, border: '1px solid #1c1c1c', fontStyle: 'italic' }}>
-                                "{String(payload.body || payload.content || '')}"
-                            </div>
-                        </>
-                    )}
-                </div>
-            );
-        }
-
-        if (event.action_type === 'FINANCIAL_JOURNAL_PROPOSAL') {
-            return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#a1a1aa', fontSize: 14 }}>
-                        <DollarSign size={16} />
-                        <span>QuickBooks Journal Entry</span>
-                    </div>
-                    {isExpanded && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            {Object.entries(payload).map(([k, v]) => (
-                                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1c1c1c50', padding: '6px 0', fontSize: 14, alignItems: 'center', gap: 8 }}>
-                                    <span style={{ color: '#a1a1aa', textTransform: 'uppercase', fontFamily: 'monospace', fontSize: 12 }}>{k}</span>
-                                    <span style={{ color: '#e8e8e8', fontFamily: 'monospace' }}>{String(v)}</span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
-        if (event.action_type === 'ENTITY_MODIFICATION' || event.action_type === 'FIELD_OVERRIDE') {
-            const evidenceChain = payload.evidence_chain as string[] | undefined;
-            const conflictDetected = payload.conflict_detected as boolean | undefined;
-            const conflictQuestion = payload.conflict_question as string | undefined;
-            const extractedFinancials = payload.extracted_financials as string[] | undefined;
-            const docMentions = payload.doc_mentions as number | undefined;
-            const relationshipType = payload.relationship_type as string | undefined;
-            const evidenceTier = payload.evidence_tier as string | undefined;
-            const roles = payload.roles as string[] | undefined;
-            const skipKeys = new Set(['evidence_chain', 'evidence_tier', 'conflict_detected', 'conflict_question', 'extracted_financials', 'doc_mentions', 'relationship_type', 'roles']);
-            const entries = Object.entries(payload).filter(([k]) => !skipKeys.has(k));
-
-            const financialColor = (line: string): string => {
-                if (line.startsWith('[TRANSACTION]')) return '#22C55E';
-                if (line.startsWith('[COVERAGE_LIMIT]')) return '#3B82F6';
-                if (line.startsWith('[THIRD_PARTY_CERT]')) return '#71717a';
-                if (line.startsWith('[BALANCE_SNAPSHOT]')) return '#F59E0B';
-                return '#a1a1aa';
-            };
-
-            const tierColor = evidenceTier === 'TIER_1_CONFIRMED' ? '#22C55E' : evidenceTier === 'TIER_2_PROBABLE' ? '#F59E0B' : '#71717a';
-
-            return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        {relationshipType && (
-                            <span style={{ fontSize: 11, fontFamily: 'monospace', fontWeight: 700, padding: '3px 8px', borderRadius: 4, background: '#C5A05915', border: '1px solid #C5A05933', color: '#C5A059', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                {relationshipType.replace(/_/g, ' ')}
-                            </span>
-                        )}
-                        <span style={{ fontSize: 11, fontFamily: 'monospace', fontWeight: 700, padding: '3px 8px', borderRadius: 4, background: event.target_type === 'VENDOR' ? '#3B82F610' : event.target_type === 'PERSON' ? '#A855F710' : '#F59E0B10', border: `1px solid ${event.target_type === 'VENDOR' ? '#3B82F633' : event.target_type === 'PERSON' ? '#A855F733' : '#F59E0B33'}`, color: event.target_type === 'VENDOR' ? '#3B82F6' : event.target_type === 'PERSON' ? '#A855F7' : '#F59E0B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                            {event.target_type}
-                        </span>
-                        {evidenceTier && (
-                            <span style={{ fontSize: 11, fontFamily: 'monospace', fontWeight: 700, padding: '3px 8px', borderRadius: 4, background: `${tierColor}10`, border: `1px solid ${tierColor}33`, color: tierColor, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                {evidenceTier.replace(/_/g, ' ')}
-                            </span>
-                        )}
-                    </div>
-
-                    {roles && roles.length > 0 && (
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                            {roles.map((role, i) => (
-                                <span key={i} style={{ fontSize: 11, fontFamily: 'monospace', padding: '2px 6px', borderRadius: 3, background: '#52525210', border: '1px solid #52525233', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                    {role}
-                                </span>
-                            ))}
-                        </div>
-                    )}
-
-                    {docMentions != null && (
-                        <span style={{ fontSize: 12, color: '#a1a1aa' }}>Referenced in {docMentions} document{docMentions !== 1 ? 's' : ''}</span>
-                    )}
-
-                    {isExpanded && (
-                        <>
-                            {extractedFinancials && extractedFinancials.length > 0 && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                    {extractedFinancials.map((line, i) => (
-                                        <div key={i} style={{ fontSize: 13, fontFamily: 'monospace', padding: '5px 8px', borderLeft: `3px solid ${financialColor(line)}`, color: financialColor(line), background: '#0a0a0a', borderRadius: '0 4px 4px 0' }}>
-                                            {line}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {conflictDetected && conflictQuestion && (
-                                <div style={{
-                                    background: '#F59E0B10', border: '2px solid #F59E0B44', padding: 14, borderRadius: 8,
-                                    display: 'flex', alignItems: 'flex-start', gap: 12,
-                                }}>
-                                    <AlertCircle size={20} color="#F59E0B" style={{ flexShrink: 0, marginTop: 2 }} />
-                                    <div>
-                                        <span style={{ color: '#F59E0B', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Conflict Detected</span>
-                                        <p style={{ color: '#e8e8e8', fontSize: 14, lineHeight: 1.5, margin: 0 }}>{conflictQuestion}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {evidenceChain && evidenceChain.length > 0 && (
-                                <div style={{ background: '#0a0a0a', padding: 10, borderRadius: 6, border: '1px solid #1c1c1c' }}>
-                                    <span style={{ fontSize: 11, color: '#a1a1aa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Evidence Chain</span>
-                                    {evidenceChain.map((msgId, i) => (
-                                        <div key={i} style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: 6, wordBreak: 'break-all' }}>
-                                            <span style={{ color: '#525252' }}>&#8627;</span> {msgId}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {entries.length > 0 && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                    {entries.map(([k, v]) => (
-                                        <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1c1c1c50', padding: '6px 0', fontSize: 13, alignItems: 'center', gap: 8 }}>
-                                            <span style={{ color: '#a1a1aa', textTransform: 'uppercase', flexShrink: 0, fontFamily: 'monospace', fontSize: 11 }}>{k}</span>
-                                            <span style={{ color: '#e8e8e8', fontFamily: 'monospace', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis' }}>{Array.isArray(v) ? v.join(', ') : String(v)}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </>
-                    )}
-                </div>
-            );
-        }
-
-        return (
-            <pre style={{ fontSize: 14, fontFamily: 'monospace', color: '#a1a1aa', background: '#0a0a0a', padding: 12, borderRadius: 6, overflow: 'auto', maxHeight: 200, whiteSpace: 'pre-wrap', margin: 0 }}>
-                {JSON.stringify(payload, null, 2)}
-            </pre>
-        );
-    };
-
-    const byTier = queue.reduce((acc, e) => {
-        const t = getTier(e);
-        if (!acc[t]) acc[t] = 0;
-        acc[t]++;
-        return acc;
-    }, {} as Record<string, number>);
-
-    const tier1Count = byTier['TIER_1_CONFIRMED'] || 0;
-    const tier2Count = byTier['TIER_2_PROBABLE'] || 0;
-    const tier3Count = byTier['TIER_3_UNCONFIRMED'] || 0;
-    const otherCount = queue.length - tier1Count - tier2Count - tier3Count;
-
-    const filteredQueue = queue.filter(e => getTier(e) === selectedTier);
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, height: '100%' }}>
-            {toasts.length > 0 && (
-                <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 50, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {toasts.map(toast => (
-                        <div
-                            key={toast.id}
-                            onClick={() => dismissToast(toast.id)}
-                            style={{
-                                cursor: 'pointer', padding: '14px 18px', borderRadius: 8, fontSize: 14, fontWeight: 500,
-                                border: `1px solid ${toast.type === 'error' ? '#E3061344' : '#22C55E44'}`,
-                                background: toast.type === 'error' ? '#E306130d' : '#22C55E0d',
-                                color: toast.type === 'error' ? '#fca5a5' : '#86efac',
-                                display: 'flex', alignItems: 'center', gap: 10, maxWidth: 400,
-                            }}
-                        >
-                            {toast.type === 'error' ? <AlertCircle size={18} style={{ flexShrink: 0 }} /> : <CheckCircle2 size={18} style={{ flexShrink: 0 }} />}
-                            {toast.message}
-                            <span style={{ marginLeft: 'auto', fontSize: 18, color: '#a1a1aa', flexShrink: 0 }}>&#10005;</span>
-                        </div>
-                    ))}
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: T.bg, color: T.text, fontFamily: "'DM Sans', sans-serif" }}>
+
+            {toast && (
+                <div onClick={() => setToast(null)} style={{
+                    position: 'fixed', top: 16, right: 16, zIndex: 999, padding: '12px 18px', borderRadius: 8,
+                    background: toast.type === 'error' ? '#E306130d' : '#22C55E0d',
+                    border: `1px solid ${toast.type === 'error' ? '#E3061344' : '#22C55E44'}`,
+                    color: toast.type === 'error' ? '#fca5a5' : '#86efac',
+                    fontSize: 13, cursor: 'pointer', maxWidth: 380,
+                }}>
+                    {toast.msg}
                 </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h2 style={{ fontSize: 24, fontWeight: 700, color: 'white', margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
-                        Action Center
-                        <span style={{
-                            padding: '4px 12px', background: '#F59E0B10', border: '1px solid #F59E0B33',
-                            color: '#F59E0B', fontSize: 13, borderRadius: 20, fontFamily: 'monospace', fontWeight: 700,
-                        }}>
-                            {queue.length} Pending
-                        </span>
-                    </h2>
-                    <p style={{ fontSize: 13, color: '#71717a', marginTop: 6, fontFamily: 'monospace', letterSpacing: '0.04em' }}>
-                        SANDBOX GOVERNANCE QUEUE
-                        <span style={{ color: '#525252', margin: '0 8px' }}>|</span>
-                        <span style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: 'normal', color: '#a1a1aa' }}>Review and authorize AI-proposed operations before execution.</span>
-                    </p>
-                </div>
-                <button
-                    onClick={fetchQueue}
-                    disabled={loading}
-                    style={{
-                        padding: '10px 18px', minHeight: 44, background: '#141414', border: '1px solid #242424',
-                        color: 'white', borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', gap: 8, opacity: loading ? 0.5 : 1,
-                    }}
-                >
-                    {loading ? <Loader2 size={18} /> : <RefreshCw size={18} />}
-                    {loading ? 'Syncing...' : 'Sync Queue'}
-                </button>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#0f0f0f', border: '1px solid #1c1c1c', borderRadius: 8, padding: 4, width: 'max-content' }}>
-                {[
-                    { key: 'TIER_1_CONFIRMED', label: 'Confirmed', count: tier1Count },
-                    { key: 'TIER_2_PROBABLE', label: 'Probable', count: tier2Count },
-                    { key: 'TIER_3_UNCONFIRMED', label: 'Unconfirmed', count: tier3Count },
-                    ...(otherCount > 0 ? [{ key: 'OTHER', label: 'Other', count: otherCount }] : []),
-                ].map(tier => (
-                    <button
-                        key={tier.key}
-                        onClick={() => setSelectedTier(tier.key)}
-                        style={{
-                            padding: '10px 20px', minHeight: 44, borderRadius: 6, border: 'none',
-                            background: selectedTier === tier.key ? '#242424' : 'transparent',
-                            color: selectedTier === tier.key ? 'white' : '#a1a1aa',
-                            fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                        }}
-                    >
-                        {tier.count} {tier.label}
+            <div style={{ padding: '20px 24px 0', flexShrink: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <div>
+                        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
+                            Action Center
+                            <span style={{ padding: '3px 10px', background: '#F59E0B10', border: '1px solid #F59E0B33', color: '#F59E0B', fontSize: 12, borderRadius: 12, fontFamily: 'monospace', fontWeight: 700 }}>
+                                {queue.length}
+                            </span>
+                        </h2>
+                        <p style={{ margin: '4px 0 0', fontSize: 12, color: T.dim, fontFamily: 'monospace' }}>
+                            HITL GOVERNANCE QUEUE — Review and authorize AI proposals
+                        </p>
+                    </div>
+                    <button onClick={fetchQueue} disabled={loading} style={{
+                        padding: '8px 16px', background: T.card, border: `1px solid ${T.border}`, color: T.text,
+                        borderRadius: 6, fontSize: 13, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1,
+                    }}>
+                        {loading ? 'Syncing...' : 'Refresh'}
                     </button>
-                ))}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+                    <select value={filterType} onChange={e => { setFilterType(e.target.value); setPage(0); }}
+                        style={{ padding: '6px 10px', background: T.card, border: `1px solid ${T.border}`, color: T.text, borderRadius: 6, fontSize: 12, fontFamily: 'monospace' }}>
+                        {actionTypes.map(t => (
+                            <option key={t} value={t}>
+                                {t === 'ALL' ? `ALL TYPES (${queue.length})` : `${actionLabel(t)} (${queue.filter(e => e.action_type === t).length})`}
+                            </option>
+                        ))}
+                    </select>
+                    <input value={search} onChange={e => { setSearch(e.target.value); setPage(0); }}
+                        placeholder="Search by ID, target, or content..."
+                        style={{ flex: 1, minWidth: 200, padding: '6px 10px', background: T.card, border: `1px solid ${T.border}`, color: T.text, borderRadius: 6, fontSize: 12, fontFamily: 'monospace', outline: 'none' }}
+                    />
+                    <span style={{ fontSize: 11, color: T.muted, fontFamily: 'monospace' }}>
+                        {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+                    </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 120px 140px', gap: 0, padding: '8px 16px', fontSize: 10, fontFamily: 'monospace', color: T.muted, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: `1px solid ${T.border}` }}>
+                    <span>Target</span>
+                    <span>Type</span>
+                    <span>Status</span>
+                    <span>Time</span>
+                    <span style={{ textAlign: 'right' }}>Actions</span>
+                </div>
             </div>
 
-            {!loading && filteredQueue.length === 0 && (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}>
-                    <CheckCircle2 size={48} color="#a1a1aa" />
-                    <p style={{ color: '#a1a1aa', fontFamily: 'monospace', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.15em', marginTop: 12 }}>INBOX ZERO &#8212; Category Empty</p>
-                </div>
-            )}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px' }}>
+                {loading && paged.length === 0 && (
+                    <div style={{ padding: 40, textAlign: 'center', color: T.dim }}>Loading queue...</div>
+                )}
+                {!loading && filtered.length === 0 && (
+                    <div style={{ padding: 40, textAlign: 'center', color: T.dim, fontFamily: 'monospace' }}>
+                        {search || filterType !== 'ALL' ? 'No matching proposals.' : 'Queue empty — all clear.'}
+                    </div>
+                )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 16, overflow: 'auto', paddingBottom: 20 }}>
-                {filteredQueue.map((event) => {
+                {paged.map(event => {
                     const eid = getEventId(event);
-                    const isApproving = approvingId === eid;
-                    const isRejecting = rejectingId === eid;
-                    const isProcessing = isApproving || isRejecting;
-                    const isExpanded = expandedId === eid;
+                    const isBusy = busyId === eid;
+                    const isOpen = expandedId === eid;
+                    const color = actionColor(event.action_type);
+
                     return (
-                        <div
-                            key={eid}
-                            style={{
-                                background: '#0f0f0f', border: `1px solid ${isExpanded ? '#C5A05944' : '#1c1c1c'}`, borderRadius: 12,
-                                display: 'flex', flexDirection: 'column', overflow: 'hidden',
-                                opacity: isProcessing ? 0.6 : 1,
-                                transition: 'border-color 0.2s, box-shadow 0.2s',
-                                boxShadow: isExpanded ? '0 0 0 1px #C5A05922' : 'none',
-                            }}
-                        >
+                        <div key={eid} style={{ borderBottom: `1px solid ${T.border}` }}>
                             <div
-                                onClick={() => setExpandedId(isExpanded ? null : eid)}
-                                style={{ padding: 16, borderBottom: '1px solid #1c1c1c', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', cursor: 'pointer', transition: 'background 0.15s' }}
-                                onMouseEnter={e => { e.currentTarget.style.background = '#141414'; }}
-                                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                                onClick={() => setExpandedId(isOpen ? null : eid)}
+                                style={{
+                                    display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 120px 140px', gap: 0,
+                                    padding: '12px 16px', alignItems: 'center', cursor: 'pointer',
+                                    background: isOpen ? T.card : 'transparent',
+                                    transition: 'background 0.1s',
+                                }}
+                                onMouseEnter={e => { if (!isOpen) e.currentTarget.style.background = '#0f0f0f'; }}
+                                onMouseLeave={e => { if (!isOpen) e.currentTarget.style.background = 'transparent'; }}
                             >
-                                <div>
-                                    <span style={{ fontSize: 12, fontFamily: 'monospace', fontWeight: 700, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 4 }}>
-                                        {event.action_type}
-                                    </span>
-                                    <h3 style={{ color: 'white', fontWeight: 700, fontSize: 18, margin: 0 }}>
+                                <div style={{ overflow: 'hidden' }}>
+                                    <div style={{ fontSize: 13, fontWeight: 600, color: T.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {event.target_id}
-                                    </h3>
-                                    {isExpanded && (
-                                        <span style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace', display: 'block', marginTop: 2 }} title={eid}>
-                                            {eid}
-                                        </span>
-                                    )}
+                                    </div>
+                                    <div style={{ fontSize: 11, color: T.muted, fontFamily: 'monospace', marginTop: 2 }}>
+                                        {event.target_type}
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                                    <span style={{ fontSize: 13, color: '#a1a1aa', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
-                                        {new Date(event.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                <div>
+                                    <span style={{
+                                        fontSize: 10, fontFamily: 'monospace', fontWeight: 700, padding: '2px 8px',
+                                        borderRadius: 4, background: `${color}12`, border: `1px solid ${color}30`,
+                                        color, textTransform: 'uppercase', letterSpacing: '0.03em', whiteSpace: 'nowrap',
+                                    }}>
+                                        {actionLabel(event.action_type)}
                                     </span>
-                                    {isExpanded ? <ChevronUp size={16} color="#a1a1aa" /> : <ChevronDown size={16} color="#525252" />}
+                                </div>
+                                <div>
+                                    <span style={{
+                                        fontSize: 10, fontFamily: 'monospace', fontWeight: 600, padding: '2px 8px',
+                                        borderRadius: 4, background: '#F59E0B10', border: '1px solid #F59E0B30',
+                                        color: '#F59E0B', textTransform: 'uppercase',
+                                    }}>
+                                        {event.status}
+                                    </span>
+                                </div>
+                                <span style={{ fontSize: 11, color: T.dim, fontFamily: 'monospace' }}>
+                                    {new Date(event.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
+                                    <button
+                                        onClick={() => handleAction(event, 'approve')}
+                                        disabled={isBusy}
+                                        title="Approve"
+                                        style={{
+                                            padding: '5px 12px', fontSize: 11, fontWeight: 700, fontFamily: 'monospace',
+                                            background: '#C5A0590d', border: `1px solid ${T.gold}33`, color: T.gold,
+                                            borderRadius: 5, cursor: isBusy ? 'not-allowed' : 'pointer',
+                                            opacity: isBusy ? 0.4 : 1, textTransform: 'uppercase', letterSpacing: '0.03em',
+                                        }}
+                                    >
+                                        {isBusy ? '...' : 'Approve'}
+                                    </button>
+                                    <button
+                                        onClick={() => handleAction(event, 'reject')}
+                                        disabled={isBusy}
+                                        title="Reject"
+                                        style={{
+                                            padding: '5px 12px', fontSize: 11, fontWeight: 700, fontFamily: 'monospace',
+                                            background: 'transparent', border: `1px solid ${T.red}33`, color: T.red,
+                                            borderRadius: 5, cursor: isBusy ? 'not-allowed' : 'pointer',
+                                            opacity: isBusy ? 0.4 : 1, textTransform: 'uppercase', letterSpacing: '0.03em',
+                                        }}
+                                    >
+                                        {isBusy ? '...' : 'Reject'}
+                                    </button>
                                 </div>
                             </div>
 
-                            <div style={{ padding: 16, flex: 1 }}>
-                                {renderPayload(event, isExpanded)}
-                                {isExpanded && event.reason && (
-                                    <p style={{ marginTop: 14, fontSize: 14, color: '#a1a1aa', fontStyle: 'italic', borderLeft: '3px solid #242424', paddingLeft: 12, lineHeight: 1.5 }}>
-                                        "{event.reason}"
-                                    </p>
-                                )}
-                            </div>
+                            {isOpen && (
+                                <div style={{ padding: '0 16px 16px', background: T.card }}>
+                                    <div style={{ fontSize: 11, color: T.muted, fontFamily: 'monospace', marginBottom: 8 }}>
+                                        ID: {eid}
+                                    </div>
 
-                            {isExpanded && (
-                                <div style={{ padding: 12, borderTop: '1px solid #1c1c1c', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                                    <button
-                                        id={`reject-${eid}`}
-                                        onClick={(e) => { e.stopPropagation(); handleReject(event); }}
-                                        disabled={isProcessing}
-                                        style={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                                            minHeight: 44, borderRadius: 8, border: '1px solid #E3061333',
-                                            background: 'transparent', color: '#E30613', fontSize: 13,
-                                            fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em',
-                                            cursor: isProcessing ? 'not-allowed' : 'pointer', opacity: isProcessing ? 0.5 : 1,
-                                        }}
-                                        onMouseEnter={e => { if (!isProcessing) e.currentTarget.style.background = '#E306130d'; }}
-                                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-                                    >
-                                        {isRejecting ? <Loader2 size={16} /> : <XCircle size={16} />}
-                                        {isRejecting ? 'Archiving...' : 'Reject'}
-                                    </button>
-                                    <button
-                                        id={`approve-${eid}`}
-                                        onClick={(e) => { e.stopPropagation(); handleApprove(event); }}
-                                        disabled={isProcessing}
-                                        style={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                                            minHeight: 44, borderRadius: 8, border: '1px solid #C5A05933',
-                                            background: '#C5A0590d', color: '#C5A059', fontSize: 13,
-                                            fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em',
-                                            cursor: isProcessing ? 'not-allowed' : 'pointer', opacity: isProcessing ? 0.5 : 1,
-                                        }}
-                                        onMouseEnter={e => { if (!isProcessing) e.currentTarget.style.background = '#C5A0591a'; }}
-                                        onMouseLeave={e => { e.currentTarget.style.background = '#C5A0590d'; }}
-                                    >
-                                        {isApproving ? <Loader2 size={16} /> : <CheckCircle2 size={16} />}
-                                        {isApproving ? 'Applying...' : 'Approve'}
-                                    </button>
+                                    {event.reason && (
+                                        <p style={{ fontSize: 13, color: T.dim, fontStyle: 'italic', borderLeft: `3px solid ${T.border}`, paddingLeft: 12, margin: '0 0 12px', lineHeight: 1.5 }}>
+                                            "{event.reason}"
+                                        </p>
+                                    )}
+
+                                    <div style={{ background: T.bg, borderRadius: 6, border: `1px solid ${T.border}`, padding: 12, overflow: 'auto', maxHeight: 300 }}>
+                                        {(() => {
+                                            const p = parsePayload(event.payload);
+                                            if (typeof p === 'string') return <pre style={{ margin: 0, fontSize: 12, fontFamily: 'monospace', color: T.dim, whiteSpace: 'pre-wrap' }}>{p}</pre>;
+                                            return (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                                    {Object.entries(p).map(([k, v]) => (
+                                                        <div key={k} style={{ display: 'flex', gap: 12, fontSize: 12, padding: '4px 0', borderBottom: `1px solid ${T.border}50` }}>
+                                                            <span style={{ color: T.muted, fontFamily: 'monospace', fontSize: 11, textTransform: 'uppercase', minWidth: 140, flexShrink: 0 }}>{k}</span>
+                                                            <span style={{ color: T.text, fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                                                                {Array.isArray(v) ? v.join(', ') : typeof v === 'object' && v !== null ? JSON.stringify(v, null, 2) : String(v)}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
                                 </div>
                             )}
                         </div>
                     );
                 })}
             </div>
+
+            {totalPages > 1 && (
+                <div style={{ padding: '10px 24px', borderTop: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, background: T.surface }}>
+                    <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={safePage === 0}
+                        style={{ padding: '6px 14px', background: T.card, border: `1px solid ${T.border}`, color: safePage === 0 ? T.muted : T.text, borderRadius: 5, fontSize: 12, cursor: safePage === 0 ? 'not-allowed' : 'pointer' }}>
+                        Previous
+                    </button>
+                    <span style={{ fontSize: 12, color: T.dim, fontFamily: 'monospace' }}>
+                        Page {safePage + 1} of {totalPages} — showing {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}
+                    </span>
+                    <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={safePage >= totalPages - 1}
+                        style={{ padding: '6px 14px', background: T.card, border: `1px solid ${T.border}`, color: safePage >= totalPages - 1 ? T.muted : T.text, borderRadius: 5, fontSize: 12, cursor: safePage >= totalPages - 1 ? 'not-allowed' : 'pointer' }}>
+                        Next
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

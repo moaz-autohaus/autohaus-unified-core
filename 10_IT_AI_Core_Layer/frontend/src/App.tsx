@@ -24,7 +24,7 @@ function App() {
             </button>
             <span style={{ color: "#525252", fontSize: 9, fontFamily: "monospace" }}>CIL GOVERNANCE API</span>
           </div>
-          <div style={{ flex: 1, overflow: "auto", padding: 24 }}>
+          <div style={{ flex: 1, overflow: "hidden" }}>
             <ActionCenter />
           </div>
         </div>
