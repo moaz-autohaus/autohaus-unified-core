@@ -88,6 +88,16 @@ async def ingest_media(
                     )
                     claims.append(claim)
 
+        # Run conflict detector on extracted claims to catch stubs, mismatches, or conflicts
+        from pipeline.conflict_detector import process_claim, log_claim_processing_result
+        bq = BigQueryClient()
+        for claim in claims:
+            try:
+                res = await process_claim(claim, bq)
+                log_claim_processing_result(res)
+            except Exception as e:
+                logger.error(f"Conflict detector error on claim {claim.claim_id}: {e}")
+
         # Step 3: Create HITL Proposal
         bq = BigQueryClient()
         claims_dicts = [c.model_dump(mode='json') for c in claims]

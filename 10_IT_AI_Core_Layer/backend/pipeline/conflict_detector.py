@@ -402,6 +402,24 @@ async def process_claim(
                 client.query(up_q, job_config=j_config).result()
             except Exception as e:
                 logger.error(f"Failed updating claim status {claim.claim_id}: {e}")
+                
+            # Handle STUB_PENDING_VIN or ENTITY_NAME_MISMATCH
+            if claim.source_lineage and claim.source_lineage.get("stub_type") == "STUB_PENDING_VIN":
+                try:
+                    from database.open_questions import create_question
+                    create_question(
+                        content=f"Document explicitly stated VIN was not provided. Need manual VIN validation for document {claim.input_reference}.",
+                        source_type="MISSING_ATTRIBUTE",
+                        source_id=str(claim.claim_id),
+                        owner_role="STANDARD",
+                        dependency_list=[],
+                        lineage_pointer={"stub": "STUB_PENDING_VIN", "doc": claim.input_reference},
+                        bq_client=client
+                    )
+                    actions.append("OPEN_QUESTION_CREATED")
+                except Exception as e:
+                    logger.error(f"Failed creating stub question for {claim.claim_id}: {e}")
+                    
         actions.append("CLAIM_STAGED")
 
 

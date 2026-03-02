@@ -23,15 +23,51 @@ def unpack_to_claims(raw_response: dict,
                      input_reference: str,
                      source_lineage: dict) -> List[ExtractedClaim]:
     claims = []
+    
+    ontology_valid_names = []
+    try:
+        ontology_path = os.path.join(os.path.dirname(__file__), '..', 'registry', 'business_ontology.json')
+        if os.path.exists(ontology_path):
+            with open(ontology_path, 'r') as f:
+                ontology = json.load(f)
+            parent = ontology.get("business_structure", {}).get("parent_entity", {})
+            if parent.get("legal_name"): ontology_valid_names.append(parent.get("legal_name").lower())
+            if parent.get("display_name"): ontology_valid_names.append(parent.get("display_name").lower())
+            lanes = ontology.get("business_structure", {}).get("operating_lanes", [])
+            for lane in lanes:
+                if lane.get("legal_name"): ontology_valid_names.append(lane.get("legal_name").lower())
+                if lane.get("alias"): ontology_valid_names.append(lane.get("alias").lower())
+    except Exception as e:
+        logger.error(f"Failed to load ontology: {e}")
+
     for key, val in raw_response.items():
         if isinstance(val, list):
             for item in val:
                 if isinstance(item, dict) and "extracted_value" in item:
                     try:
+                        target_field = item.get("target_field", key)
                         val_str = str(item.get("extracted_value", ""))
                         lineage = dict(source_lineage)
+                        
                         if val_str == "VIN_NOT_PROVIDED":
                             lineage["stub_type"] = "STUB_PENDING_VIN"
+                        
+                        if target_field == "bill_to_entity_name" and raw_response.get("doc_type") == "VENDOR_INVOICE":
+                            if val_str.lower() not in ontology_valid_names:
+                                from database.open_questions import raise_open_question
+                                from database.bigquery_client import BigQueryClient
+                                bq_client = BigQueryClient().client
+                                raise_open_question(
+                                    bq_client=bq_client,
+                                    question_type="ENTITY_MATCH_FAILURE",
+                                    priority="HIGH",
+                                    context={
+                                        "input_reference": input_reference,
+                                        "attempted_name": val_str
+                                    },
+                                    description=f"Extracted bill_to_entity_name '{val_str}' does not match any registered entity."
+                                )
+                                val_str = "ENTITY_NAME_MISMATCH"
                         
                         claim_data = {
                             "source": source.value if hasattr(source, "value") else source,
@@ -39,7 +75,7 @@ def unpack_to_claims(raw_response: dict,
                             "input_reference": input_reference,
                             "source_lineage": lineage,
                             "entity_type": item.get("entity_type", "UNKNOWN"),
-                            "target_field": item.get("target_field", key),
+                            "target_field": target_field,
                             "extracted_value": val_str,
                             "confidence": float(item.get("confidence", 1.0))
                         }
@@ -163,16 +199,19 @@ Identify:
 3. Entity Names (Transport Carrier, Insurance Carrier, Auction House, Bank)
 4. Dates (Purchase Date, Policy Start/End)
 5. Document Type (AUCTION_RECEIPT, BOL, VENDOR_INVOICE, INSURANCE_CERT, BANK_STMT, TAX_DOC)
+6. For VENDOR_INVOICE documents ONLY, additionally extract these into a "vendor_invoice_fields" array: 
+   vendor_name, vendor_address, vendor_phone, vendor_email, bill_to_entity_name, bill_to_address, bill_to_account_number, contact_name, vehicle_year, vehicle_make, vehicle_model, vehicle_mileage, vehicle_stock_number, invoice_number, invoice_date, due_date, payment_terms, subtotal, tax_amount, total_amount, line_items (encode the entire array as a single JSON string), notes.
+   Ensure bill_to_entity_name is always present if it exists.
 
 Sender: {sender}
 Subject: {subject}
 Filename: {filename}
 
-Return valid JSON ONLY, using arrays of extracted fact objects.
+Return valid JSON ONLY, using arrays of extracted fact objects partitioned freely by key (e.g. "vins", "financials", "entities", "dates", "vendor_invoice_fields", etc).
 Each extracted fact object MUST include exactly these fields:
   - confidence (float between 0.0 and 1.0)
   - entity_type (must be one of: VEHICLE, PERSON, VENDOR, DOCUMENT, UNKNOWN)
-  - target_field (string, e.g., 'vin', 'transport_cost', 'start_date')
+  - target_field (string, e.g., 'vin', 'bill_to_entity_name', 'subtotal', 'line_items')
   - extracted_value (string, the asserted value)
 
 Example output:

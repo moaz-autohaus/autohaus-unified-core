@@ -350,6 +350,35 @@ async def apply(bq_client, hitl_event_id: str) -> Dict[Any, Any]:
                  
              diff = {"action": "ENTITY_PATCH", "target": target_id, "changes": payload, "authority": authority}
              rebuild_entity_facts(bq_client, target_id)
+             
+        elif action in (ActionType.MEDIA_INGEST, ActionType.TIER_0_EXTRACTION):
+            for act in payload.get("actions", []):
+                if act.get("type") == "APPLY_CLAIMS":
+                    claims = act.get("params", {}).get("claims", [])
+                    rows_to_insert = []
+                    for claim in claims:
+                        rows_to_insert.append({
+                            "claim_id": claim.get("claim_id"),
+                            "target_entity_id": claim.get("target_entity_id"),
+                            "target_field": claim.get("target_field"),
+                            "extracted_value": str(claim.get("extracted_value")) if claim.get("extracted_value") is not None else None,
+                            "entity_type": claim.get("entity_type"),
+                            "confidence": float(claim.get("confidence", 1.0)),
+                            "status": "AUTO_ENRICHED",
+                            "source": claim.get("source", "MEDIA"),
+                            "extractor_identity": claim.get("extractor_identity"),
+                            "input_reference": claim.get("input_reference"),
+                            "source_lineage": safe_json_dumps(claim.get("source_lineage")),
+                            "created_at": claim.get("created_at") or now,
+                            "updated_at": now
+                        })
+                    
+                    if rows_to_insert:
+                        errs = bq_client.insert_rows_json("autohaus-infrastructure.autohaus_cil.extraction_claims", rows_to_insert)
+                        if errs:
+                            logger.error(f"[HITL] failed extraction_claims write: {errs}")
+                            
+            diff = {"action": f"{action}_APPLIED", "target": target_id}
     except Exception as e:
         logger.error(f"[HITL] Apply failed for {hitl_event_id}: {e}")
         return {"status": "ERROR", "reason": str(e)}
