@@ -35,6 +35,9 @@ from google.cloud import bigquery
 import google.auth
 from dotenv import load_dotenv
 
+from database.policy_engine import get_policy
+from pipeline.hydration_engine import HydrationEngine, ContextPackage
+
 load_dotenv(os.path.expanduser("~/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/auth/.env"))
 
 # ---------------------------------------------------------------------------
@@ -42,6 +45,8 @@ load_dotenv(os.path.expanduser("~/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/aut
 # ---------------------------------------------------------------------------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("autohaus.logistics")
+
+hydration_engine = HydrationEngine()
 
 PROJECT_ID = "autohaus-infrastructure"
 DATASET_ID = "autohaus_cil"
@@ -127,16 +132,104 @@ def dispatch_tracking_sms(phone: str, job_id: str, driver_id: str, entity: str):
 async def update_location(payload: LocationUpdate, background_tasks: BackgroundTasks):
     """
     AppSheet Webhook endpoint for Driver GPS tracking.
+    Wrapped in Normalize → Validate → Hydrate → Log pipeline.
     """
     timestamp = datetime.now(timezone.utc).isoformat()
     
+    # Step 1: Normalize
+    status = payload.status.upper().strip()
+    if not (-90.0 <= payload.latitude <= 90.0 and -180.0 <= payload.longitude <= 180.0):
+        raise HTTPException(status_code=400, detail={
+            "error": "INVALID_COORDINATES",
+            "message": "GPS coordinates out of valid range"
+        })
+
+    # Step 2: Validate
+    allowed_statuses = get_policy("LOGISTICS", "logistics_valid_statuses")
+    if not allowed_statuses:
+        allowed_statuses = ["EN_ROUTE", "DELIVERED", "IDLE", "BREAKDOWN"]
+    elif isinstance(allowed_statuses, str):
+        allowed_statuses = [s.strip().upper() for s in allowed_statuses.split(",")]
+    else:
+        allowed_statuses = [str(s).upper() for s in allowed_statuses]
+
+    if status not in allowed_statuses:
+        raise HTTPException(status_code=400, detail={
+            "error": "INVALID_STATUS",
+            "allowed_values": allowed_statuses,
+            "received": status
+        })
+
+    bq = _get_bq_client()
+    if bq:
+        driver_query = f"""
+            SELECT person_id 
+            FROM `{PROJECT_ID}.{DATASET_ID}.master_person_graph`
+            WHERE person_id = @driver_id
+            LIMIT 1
+        """
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[bigquery.ScalarQueryParameter("driver_id", "STRING", payload.driver_id)]
+        )
+        try:
+            results = list(bq.query(driver_query, job_config=job_config).result())
+            if len(results) == 0:
+                raise HTTPException(status_code=404, detail={
+                    "error": "DRIVER_NOT_FOUND",
+                    "driver_id": payload.driver_id
+                })
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"[LOGISTICS] Could not validate Driver ID against BQ: {e}")
+
+    # Step 3: Hydrate
+    context_package = None
+    hydrated = False
+    try:
+        context_package = await hydration_engine.build_context_package({
+            "person_id": payload.driver_id,
+            "input_domain": "LOGISTICS"
+        })
+        hydrated = True
+    except Exception as e:
+        logger.warning(f"[LOGISTICS] Hydration failed: {e}")
+        context_package = ContextPackage(input_reference=payload.driver_id)
+
+    # Step 4: Log (Event Spine first)
+    if bq:
+        event_row = {
+            "event_id": str(uuid_lib.uuid4()),
+            "event_type": "LOCATION_UPDATE",
+            "timestamp": timestamp,
+            "actor_type": "PERSON",
+            "actor_id": payload.driver_id,
+            "actor_role": "DRIVER",
+            "target_type": "LOGISTICS_JOB",
+            "target_id": payload.job_id,
+            "payload": json.dumps({
+                "coordinates": {"lat": payload.latitude, "lng": payload.longitude},
+                "status": status,
+                "context_package_hydrated": hydrated,
+                "recorded_at": timestamp
+            }),
+            "metadata": None,
+            "idempotency_key": f"loc_{payload.job_id}_{timestamp}"
+        }
+        try:
+            errs = bq.insert_rows_json(f"{PROJECT_ID}.{DATASET_ID}.cil_events", [event_row])
+            if errs:
+                logger.error(f"[LOGISTICS] cil_events insert failed: {errs}")
+        except Exception as e:
+            logger.error(f"[LOGISTICS] cil_events logging failed: {e}")
+
     logger.info(
         f"[LOGISTICS UPDATE] Job {payload.job_id} | Driver {payload.driver_id} | "
-        f"Status: {payload.status} | Location: {payload.latitude}, {payload.longitude}"
+        f"Status: {status} | Location: {payload.latitude}, {payload.longitude}"
     )
 
-    # 1. Dispatch SMS if EN_ROUTE (AppSheet trigger)
-    if payload.status == "EN_ROUTE" and payload.customer_phone:
+    # Dispatch SMS if EN_ROUTE
+    if status == "EN_ROUTE" and payload.customer_phone:
         background_tasks.add_task(
             dispatch_tracking_sms,
             payload.customer_phone,
@@ -145,14 +238,14 @@ async def update_location(payload: LocationUpdate, background_tasks: BackgroundT
             payload.entity
         )
 
-    # 2. Write location trace to BigQuery Audit Ledger
-    client = _get_bq_client()
+    # Continue to system_audit_ledger
+    client = bq
     if client:
         try:
             audit_record = {
                 "event_id": str(uuid_lib.uuid4()),
                 "timestamp": timestamp,
-                "action": f"LOGISTICS_{payload.status}",
+                "action": f"LOGISTICS_{status}",
                 "entity_id": payload.job_id,
                 "entity_type": "LOGISTICS_JOB",
                 "performed_by": payload.driver_id,
@@ -160,7 +253,8 @@ async def update_location(payload: LocationUpdate, background_tasks: BackgroundT
                     "latitude": payload.latitude,
                     "longitude": payload.longitude,
                     "entity": payload.entity,
-                    "status": payload.status
+                    "status": status,
+                    "context_package": context_package.model_dump(mode='json') if context_package else None
                 }),
             }
             errors = client.insert_rows_json(LEDGER_TABLE, [audit_record])

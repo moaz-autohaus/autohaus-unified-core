@@ -152,7 +152,13 @@ def _call_gemini(prompt: str, use_pro: bool = False) -> Optional[dict]:
         genai.configure(api_key=api_key)
         
         model_name = "gemini-flash-latest" if not use_pro else "gemini-pro-latest"
-        model = genai.GenerativeModel(model_name)
+        model = genai.GenerativeModel(
+            model_name,
+            generation_config=genai.GenerationConfig(
+                temperature=0.0,
+                response_mime_type="application/json"
+            )
+        )
         
         response = model.generate_content(prompt)
         text = response.text.strip()

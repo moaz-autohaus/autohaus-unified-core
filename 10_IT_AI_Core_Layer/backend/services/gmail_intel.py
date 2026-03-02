@@ -11,8 +11,35 @@ from database.bigquery_client import BigQueryClient
 from agents.classifier_agent import EmailClassifier
 from integrations.google_workspace_service import WorkspaceService
 from pipeline.hitl_service import propose
+from models.claims import ExtractedClaim, ClaimSource
 
 logger = logging.getLogger("autohaus.gmail_intel")
+
+def unpack_to_claims(raw_response: dict, 
+                     source: ClaimSource,
+                     extractor_identity: str,
+                     input_reference: str,
+                     source_lineage: dict) -> List[ExtractedClaim]:
+    claims = []
+    for key, val in raw_response.items():
+        if isinstance(val, list):
+            for item in val:
+                if isinstance(item, dict) and "extracted_value" in item:
+                    try:
+                        claim_data = {
+                            "source": source.value if hasattr(source, "value") else source,
+                            "extractor_identity": extractor_identity,
+                            "input_reference": input_reference,
+                            "source_lineage": source_lineage,
+                            "entity_type": item.get("entity_type", "UNKNOWN"),
+                            "target_field": item.get("target_field", key),
+                            "extracted_value": str(item.get("extracted_value", "")),
+                            "confidence": float(item.get("confidence", 1.0))
+                        }
+                        claims.append(ExtractedClaim.from_gemini_response(claim_data))
+                    except Exception as e:
+                        logger.error(f"Failed to unpack claim from {item}: {e}")
+    return claims
 
 ACCOUNTS_ORDER = [
     "ahsin@autohausia.com", 
@@ -79,8 +106,9 @@ class GmailIntelService:
                         stats["categories"][cat] = stats["categories"].get(cat, 0) + 1
                         
                         entities = json.loads(result["extracted_entities"])
-                        stats["vins"].extend(entities.get("vins", []))
-                        stats["vendors"].extend(entities.get("vendors", []))
+                        def get_val(x): return x.get("extracted_value") if isinstance(x, dict) else x
+                        stats["vins"].extend([get_val(v) for v in entities.get("vins", [])])
+                        stats["vendors"].extend([get_val(v) for v in entities.get("vendors", [])])
                         if result["has_attachments"]:
                             stats["attachments"] += 1
 
@@ -137,6 +165,27 @@ class GmailIntelService:
         extracted_entities = {}
         if category not in ["MARKETING", "PERSONAL", "TURO_CALIFORNIA"]:
             extracted_entities = await self._extract_entities(body, sender)
+            
+            # Hydrate into ExtractedClaim framework
+            lineage = {
+                "model": "gemini-1.5-flash",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+            claims = unpack_to_claims(
+                raw_response=extracted_entities,
+                source=ClaimSource.GMAIL,
+                extractor_identity="gmail_intel._extract_entities",
+                input_reference=msg_id,
+                source_lineage=lineage
+            )
+            # Claims are assembled; Task 1.2 completed for this node. Pipeline will handle database persistence in Task 2.
+            from pipeline.conflict_detector import process_claim, log_claim_processing_result
+            for claim in claims:
+                try:
+                    result = await process_claim(claim, self.bq)
+                    log_claim_processing_result(result)
+                except Exception as e:
+                    logger.error(f"[GMAIL INTEL] Conflict detector error on claim {claim.claim_id}: {e}")
 
         # 4. Attachments
         attachments = self._get_attachments(msg)
@@ -176,8 +225,11 @@ class GmailIntelService:
         account = row["email_account"]
         category = row["classification"]
 
+        def get_val(x): return x.get("extracted_value") if isinstance(x, dict) else x
+
         # A. Vendor Proposals
-        for vendor in entities.get("vendors", []):
+        for vendor_raw in entities.get("vendors", []):
+            vendor = get_val(vendor_raw)
             propose(
                 bq_client=self.bq.client,
                 actor_user_id="GMAIL_INTEL",
@@ -195,7 +247,8 @@ class GmailIntelService:
             )
 
         # B. Vehicle Proposals
-        for vin in entities.get("vins", []):
+        for vin_raw in entities.get("vins", []):
+            vin = get_val(vin_raw)
             propose(
                 bq_client=self.bq.client,
                 actor_user_id="GMAIL_INTEL",
@@ -214,7 +267,8 @@ class GmailIntelService:
 
         # C. Lead Proposals
         if category in ["CUSTOMER_LEAD", "LEAD_INQUIRY"]:
-            name = entities.get("persons", ["Unknown"])[0] if entities.get("persons") else "Unknown"
+            persons_list = entities.get("persons", [])
+            name = get_val(persons_list[0]) if persons_list else "Unknown"
             propose(
                 bq_client=self.bq.client,
                 actor_user_id="GMAIL_INTEL",
@@ -232,6 +286,9 @@ class GmailIntelService:
 
         # D. Insurance Proposals
         if category == "INSURANCE_CORRESPONDENCE":
+            vendors_list = entities.get("vendors", [])
+            carrier = get_val(vendors_list[0]) if vendors_list else "Unknown"
+            
             propose(
                 bq_client=self.bq.client,
                 actor_user_id="GMAIL_INTEL",
@@ -241,19 +298,42 @@ class GmailIntelService:
                 target_id=message_id,
                 payload={
                     "source": "GMAIL_SCAN",
-                    "carrier": entities.get("vendors", ["Unknown"])[0] if entities.get("vendors") else "Unknown",
-                    "policy_ref": entities.get("policy_ref", "Check Attachment")
+                    "carrier": carrier,
+                    "policy_ref": get_val(entities.get("policy_ref")) or "Check Attachment"
                 },
                 reason="Insurance-related correspondence detected requiring policy update."
             )
 
     async def _extract_entities(self, body: str, sender: str) -> dict:
         import google.generativeai as genai
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(
+            "gemini-1.5-flash",
+            generation_config=genai.GenerationConfig(
+                temperature=0.0,
+                response_mime_type="application/json"
+            )
+        )
         prompt = f"""Extract data from this email for an auto dealership. 
 Identify: VINS, Dollar Amounts, Vendor Names.
 Sender: {sender}. Body: {body[:3000]}
-Return JSON only: {{"vins": [], "financials": [], "vendors": []}}"""
+
+Return valid JSON ONLY, using arrays of extracted fact objects.
+Each extracted fact object MUST include exactly these fields:
+  - confidence (float between 0.0 and 1.0)
+  - entity_type (must be one of: VEHICLE, PERSON, VENDOR, DOCUMENT, UNKNOWN)
+  - target_field (string, e.g., 'vin', 'purchase_price', 'name')
+  - extracted_value (string, the asserted value)
+
+Example output:
+{{
+  "vins": [
+    {{"extracted_value": "WBA123...", "confidence": 0.95, "entity_type": "VEHICLE", "target_field": "vin"}}
+  ],
+  "financials": [],
+  "vendors": [
+    {{"extracted_value": "Acme Transport", "confidence": 0.90, "entity_type": "VENDOR", "target_field": "vendor_name"}}
+  ]
+}}"""
         try:
             res = await model.generate_content_async(prompt)
             return json.loads(res.text.strip().strip("```json").strip("```"))
