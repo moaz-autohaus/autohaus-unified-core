@@ -65,9 +65,32 @@ async def ingest_media(
         else:
             from pipeline.extraction_engine import classify_document, extract_fields
             from models.claims import ClaimSource, ExtractedClaim
+            import asyncio
+            from concurrent.futures import ThreadPoolExecutor
+            
             text_content = content.decode("utf-8", errors="ignore")
-            doc_type, conf = classify_document(text_content)
-            extracted_data = extract_fields(text_content, doc_type, file_id) or {}
+            loop = asyncio.get_running_loop()
+            
+            try:
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    doc_type, conf = await asyncio.wait_for(
+                        loop.run_in_executor(executor, classify_document, text_content),
+                        timeout=30.0
+                    )
+                    extracted_data = await asyncio.wait_for(
+                        loop.run_in_executor(executor, extract_fields, text_content, doc_type, file_id),
+                        timeout=45.0
+                    )
+                    if extracted_data is None:
+                        extracted_data = {}
+            except asyncio.TimeoutError:
+                logger.error("Timeout during Gemini text extraction")
+                extracted_data = {}
+                doc_type = "UNKNOWN"
+            except Exception as e:
+                logger.error(f"Error during Gemini text extraction: {e}")
+                extracted_data = {}
+                doc_type = "UNKNOWN"
             
             if extracted_data and "fields" in extracted_data:
                 lineage = {
@@ -88,15 +111,8 @@ async def ingest_media(
                     )
                     claims.append(claim)
 
-        # Run conflict detector on extracted claims to catch stubs, mismatches, or conflicts
-        from pipeline.conflict_detector import process_claim, log_claim_processing_result
-        bq = BigQueryClient()
-        for claim in claims:
-            try:
-                res = await process_claim(claim, bq)
-                log_claim_processing_result(res)
-            except Exception as e:
-                logger.error(f"Conflict detector error on claim {claim.claim_id}: {e}")
+        # Skip synchronous/sequential conflict detection here to prevent timeouts
+        # The background batch process or startup routine will pick these up automatically.
 
         # Step 3: Create HITL Proposal
         bq = BigQueryClient()
