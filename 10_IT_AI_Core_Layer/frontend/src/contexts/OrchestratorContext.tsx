@@ -1,21 +1,21 @@
 import { useState, useEffect, useRef, useCallback, createContext, useContext } from "react";
 
 export const T = {
-  bg:       "#080808",
-  surface:  "#0f0f0f",
+  bg: "#080808",
+  surface: "#0f0f0f",
   elevated: "#141414",
-  border:   "#1c1c1c",
-  border2:  "#242424",
-  gold:     "#C5A059",
-  goldDim:  "#8a6d3b",
-  red:      "#E30613",
-  green:    "#22c55e",
-  blue:     "#3b82f6",
-  purple:   "#a78bfa",
-  dim:      "#525252",
-  muted:    "#3a3a3a",
-  text:     "#e8e8e8",
-  textDim:  "#888888",
+  border: "#1c1c1c",
+  border2: "#242424",
+  gold: "#C5A059",
+  goldDim: "#8a6d3b",
+  red: "#E30613",
+  green: "#22c55e",
+  blue: "#3b82f6",
+  purple: "#a78bfa",
+  dim: "#525252",
+  muted: "#3a3a3a",
+  text: "#e8e8e8",
+  textDim: "#888888",
 };
 
 export interface User {
@@ -96,10 +96,10 @@ export interface InventoryItem {
 }
 
 export const USERS: Record<string, User> = {
-  AHSIN:  { id: "AHSIN_CEO",       name: "Ahsin",  role: "CEO",       access: "SOVEREIGN",  entities: ["ALL"] },
-  MOAZ:   { id: "MOAZ_LOGISTICS",  name: "Moaz",   role: "Logistics", access: "FIELD",      entities: ["FLUIDITRUCK","CARLUX"] },
-  ASIM:   { id: "ASIM_SALES",      name: "Asim",   role: "Sales/Ops", access: "STANDARD",   entities: ["KAMM","AUTOHAUS_SERVICES"] },
-  MOHSIN: { id: "MOHSIN_OPS",      name: "Mohsin", role: "Lane B Ops",access: "STANDARD",   entities: ["ASTROLOGISTICS","AUTOHAUS_SERVICES"] },
+  AHSIN: { id: "AHSIN_CEO", name: "Ahsin", role: "CEO", access: "SOVEREIGN", entities: ["ALL"] },
+  MOAZ: { id: "MOAZ_LOGISTICS", name: "Moaz", role: "Logistics", access: "FIELD", entities: ["FLUIDITRUCK", "CARLUX"] },
+  ASIM: { id: "ASIM_SALES", name: "Asim", role: "Sales/Ops", access: "STANDARD", entities: ["KAMM", "AUTOHAUS_SERVICES"] },
+  MOHSIN: { id: "MOHSIN_OPS", name: "Mohsin", role: "Lane B Ops", access: "STANDARD", entities: ["ASTROLOGISTICS", "AUTOHAUS_SERVICES"] },
 };
 
 export const FINANCE_DATA = [
@@ -112,57 +112,57 @@ export const FINANCE_DATA = [
 ];
 
 export const TWIN_FLAGS: Finding[] = [
-  { zone: "Engine Bay",   issue: "Oil seepage detected — valve cover gasket",     severity: "RED",    source: "Mechanic Audio", confidence: 94 },
-  { zone: "Subframe",     issue: "Surface oxidation — minor rust present",         severity: "YELLOW", source: "Gemini Veo",     confidence: 88 },
-  { zone: "Front Bumper", issue: "Paint chip 2cm — door ding pattern",             severity: "YELLOW", source: "Visual Scribe",  confidence: 91 },
-  { zone: "Tires",        issue: "7/32 tread depth — within acceptable range",     severity: "GREEN",  source: "Walk-around",    confidence: 97 },
-  { zone: "Interior",     issue: "No anomalies detected",                           severity: "GREEN",  source: "Visual Scribe",  confidence: 99 },
-  { zone: "Transmission", issue: "Fluid analysis clear — no anomalies",            severity: "GREEN",  source: "Fluid Analysis", confidence: 96 },
+  { zone: "Engine Bay", issue: "Oil seepage detected — valve cover gasket", severity: "RED", source: "Mechanic Audio", confidence: 94 },
+  { zone: "Subframe", issue: "Surface oxidation — minor rust present", severity: "YELLOW", source: "Gemini Veo", confidence: 88 },
+  { zone: "Front Bumper", issue: "Paint chip 2cm — door ding pattern", severity: "YELLOW", source: "Visual Scribe", confidence: 91 },
+  { zone: "Tires", issue: "7/32 tread depth — within acceptable range", severity: "GREEN", source: "Walk-around", confidence: 97 },
+  { zone: "Interior", issue: "No anomalies detected", severity: "GREEN", source: "Visual Scribe", confidence: 99 },
+  { zone: "Transmission", issue: "Fluid analysis clear — no anomalies", severity: "GREEN", source: "Fluid Analysis", confidence: 96 },
 ];
 
 export const ENTITY_OPTIONS: EntityOption[] = [
-  { vin: "WBA93HM0XP1234567", entity: "KAMM_LLC",        year: 2023, model: "BMW M4 Competition", color: "Frozen Black",      insurance: "Unified Auto-Owners — Garagekeepers", lot: "KAMM Lot A", daysOnLot: 23 },
-  { vin: "WBA93HM0XP9876543", entity: "FLUIDITRUCK_LLC", year: 2023, model: "BMW M4 Competition", color: "Isle of Man Green", insurance: "Unified Auto-Owners — Fleet",         lot: "Fluiditruck Bay 3", daysOnLot: 7 },
+  { vin: "WBA93HM0XP1234567", entity: "KAMM_LLC", year: 2023, model: "BMW M4 Competition", color: "Frozen Black", insurance: "Unified Auto-Owners — Garagekeepers", lot: "KAMM Lot A", daysOnLot: 23 },
+  { vin: "WBA93HM0XP9876543", entity: "FLUIDITRUCK_LLC", year: 2023, model: "BMW M4 Competition", color: "Isle of Man Green", insurance: "Unified Auto-Owners — Fleet", lot: "Fluiditruck Bay 3", daysOnLot: 7 },
 ];
 
 export const INVENTORY_DATA: InventoryItem[] = [
-  { vin: "WBA93HM0XP1234567", make: "BMW",     model: "M4 Competition", year: 2023, entity: "KAMM",            status: "RECON",    days: 23, price: 74900, color: "Frozen Black" },
-  { vin: "1FTEW1EG0NFC12345", make: "Ford",    model: "F-150 Raptor",   year: 2022, entity: "FLUIDITRUCK",     status: "AVAILABLE",days: 8,  price: 62500, color: "Shadow Black" },
-  { vin: "WDDGF4HB5EA123456", make: "Mercedes",model: "C300",           year: 2021, entity: "AUTOHAUS_SVC",    status: "SERVICE",  days: 3,  price: 34900, color: "Polar White" },
-  { vin: "5YJSA1E26MF123456", make: "Tesla",   model: "Model S Plaid",  year: 2022, entity: "KAMM",            status: "AVAILABLE",days: 12, price: 89900, color: "Midnight Silver" },
-  { vin: "WBXYJ3C50JEJ12345", make: "BMW",     model: "X5 M50i",        year: 2021, entity: "ASTROLOGISTICS",  status: "COSMETIC", days: 5,  price: 71200, color: "Carbon Black" },
+  { vin: "WBA93HM0XP1234567", make: "BMW", model: "M4 Competition", year: 2023, entity: "KAMM", status: "RECON", days: 23, price: 74900, color: "Frozen Black" },
+  { vin: "1FTEW1EG0NFC12345", make: "Ford", model: "F-150 Raptor", year: 2022, entity: "FLUIDITRUCK", status: "AVAILABLE", days: 8, price: 62500, color: "Shadow Black" },
+  { vin: "WDDGF4HB5EA123456", make: "Mercedes", model: "C300", year: 2021, entity: "AUTOHAUS_SVC", status: "SERVICE", days: 3, price: 34900, color: "Polar White" },
+  { vin: "5YJSA1E26MF123456", make: "Tesla", model: "Model S Plaid", year: 2022, entity: "KAMM", status: "AVAILABLE", days: 12, price: 89900, color: "Midnight Silver" },
+  { vin: "WBXYJ3C50JEJ12345", make: "BMW", model: "X5 M50i", year: 2021, entity: "ASTROLOGISTICS", status: "COSMETIC", days: 5, price: 71200, color: "Carbon Black" },
 ];
 
 export const PRIMITIVES: Primitive[] = [
-  { id: "identity_engine",   label: "Identity Engine",    status: "ACTIVE" },
-  { id: "agentic_router",    label: "Agentic Router",     status: "ACTIVE" },
-  { id: "jit_websocket",     label: "JIT WebSocket",      status: "ACTIVE" },
-  { id: "sovereign_memory",  label: "Sovereign Memory",   status: "ACTIVE" },
-  { id: "anomaly_monitor",   label: "Anomaly Monitor",    status: "ACTIVE" },
-  { id: "omnichannel",       label: "Omnichannel/Twilio", status: "ACTIVE" },
-  { id: "customer_quotes",   label: "Customer Quotes",    status: "ACTIVE" },
-  { id: "logistics",         label: "Logistics Tracking", status: "ACTIVE" },
-  { id: "crm_intake",        label: "CRM Intake",         status: "ACTIVE" },
-  { id: "semantic_catalog",  label: "Semantic Catalog",   status: "ACTIVE" },
-  { id: "lineage_log",       label: "Lineage Log",        status: "ACTIVE" },
+  { id: "identity_engine", label: "Identity Engine", status: "ACTIVE" },
+  { id: "agentic_router", label: "Agentic Router", status: "ACTIVE" },
+  { id: "jit_websocket", label: "JIT WebSocket", status: "ACTIVE" },
+  { id: "sovereign_memory", label: "Sovereign Memory", status: "ACTIVE" },
+  { id: "anomaly_monitor", label: "Anomaly Monitor", status: "ACTIVE" },
+  { id: "omnichannel", label: "Omnichannel/Twilio", status: "ACTIVE" },
+  { id: "customer_quotes", label: "Customer Quotes", status: "ACTIVE" },
+  { id: "logistics", label: "Logistics Tracking", status: "ACTIVE" },
+  { id: "crm_intake", label: "CRM Intake", status: "ACTIVE" },
+  { id: "semantic_catalog", label: "Semantic Catalog", status: "ACTIVE" },
+  { id: "lineage_log", label: "Lineage Log", status: "ACTIVE" },
 ];
 
 export const FLOWS = {
   keywords: {
-    finance:    ["financ","p&l","revenue","margin","money","kamm financials","lane a","show me kamm"],
-    twin:       ["twin","m4","digital twin","bmw","vehicle","vin"],
-    anomaly:    ["anomal","alert","monitor","sleep","spike","flag","warning"],
-    collision:  ["update","mileage","which","two","both"],
-    inventory:  ["inventory","stock","lot","fleet","available","vehicles"],
-    logistics:  ["dispatch","driver","track","delivery","carlux","moaz","transport"],
+    finance: ["financ", "p&l", "revenue", "margin", "money", "kamm financials", "lane a", "show me kamm"],
+    twin: ["twin", "m4", "digital twin", "bmw", "vehicle", "vin"],
+    anomaly: ["anomal", "alert", "monitor", "sleep", "spike", "flag", "warning"],
+    collision: ["update", "mileage", "which", "two", "both"],
+    inventory: ["inventory", "stock", "lot", "fleet", "available", "vehicles"],
+    logistics: ["dispatch", "driver", "track", "delivery", "carlux", "moaz", "transport"],
   } as Record<string, string[]>,
   responses: {
-    finance:   { text: "Running finance aggregation across all active entities. Six-week margin breakdown ready — pulling from BigQuery ledger now.", plate: "FINANCE",   intent: "FINANCE",    entity: "ALL_ENTITIES",    confidence: 97 },
-    twin:      { text: "Digital Twin loaded for VIN WBA93HM0XP1234567. I'm flagging 1 RED anomaly requiring immediate attention — engine bay oil seepage. 2 YELLOW flags also active.", plate: "TWIN",      intent: "INVENTORY",  entity: "BMW_M4_KAMM",     confidence: 94 },
-    anomaly:   { text: "Sleep Monitor fired 14 minutes ago. Transport cost for VIN WBA123 registered at $847 — 2.3σ above the 30-day mean of $312. Carlux dispatch via Moaz. Insurance transfer context assembled. Action required.", plate: "ANOMALY",   intent: "COMPLIANCE", entity: "CARLUX_LLC",      confidence: 99 },
-    collision: { text: "I found two BMW M4 Competition units in inventory_master. Identity Engine cannot auto-resolve — both match your query. Collision plate mounted. Select the correct vehicle to resume workflow.", plate: "COLLISION", intent: "INVENTORY",  entity: "AMBIGUOUS",       confidence: 72 },
-    inventory: { text: "Pulling current inventory state across KAMM, Fluiditruck, AutoHaus Services, and AstroLogistics. 5 vehicles active across 4 entities.", plate: "INVENTORY", intent: "INVENTORY",  entity: "ALL_ENTITIES",    confidence: 98 },
-    logistics: { text: "Carlux dispatch active. Moaz is currently en route — 12 minutes from customer location. Live tracking plate mounted.", plate: "LOGISTICS", intent: "LOGISTICS",  entity: "CARLUX_LLC",      confidence: 96 },
+    finance: { text: "Running finance aggregation across all active entities. Six-week margin breakdown ready — pulling from BigQuery ledger now.", plate: "FINANCE", intent: "FINANCE", entity: "ALL_ENTITIES", confidence: 97 },
+    twin: { text: "Digital Twin loaded for VIN WBA93HM0XP1234567. I'm flagging 1 RED anomaly requiring immediate attention — engine bay oil seepage. 2 YELLOW flags also active.", plate: "TWIN", intent: "INVENTORY", entity: "BMW_M4_KAMM", confidence: 94 },
+    anomaly: { text: "Sleep Monitor fired 14 minutes ago. Transport cost for VIN WBA123 registered at $847 — 2.3σ above the 30-day mean of $312. Carlux dispatch via Moaz. Insurance transfer context assembled. Action required.", plate: "ANOMALY", intent: "COMPLIANCE", entity: "CARLUX_LLC", confidence: 99 },
+    collision: { text: "I found two BMW M4 Competition units in inventory_master. Identity Engine cannot auto-resolve — both match your query. Collision plate mounted. Select the correct vehicle to resume workflow.", plate: "COLLISION", intent: "INVENTORY", entity: "AMBIGUOUS", confidence: 72 },
+    inventory: { text: "Pulling current inventory state across KAMM, Fluiditruck, AutoHaus Services, and AstroLogistics. 5 vehicles active across 4 entities.", plate: "INVENTORY", intent: "INVENTORY", entity: "ALL_ENTITIES", confidence: 98 },
+    logistics: { text: "Carlux dispatch active. Moaz is currently en route — 12 minutes from customer location. Live tracking plate mounted.", plate: "LOGISTICS", intent: "LOGISTICS", entity: "CARLUX_LLC", confidence: 96 },
   } as Record<string, { text: string; plate: string; intent: string; entity: string; confidence: number }>,
 };
 
@@ -181,25 +181,25 @@ const MEDIA_RESPONSES: Record<string, MediaResponse[]> = {
       text: "Visual Scribe analysis complete. Gemini Veo detected 2 surface anomalies in the uploaded photo: paint chip (~3cm) on rear quarter panel — severity YELLOW, and brake dust accumulation on rear rotors consistent with worn pads — severity RED. Flagging for Digital Twin update. Which VIN should I attribute this to?",
       findings: [
         { zone: "Rear Quarter Panel", issue: "Paint chip ~3cm detected", severity: "YELLOW", confidence: 91 },
-        { zone: "Rear Rotors",        issue: "Brake dust — possible pad wear", severity: "RED",    confidence: 87 },
+        { zone: "Rear Rotors", issue: "Brake dust — possible pad wear", severity: "RED", confidence: 87 },
       ],
       intent: "SERVICE", entity: "VISUAL_SCRIBE", confidence: 91,
     },
     {
       text: "Walk-around photo processed. Gemini Veo extracted 3 observations: clean exterior with minor swirl marks on hood (YELLOW), tires showing uneven wear pattern on front-left (YELLOW), and no visible undercarriage anomalies from this angle (GREEN). Ready to write findings to Digital Twin — confirm VIN.",
       findings: [
-        { zone: "Hood",           issue: "Swirl marks — detail required",       severity: "YELLOW", confidence: 88 },
-        { zone: "Front-Left Tire", issue: "Uneven wear pattern detected",       severity: "YELLOW", confidence: 83 },
-        { zone: "Undercarriage",  issue: "No anomalies visible from this angle", severity: "GREEN",  confidence: 79 },
+        { zone: "Hood", issue: "Swirl marks — detail required", severity: "YELLOW", confidence: 88 },
+        { zone: "Front-Left Tire", issue: "Uneven wear pattern detected", severity: "YELLOW", confidence: 83 },
+        { zone: "Undercarriage", issue: "No anomalies visible from this angle", severity: "GREEN", confidence: 79 },
       ],
       intent: "SERVICE", entity: "VISUAL_SCRIBE", confidence: 88,
     },
     {
       text: "Photo ingested and analyzed. Gemini Vision identified this as a vehicle interior shot. Observations: dashboard in good condition (GREEN), driver seat shows minor wear on bolster (YELLOW), no visible spills or damage to headliner (GREEN). I can append these findings to an existing Digital Twin record — which VIN?",
       findings: [
-        { zone: "Dashboard",    issue: "Good condition — no anomalies",    severity: "GREEN",  confidence: 96 },
-        { zone: "Driver Seat",  issue: "Bolster wear — detail recommended", severity: "YELLOW", confidence: 82 },
-        { zone: "Headliner",    issue: "No damage detected",               severity: "GREEN",  confidence: 94 },
+        { zone: "Dashboard", issue: "Good condition — no anomalies", severity: "GREEN", confidence: 96 },
+        { zone: "Driver Seat", issue: "Bolster wear — detail recommended", severity: "YELLOW", confidence: 82 },
+        { zone: "Headliner", issue: "No damage detected", severity: "GREEN", confidence: 94 },
       ],
       intent: "SERVICE", entity: "VISUAL_SCRIBE", confidence: 90,
     },
@@ -222,10 +222,10 @@ const MEDIA_RESPONSES: Record<string, MediaResponse[]> = {
     {
       text: "Walk-around video uploaded. Gemini Veo processing 47 frames... Analysis complete. Audio transcript extracted: mechanic noted 'slight knock on cold start' and 'passenger window slow to respond.' Visual scan detected rust spotting on subframe (YELLOW) and a hairline crack on rear diffuser lip (YELLOW). Writing 4 findings to Digital Twin. Confirm VIN to commit.",
       findings: [
-        { zone: "Engine (Audio)",   issue: "Knock on cold start — investigation warranted", severity: "YELLOW", confidence: 84 },
-        { zone: "Window Regulator", issue: "Slow response — possible motor wear",           severity: "YELLOW", confidence: 80 },
-        { zone: "Subframe",         issue: "Rust spotting — surface level",                  severity: "YELLOW", confidence: 91 },
-        { zone: "Rear Diffuser",    issue: "Hairline crack on lip",                          severity: "YELLOW", confidence: 88 },
+        { zone: "Engine (Audio)", issue: "Knock on cold start — investigation warranted", severity: "YELLOW", confidence: 84 },
+        { zone: "Window Regulator", issue: "Slow response — possible motor wear", severity: "YELLOW", confidence: 80 },
+        { zone: "Subframe", issue: "Rust spotting — surface level", severity: "YELLOW", confidence: 91 },
+        { zone: "Rear Diffuser", issue: "Hairline crack on lip", severity: "YELLOW", confidence: 88 },
       ],
       intent: "SERVICE", entity: "VISUAL_SCRIBE", confidence: 87,
     },
@@ -242,8 +242,8 @@ export function getMediaResponse(file: StagedFile): MediaResponse {
   const ext = file.name.split(".").pop()?.toLowerCase() || "";
   const type = file.type.startsWith("image/") ? "image"
     : file.type === "application/pdf" || ext === "pdf" ? "pdf"
-    : file.type.startsWith("video/") ? "video"
-    : "doc";
+      : file.type.startsWith("video/") ? "video"
+        : "doc";
   const pool = MEDIA_RESPONSES[type] || MEDIA_RESPONSES.doc;
   return { ...pool[Math.floor(Math.random() * pool.length)], mediaType: type };
 }
@@ -412,7 +412,7 @@ export function OrchestratorProvider({ children }: { children: React.ReactNode }
     if (e.dataTransfer.files?.length) stageFiles(e.dataTransfer.files);
   }, [stageFiles]);
 
-  const sendMessage = useCallback((text: string, files: StagedFile[] = []) => {
+  const sendMessage = useCallback(async (text: string, files: StagedFile[] = []) => {
     const hasText = text.trim().length > 0;
     const hasFiles = files.length > 0;
     if ((!hasText && !hasFiles) || processing) return;
@@ -427,23 +427,63 @@ export function OrchestratorProvider({ children }: { children: React.ReactNode }
       wsRef.current.send(JSON.stringify({ type: "chat", text, user_id: user.id }));
     }
 
-    setTimeout(() => {
-      let reply: ChatMessage;
-      if (hasFiles) {
-        const mediaResp = getMediaResponse(files[0]);
-        reply = { id: Date.now() + 1, isBot: true, time: now(), text: mediaResp.text, findings: mediaResp.findings, intent: mediaResp.intent, entity: mediaResp.entity, confidence: mediaResp.confidence };
-      } else {
+    if (hasFiles) {
+      try {
+        const formData = new FormData();
+        formData.append("file", files[0].raw);
+        formData.append("actor_id", user.id);
+        formData.append("actor_role", user.role);
+
+        const res = await fetch("/api/media/ingest", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          throw new Error("Ingestion error: " + res.statusText);
+        }
+
+        const data = await res.json();
+        const numClaims = data.extracted_claims ? data.extracted_claims.length : 0;
+        const textResp = `File successfully processed by CIL Extraction Engine. Extracted ${numClaims} claims. Generated Proposal ID: ${data.proposal_id}`;
+
+        const reply: ChatMessage = {
+          id: Date.now() + 1,
+          isBot: true,
+          time: now(),
+          text: textResp,
+          intent: "INGEST",
+          entity: "PIPELINE",
+          confidence: 100
+        };
+        setMessages(p => [...p, reply]);
+      } catch (err: any) {
+        const reply: ChatMessage = {
+          id: Date.now() + 1,
+          isBot: true,
+          time: now(),
+          text: `Error processing file: ${err.message}`,
+          intent: "ERROR",
+          entity: "SYSTEM",
+          confidence: 0
+        };
+        setMessages(p => [...p, reply]);
+      } finally {
+        setProcessing(false);
+      }
+    } else {
+      setTimeout(() => {
         const intent = classifyIntent(text);
         const flow = intent ? FLOWS.responses[intent] : undefined;
-        reply = flow
+        let reply: ChatMessage = flow
           ? { id: Date.now() + 1, isBot: true, time: now(), text: flow.text, intent: flow.intent, entity: flow.entity, confidence: flow.confidence }
           : { id: Date.now() + 1, isBot: true, time: now(), text: "Command received and routed through the Agentic Router. Intent classified — executing via CIL.", intent: "PROCESSING", entity: "CIL", confidence: 85 };
         if (flow?.plate) setPlate(flow.plate);
-      }
-      setMessages(p => [...p, reply]);
-      setProcessing(false);
-    }, hasFiles ? 1800 : 1100);
-  }, [processing, user.id]);
+        setMessages(p => [...p, reply]);
+        setProcessing(false);
+      }, 1100);
+    }
+  }, [processing, user.id, user.role]);
 
   const handleResolve = useCallback((vehicle: EntityOption) => {
     setMessages(p => [...p, { id: Date.now(), isBot: true, time: now(), text: `Collision resolved. Entity confirmed: ${vehicle.entity} · VIN ${vehicle.vin}. Workflow resumed. Identity Engine updated. What update would you like to apply?`, intent: "INVENTORY", entity: vehicle.entity, confidence: 100 }]);
