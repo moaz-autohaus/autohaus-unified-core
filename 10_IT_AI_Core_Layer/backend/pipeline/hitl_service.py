@@ -75,6 +75,8 @@ def get_role_permissions(role: str) -> set:
         raw_perms = json.loads(raw_perms)
         
     role_perms = raw_perms.get(role, [])
+    if "*" in role_perms:
+        return set(ActionType)
     return set(ActionType(a) for a in role_perms)
 
 # Entity scope per person (from personnel_access_matrix)
