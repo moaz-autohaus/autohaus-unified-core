@@ -6,7 +6,7 @@ import logging
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timezone
 
 from database.bigquery_client import BigQueryClient
 from pipeline.hitl_service import propose, ActionType
@@ -19,6 +19,7 @@ class MediaIngestResponse(BaseModel):
     status: str
     requires_approval: bool
     proposed_actions: List[dict]
+    extracted_claims: List[dict]
 
 @media_router.post("/ingest", response_model=MediaIngestResponse)
 async def ingest_media(
@@ -38,27 +39,67 @@ async def ingest_media(
         file_id = str(uuid.uuid4())
         content = await file.read()
         
-        # Step 2: Simulated Gemini Analysis
-        # In production, this would call extraction_engine.py
-        mock_extraction = {
-            "vin": "WBA93HM0XP1234567",
-            "doc_type": doc_type_hint or "AUCTION_RECEIPT",
-            "extracted_facts": {
-                "mileage": "14,200",
-                "condition": "Damaged",
-                "auction_date": "2026-02-21"
-            }
-        }
+        # Step 2: Real Gemini Analysis
+        is_pdf = file.filename.lower().endswith(".pdf") or file.content_type == "application/pdf"
+        extracted_data = {}
+        claims = []
         
+        if is_pdf:
+            from services.attachment_processor import attachment_processor, unpack_to_claims
+            from models.claims import ClaimSource
+            extracted_data = await attachment_processor._extract_tier0_metrics(
+                content, file.filename, "UI_UPLOAD", "UI_UPLOAD"
+            )
+            if extracted_data:
+                lineage = {
+                    "model": "gemini-2.5-flash",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+                claims = unpack_to_claims(
+                    raw_response=extracted_data,
+                    source=ClaimSource.MEDIA,
+                    extractor_identity="media_routes.ingest_media",
+                    input_reference=file_id,
+                    source_lineage=lineage
+                )
+        else:
+            from pipeline.extraction_engine import classify_document, extract_fields
+            from models.claims import ClaimSource, ExtractedClaim
+            text_content = content.decode("utf-8", errors="ignore")
+            doc_type, conf = classify_document(text_content)
+            extracted_data = extract_fields(text_content, doc_type, file_id) or {}
+            
+            if extracted_data and "fields" in extracted_data:
+                lineage = {
+                    "model": "gemini-flash-latest",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "extraction_version_id": extracted_data.get("extraction_version_id")
+                }
+                for field_name, field_data in extracted_data["fields"].items():
+                    claim = ExtractedClaim(
+                        source=ClaimSource.MEDIA,
+                        extractor_identity="extraction_engine.extract_fields",
+                        input_reference=file_id,
+                        entity_type="DOCUMENT",
+                        target_field=field_name,
+                        extracted_value=str(field_data["value"]) if field_data["value"] is not None else "null",
+                        confidence=field_data["confidence"],
+                        source_lineage=lineage
+                    )
+                    claims.append(claim)
+
         # Step 3: Create HITL Proposal
         bq = BigQueryClient()
+        claims_dicts = [c.model_dump(mode='json') for c in claims]
+        resolved_doc_type = extracted_data.get("doc_type", doc_type_hint or "UNKNOWN")
+        
         proposal_payload = {
             "file_id": file_id,
             "filename": file.filename,
-            "extraction": mock_extraction,
+            "extraction": extracted_data,
             "actions": [
-                {"type": "CREATE_DOCUMENT", "params": {"doc_type": mock_extraction["doc_type"]}},
-                {"type": "UPDATE_FACTS", "params": mock_extraction["extracted_facts"]}
+                {"type": "CREATE_DOCUMENT", "params": {"doc_type": resolved_doc_type}},
+                {"type": "APPLY_CLAIMS", "params": {"claims": claims_dicts}}
             ]
         }
         
@@ -81,7 +122,8 @@ async def ingest_media(
             proposal_id=result["hitl_event_id"],
             status="PROPOSED",
             requires_approval=True,
-            proposed_actions=proposal_payload["actions"]
+            proposed_actions=proposal_payload["actions"],
+            extracted_claims=claims_dicts
         )
         
     except Exception as e:

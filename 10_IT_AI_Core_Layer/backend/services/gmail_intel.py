@@ -306,7 +306,13 @@ class GmailIntelService:
 
     async def _extract_entities(self, body: str, sender: str) -> dict:
         import google.generativeai as genai
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(
+            "gemini-1.5-flash",
+            generation_config=genai.GenerationConfig(
+                temperature=0.0,
+                response_mime_type="application/json"
+            )
+        )
         prompt = f"""Extract data from this email for an auto dealership. 
 Identify: VINS, Dollar Amounts, Vendor Names.
 Sender: {sender}. Body: {body[:3000]}
