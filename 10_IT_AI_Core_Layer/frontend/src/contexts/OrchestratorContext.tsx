@@ -175,78 +175,7 @@ interface MediaResponse {
   mediaType?: string;
 }
 
-const MEDIA_RESPONSES: Record<string, MediaResponse[]> = {
-  image: [
-    {
-      text: "Visual Scribe analysis complete. Gemini Veo detected 2 surface anomalies in the uploaded photo: paint chip (~3cm) on rear quarter panel — severity YELLOW, and brake dust accumulation on rear rotors consistent with worn pads — severity RED. Flagging for Digital Twin update. Which VIN should I attribute this to?",
-      findings: [
-        { zone: "Rear Quarter Panel", issue: "Paint chip ~3cm detected", severity: "YELLOW", confidence: 91 },
-        { zone: "Rear Rotors", issue: "Brake dust — possible pad wear", severity: "RED", confidence: 87 },
-      ],
-      intent: "SERVICE", entity: "VISUAL_SCRIBE", confidence: 91,
-    },
-    {
-      text: "Walk-around photo processed. Gemini Veo extracted 3 observations: clean exterior with minor swirl marks on hood (YELLOW), tires showing uneven wear pattern on front-left (YELLOW), and no visible undercarriage anomalies from this angle (GREEN). Ready to write findings to Digital Twin — confirm VIN.",
-      findings: [
-        { zone: "Hood", issue: "Swirl marks — detail required", severity: "YELLOW", confidence: 88 },
-        { zone: "Front-Left Tire", issue: "Uneven wear pattern detected", severity: "YELLOW", confidence: 83 },
-        { zone: "Undercarriage", issue: "No anomalies visible from this angle", severity: "GREEN", confidence: 79 },
-      ],
-      intent: "SERVICE", entity: "VISUAL_SCRIBE", confidence: 88,
-    },
-    {
-      text: "Photo ingested and analyzed. Gemini Vision identified this as a vehicle interior shot. Observations: dashboard in good condition (GREEN), driver seat shows minor wear on bolster (YELLOW), no visible spills or damage to headliner (GREEN). I can append these findings to an existing Digital Twin record — which VIN?",
-      findings: [
-        { zone: "Dashboard", issue: "Good condition — no anomalies", severity: "GREEN", confidence: 96 },
-        { zone: "Driver Seat", issue: "Bolster wear — detail recommended", severity: "YELLOW", confidence: 82 },
-        { zone: "Headliner", issue: "No damage detected", severity: "GREEN", confidence: 94 },
-      ],
-      intent: "SERVICE", entity: "VISUAL_SCRIBE", confidence: 90,
-    },
-  ],
-  pdf: [
-    {
-      text: "PDF ingested by the Intelligence Layer. Gemini extracted the following: Document type — Auction Purchase Receipt. VIN: WBA99X0XP1234500, 2022 BMW 330i xDrive, Purchase Price: $28,400, Auction: Manheim Chicago, Date: 2026-02-24. Entity attribution: KAMM LLC (Iowa Dealer). Staging for governance review — approve to promote to inventory_master?",
-      intent: "INVENTORY", entity: "KAMM_LLC", confidence: 96,
-    },
-    {
-      text: "Document processed. Gemini classified this as a Transport Invoice — Carlux LLC. Extracted: Driver: Moaz Sial, VIN: WBA93HM0XP1234567, Origin: Chicago IL, Destination: Iowa City IA, Amount: $847.00, Date: 2026-02-23. ⚠ This matches the open anomaly in the Sleep Monitor queue. Should I cross-reference and close the anomaly flag?",
-      intent: "COMPLIANCE", entity: "CARLUX_LLC", confidence: 94,
-    },
-    {
-      text: "PDF analyzed. Document type: Dealer Title Transfer — Iowa DOT Form 411007. VIN extracted: 5YJSA1E26MF123456. Seller: Previous Owner, Buyer: KAMM LLC. Title status: CLEAN — no liens detected. Recommend filing to Drive: 03_Titles_KAMM/{VIN}/. Shall I rename and route this automatically?",
-      intent: "COMPLIANCE", entity: "KAMM_LLC", confidence: 98,
-    },
-  ],
-  video: [
-    {
-      text: "Walk-around video uploaded. Gemini Veo processing 47 frames... Analysis complete. Audio transcript extracted: mechanic noted 'slight knock on cold start' and 'passenger window slow to respond.' Visual scan detected rust spotting on subframe (YELLOW) and a hairline crack on rear diffuser lip (YELLOW). Writing 4 findings to Digital Twin. Confirm VIN to commit.",
-      findings: [
-        { zone: "Engine (Audio)", issue: "Knock on cold start — investigation warranted", severity: "YELLOW", confidence: 84 },
-        { zone: "Window Regulator", issue: "Slow response — possible motor wear", severity: "YELLOW", confidence: 80 },
-        { zone: "Subframe", issue: "Rust spotting — surface level", severity: "YELLOW", confidence: 91 },
-        { zone: "Rear Diffuser", issue: "Hairline crack on lip", severity: "YELLOW", confidence: 88 },
-      ],
-      intent: "SERVICE", entity: "VISUAL_SCRIBE", confidence: 87,
-    },
-  ],
-  doc: [
-    {
-      text: "Document ingested. Gemini classified this as an Insurance Certificate — Auto-Owners Policy. Extracted policy number, effective date 2026-01-01, covered entities: AutoHaus Services LLC, AstroLogistics LLC, KAMM LLC. Coverage types: Garagekeepers, Bailee, Fleet. This matches the Unified Auto-Owners anchor. Filing to 12_Insurance/ in Drive. No action required.",
-      intent: "COMPLIANCE", entity: "CARBON_LLC", confidence: 97,
-    },
-  ],
-};
 
-export function getMediaResponse(file: StagedFile): MediaResponse {
-  const ext = file.name.split(".").pop()?.toLowerCase() || "";
-  const type = file.type.startsWith("image/") ? "image"
-    : file.type === "application/pdf" || ext === "pdf" ? "pdf"
-      : file.type.startsWith("video/") ? "video"
-        : "doc";
-  const pool = MEDIA_RESPONSES[type] || MEDIA_RESPONSES.doc;
-  return { ...pool[Math.floor(Math.random() * pool.length)], mediaType: type };
-}
 
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
