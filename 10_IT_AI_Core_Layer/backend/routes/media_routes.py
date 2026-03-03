@@ -116,13 +116,24 @@ async def ingest_media(
 
         # Step 3: Create HITL Proposal
         bq = BigQueryClient()
-        claims_dicts = [c.model_dump(mode='json') for c in claims]
+        
+        # Ensure payload is serializable
+        def stringify_uuids(obj):
+            if isinstance(obj, dict):
+                return {k: stringify_uuids(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [stringify_uuids(i) for i in obj]
+            elif isinstance(obj, uuid.UUID):
+                return str(obj)
+            return obj
+
+        claims_dicts = [stringify_uuids(c.model_dump(mode='json')) for c in claims]
         resolved_doc_type = extracted_data.get("doc_type", doc_type_hint or "UNKNOWN")
         
         proposal_payload = {
             "file_id": file_id,
             "filename": file.filename,
-            "extraction": extracted_data,
+            "extraction": stringify_uuids(extracted_data),
             "actions": [
                 {"type": "CREATE_DOCUMENT", "params": {"doc_type": resolved_doc_type}},
                 {"type": "APPLY_CLAIMS", "params": {"claims": claims_dicts}}
@@ -131,9 +142,9 @@ async def ingest_media(
         
         result = propose(
             bq_client=bq.client,
-            actor_user_id=actor_id,
+            actor_user_id=str(actor_id),
             actor_role=actor_role,
-            action_type="MEDIA_INGEST", # We will add this to ActionType
+            action_type="MEDIA_INGEST",
             target_type="DOCUMENT",
             target_id=file_id,
             payload=proposal_payload,
