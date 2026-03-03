@@ -104,15 +104,17 @@ class InputEnrichmentAgent:
             logger.warning(f"Domain classification failed: {e}")
             return "CRM"
 
-    def evaluate(self, user_input: str, previous_context: Optional[list] = None, context_package: Optional[Any] = None) -> IEA_Result:
-        
+    async def evaluate(self, user_input: str, previous_context: Optional[list] = None, context_package: Optional[Any] = None) -> IEA_Result:
+        """
+        CIL Layer: Evaluates input completeness and generates clarifying questions.
+        Pure intelligence: no side-effects (does not create questions in DB).
+        """
         # Step 1: Pre-classify domain
-        domain = self._classify_domain(user_input)
+        domain = await self._classify_domain_async(user_input)
         
         # Query policy for required fields
         required_fields_val = get_policy("AGENTS", f"iea_required_fields_{domain}")
         if required_fields_val is None:
-            logger.info(f"Required fields for {domain} not found, falling back to CRM.")
             required_fields_val = get_policy("AGENTS", "iea_required_fields_CRM")
         
         try:
@@ -121,33 +123,12 @@ class InputEnrichmentAgent:
             required_fields = ["contact_identifier"]
 
         # Step 2: Query policy for confidence threshold
-        conf_val = get_policy("AGENTS", "iea_confidence_threshold")
-        if conf_val is None:
-            logger.warning("[POLICY MISSING] AGENTS::iea_confidence_threshold missing. Defaulting to 0.7.")
-            confidence_threshold = 0.7
-        else:
-            confidence_threshold = float(conf_val)
+        confidence_threshold = float(get_policy("AGENTS", "iea_confidence_threshold") or 0.7)
 
         # Step 3: Handle hydrated context
         resolved_entities = []
         if context_package:
             resolved_entities = context_package.resolved_entities if hasattr(context_package, 'resolved_entities') else []
-            
-            # Check existing open questions for matching topic (simple heuristic using keyword overlap)
-            open_questions = context_package.open_questions if hasattr(context_package, 'open_questions') else []
-            words_in_input = set(user_input.lower().split())
-            for q in open_questions:
-                q_content = q.get('content', '').lower()
-                q_words = set(q_content.split())
-                overlap = len(words_in_input.intersection(q_words))
-                if overlap >= 3 or (len(words_in_input) > 0 and overlap / len(words_in_input) > 0.5):
-                    logger.info(f"Matched existing open question {q.get('question_id')} to input.")
-                    return IEA_Result(
-                        status="INCOMPLETE",
-                        clarifying_question="This question is already open. Waiting for resolution.",
-                        extracted_entities={},
-                        existing_question_id=q.get("question_id")
-                    )
 
         sys_prompt = IEA_SYSTEM_PROMPT_TEMPLATE.format(
             domain=domain,
@@ -160,59 +141,47 @@ class InputEnrichmentAgent:
         model = self._get_model(sys_prompt)
         
         try:
-            try:
-                response = model.generate_content(prompt)
-            except Exception as e_primary:
-                logger.warning(f"IEA Primary Model failed ({e_primary}). Attempting fallback...")
-                fallback_model = genai.GenerativeModel(
-                    model_name="gemini-2.5-pro",
-                    system_instruction=sys_prompt,
-                    generation_config=genai.GenerationConfig(temperature=0.1, response_mime_type="application/json")
-                )
-                response = fallback_model.generate_content(prompt)
-                
+            response = await model.generate_content_async(prompt)
             data = json.loads(response.text.strip())
             
-            # Apply confidence threshold strictly
             status = data.get("status", "INCOMPLETE")
             conf = data.get("confidence", 1.0)
             if status == "COMPLETE" and conf < confidence_threshold:
                 status = "INCOMPLETE"
                 
-            res = IEA_Result(
+            return IEA_Result(
                 status=status,
                 clarifying_question=data.get("clarifying_question", ""),
-                extracted_entities=data.get("extracted_entities", {})
+                extracted_entities=data.get("extracted_entities", {}),
+                # domain is useful for Membrane routing
+                # question_id is handled by Membrane now
             )
             
-            # Step 4: Routing to create_question if INCOMPLETE
-            if res.status == "INCOMPLETE" and res.clarifying_question:
-                q = create_question(
-                    content=res.clarifying_question,
-                    source_type="IEA",
-                    source_id="conversation_turn_id", # Real integration should pass actual context id
-                    owner_role="STANDARD", 
-                    dependency_list=["current_conversation_turn"],
-                    lineage_pointer={
-                        "source_type": "IEA",
-                        "source_id": "conversation_turn_id",
-                        "conflict_outcome": None,
-                        "assertion_type": None
-                    },
-                    bq_client=self.bq_client
-                )
-                res.question_id = q.question_id
-                
-            return res
-            
         except Exception as e:
-            logger.error(f"IEA Evaluation Failed: {e}")
+            logger.error(f"IEA (CIL) Evaluation Failed: {e}")
             return IEA_Result(
                 status="ERROR",
-                clarifying_question="System error evaluating membrane logic.",
+                clarifying_question="Intelligence layer failure.",
                 extracted_entities={}
             )
 
+    async def _classify_domain_async(self, user_input: str) -> str:
+        model = genai.GenerativeModel(
+            model_name=self.model_name,
+            system_instruction=DOMAIN_CLASSIFIER_PROMPT,
+            generation_config=genai.GenerationConfig(temperature=0.1, response_mime_type="text/plain")
+        )
+        try:
+            resp = await model.generate_content_async(f"INPUT: {user_input}")
+            domain = resp.text.strip().upper()
+            return domain if domain in ["INVENTORY", "FINANCE", "LOGISTICS", "SERVICE", "CRM", "COMPLIANCE"] else "CRM"
+        except Exception as e:
+            logger.warning(f"Domain classification failed: {e}")
+            return "CRM"
+
 if __name__ == "__main__":
+    import asyncio
     iea = InputEnrichmentAgent()
-    print(iea.evaluate("Update the price for the Porsche"))
+    async def test():
+        print(await iea.evaluate("Update the price for the Porsche"))
+    asyncio.run(test())
