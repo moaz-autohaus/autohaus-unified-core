@@ -99,15 +99,20 @@ async def ingest_media(
                     "extraction_version_id": extracted_data.get("extraction_version_id")
                 }
                 for field_name, field_data in extracted_data["fields"].items():
+                    val_str = str(field_data["value"]) if field_data["value"] is not None else "null"
+                    field_lineage = dict(lineage)
+                    if val_str == "VIN_NOT_PROVIDED":
+                        field_lineage["stub_type"] = "STUB_PENDING_VIN"
+
                     claim = ExtractedClaim(
                         source=ClaimSource.MEDIA,
                         extractor_identity="extraction_engine.extract_fields",
                         input_reference=file_id,
                         entity_type="DOCUMENT",
                         target_field=field_name,
-                        extracted_value=str(field_data["value"]) if field_data["value"] is not None else "null",
+                        extracted_value=val_str,
                         confidence=field_data["confidence"],
-                        source_lineage=lineage
+                        source_lineage=field_lineage
                     )
                     claims.append(claim)
 
