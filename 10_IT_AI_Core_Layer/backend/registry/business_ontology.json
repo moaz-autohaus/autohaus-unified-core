@@ -49,5 +49,32 @@
     "QuickBooks": "FINANCE_GL_API",
     "Kiri_Engine": "DIGITAL_TWIN_3D_API",
     "Twilio": "OMNICHANNEL_COMM_API"
+  },
+  "personnel_access_matrix": {
+    "ahsin": {
+      "role": "SOVEREIGN",
+      "scope": "ALL"
+    },
+    "asim": {
+      "role": "STANDARD",
+      "scope": [
+        "KAMM_LLC",
+        "AUTOHAUS_SERVICES_LLC"
+      ]
+    },
+    "mohsin": {
+      "role": "STANDARD",
+      "scope": [
+        "ASTROLOGISTICS_LLC",
+        "AUTOHAUS_SERVICES_LLC"
+      ]
+    },
+    "sunny": {
+      "role": "FIELD",
+      "scope": [
+        "FLUIDITRUCK_LLC",
+        "CARLUX_LLC"
+      ]
+    }
   }
 }

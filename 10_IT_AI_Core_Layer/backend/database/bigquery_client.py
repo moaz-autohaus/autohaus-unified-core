@@ -34,11 +34,18 @@ class BigQueryClient:
             # Fallback for local development if the environment variable isn't set
             local_key_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "auth", "replit-sa-key.json")
             if os.path.exists(local_key_path):
-                self.credentials = service_account.Credentials.from_service_account_file(local_key_path)
-                self.client = bigquery.Client(credentials=self.credentials, project=self.project_id)
+                try:
+                    self.credentials = service_account.Credentials.from_service_account_file(local_key_path)
+                    self.client = bigquery.Client(credentials=self.credentials, project=self.project_id)
+                except Exception as e:
+                    logger.warning(f"Failed to use local SA key: {e}. Trying default credentials...")
+                    self.client = bigquery.Client(project=self.project_id)
             else:
-                logger.warning("No GCP_SERVICE_ACCOUNT_JSON in env and no local fallback found. BigQuery unavailable.")
-                self.client = None
+                try:
+                    self.client = bigquery.Client(project=self.project_id)
+                except Exception as e:
+                    logger.warning(f"No GCP credentials found: {e}. BigQuery unavailable.")
+                    self.client = None
 
     def execute_query(self, query: str, parameters: list = None):
         """Execute a general query (DDL or DML)."""
