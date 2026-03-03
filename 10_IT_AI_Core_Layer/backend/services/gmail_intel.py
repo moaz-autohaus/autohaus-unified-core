@@ -26,14 +26,21 @@ def unpack_to_claims(raw_response: dict,
             for item in val:
                 if isinstance(item, dict) and "extracted_value" in item:
                     try:
+                        val_str = str(item.get("extracted_value", ""))
+                        lineage = dict(source_lineage)
+                        
+                        # Handle VIN_NOT_PROVIDED as STUB_PENDING_VIN sentinel
+                        if val_str == "VIN_NOT_PROVIDED":
+                            lineage["stub_type"] = "STUB_PENDING_VIN"
+                        
                         claim_data = {
                             "source": source.value if hasattr(source, "value") else source,
                             "extractor_identity": extractor_identity,
                             "input_reference": input_reference,
-                            "source_lineage": source_lineage,
+                            "source_lineage": lineage,
                             "entity_type": item.get("entity_type", "UNKNOWN"),
                             "target_field": item.get("target_field", key),
-                            "extracted_value": str(item.get("extracted_value", "")),
+                            "extracted_value": val_str,
                             "confidence": float(item.get("confidence", 1.0))
                         }
                         claims.append(ExtractedClaim.from_gemini_response(claim_data))

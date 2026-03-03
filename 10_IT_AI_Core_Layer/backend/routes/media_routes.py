@@ -111,11 +111,18 @@ async def ingest_media(
                     )
                     claims.append(claim)
 
-        # Skip synchronous/sequential conflict detection here to prevent timeouts
-        # The background batch process or startup routine will pick these up automatically.
-
         # Step 3: Create HITL Proposal
         bq = BigQueryClient()
+
+        # Wire conflict_detector.process_claim into media_routes.py before HITL proposal is built
+        from pipeline.conflict_detector import process_claim, log_claim_processing_result
+        for claim in claims:
+            try:
+                result = await process_claim(claim, bq)
+                log_claim_processing_result(result)
+            except Exception as e:
+                logger.error(f"Conflict detector error on claim {claim.claim_id}: {e}")
+
         claims_dicts = [c.model_dump(mode='json') for c in claims]
         resolved_doc_type = extracted_data.get("doc_type", doc_type_hint or "UNKNOWN")
         
