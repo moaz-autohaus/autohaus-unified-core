@@ -28,99 +28,62 @@ class PolicyEnforcer:
 
     async def enforce_action(self, session: SessionContext, action_type: str, target_id: Optional[str] = None) -> EnforcementOutcome:
         """
-        Main entry point for enforcement. 
-        Yields an EnforcementOutcome and emits enforcement events to cil_events.
+        Main entry point for enforcement.
+        Membrane side: Handles the STOP UI and session management.
         """
-        logger.info(f"[ENFORCER] Evaluating '{action_type}' for user {session.user_id} on target {target_id}")
+        from pipeline.policy_engine_cil import PolicyEngineCIL
+        cil_engine = PolicyEngineCIL(self.bq)
 
-        # 1. Role-based Permission Check (Static Boundary)
-        # Based on CIL_MASTER_BLUEPRINT v2.0
+        logger.info(f"[ENFORCER] Evaluating '{action_type}' for user {session.user_id}")
+
+        # 1. Role-based Permission Check
         role_permissions = {
-            "SOVEREIGN": ["ADMIN_OVERRIDE", "POLICY_WRITE", "CIL_RESET", "PIPELINE_FREEZE", 
-                          "VALIDATE_CLAIM", "ENTITY_RESOLVE", "FORCE_APPLY_FIELD", 
-                          "CREATE_OPEN_QUESTION", "UPLOAD_DOC", "VIEW_PLATE", "CREATE_CLAIM_STUB"],
-            "STANDARD": ["VALIDATE_CLAIM", "ENTITY_RESOLVE", "FORCE_APPLY_FIELD", 
-                         "CREATE_OPEN_QUESTION", "UPLOAD_DOC", "VIEW_PLATE", "CREATE_CLAIM_STUB"],
-            "FIELD": ["UPLOAD_DOC", "VIEW_PLATE", "CREATE_CLAIM_STUB"]
+            "SOVEREIGN": ["*"],
+            "STANDARD": ["VALIDATE_CLAIM", "ENTITY_RESOLVE", "FORCE_APPLY_FIELD", "UPLOAD_DOC"],
+            "FIELD": ["UPLOAD_DOC", "VIEW_PLATE"]
         }
         
         allowed_actions = role_permissions.get(session.role, [])
-        if action_type not in allowed_actions and "ADMIN_OVERRIDE" not in allowed_actions:
-             outcome = EnforcementOutcome(
-                 status="STOP", 
-                 reason=f"Role '{session.role}' lacks explicit permission for '{action_type}'"
-             )
+        if "*" not in allowed_actions and action_type not in allowed_actions:
+             outcome = EnforcementOutcome(status="STOP", reason=f"Access Denied: Role {session.role} cannot perform {action_type}")
              self._emit_enforcement_event(session, "HARD_STOP_ENFORCED", outcome, action_type, target_id)
              return outcome
 
-        # 2. Entity Scope Check (Dynamic Boundary)
+        # 2. Entity Scope Check
         if target_id and not session.is_in_scope(target_id):
-            outcome = EnforcementOutcome(
-                status="STOP", 
-                reason=f"Entity '{target_id}' is outside the authorized scope for this session"
-            )
+            outcome = EnforcementOutcome(status="STOP", reason=f"Access Denied: {target_id} is out of scope.")
             self._emit_enforcement_event(session, "HARD_STOP_ENFORCED", outcome, action_type, target_id)
             return outcome
 
-        # 3. Interrogate CIL Truths for Active Blocks (HARD STOPs)
+        # 3. Interrogate CIL Truths for Active Blocks
         if target_id:
-            active_blocks = await self._check_active_blocks(target_id)
-            if active_blocks:
-                # If there are active blocks, strictly STOP for non-SOVEREIGN
+            breaches = await cil_engine.detect_breaches(target_id)
+            if breaches:
+                # Update Session State (Hard Stop management)
+                for b in breaches:
+                    if b['block_id'] not in session.active_hard_stops:
+                        session.active_hard_stops.append(b['block_id'])
+
                 if session.role != "SOVEREIGN":
                     outcome = EnforcementOutcome(
-                        status="STOP", 
-                        reason=f"Active HARD STOP on entity {target_id}: {active_blocks[0]['reason']}",
-                        block_id=active_blocks[0]['block_id']
+                        status="STOP",
+                        reason=f"HARD STOP: {breaches[0]['reason']}",
+                        block_id=breaches[0]['block_id']
                     )
                     self._emit_enforcement_event(session, "HARD_STOP_ENFORCED", outcome, action_type, target_id)
                     return outcome
                 else:
-                    logger.warning(f"[ENFORCER] SOVEREIGN user {session.user_id} proceeding despite active block: {active_blocks[0]['reason']}")
+                    logger.warning(f"[ENFORCER] SOVEREIGN user {session.user_id} proceeding despite active block: {breaches[0]['reason']}")
 
         # 4. Check for APPROVAL GATES
-        # Example logic: if a standard user tries to 'FORCE_APPLY_FIELD', trigger a gate
         if action_type == "FORCE_APPLY_FIELD" and session.role == "STANDARD":
             gate_id = str(uuid.uuid4())
-            outcome = EnforcementOutcome(
-                status="GATE",
-                reason="High-authority action requires SOVEREIGN approval gate.",
-                block_id=gate_id
-            )
+            outcome = EnforcementOutcome(status="GATE", reason="Soverign approval required.", block_id=gate_id)
             self._emit_enforcement_event(session, "ENRICHMENT_PROPOSED", outcome, action_type, target_id)
             session.pending_approvals.append(gate_id)
             return outcome
 
-        # Default: ALLOWED
         return EnforcementOutcome(status="ALLOWED")
-
-    async def _check_active_blocks(self, entity_id: str) -> List[Dict[str, Any]]:
-        """Queries the PENDING_VERIFICATION_QUEUE and COMPLIANCE_TIMELINE projections."""
-        if not self.bq.client:
-            return []
-            
-        # Interrogate CIL projections (Canonical Reference Section 5)
-        query = f"""
-            SELECT 'CONFLICT' as type, claim_id as block_id, target_field as reason
-            FROM `autohaus-infrastructure.autohaus_cil.pending_verification_queue`
-            WHERE target_id = @entity_id AND truth_status = 'CONFLICT'
-            UNION ALL
-            SELECT 'BREACH' as type, event_id as block_id, event_type as reason
-            FROM `autohaus-infrastructure.autohaus_cil.compliance_timeline`
-            WHERE target_id = @entity_id AND event_type = 'THRESHOLD_BREACHED'
-        """
-        
-        job_config = bigquery.QueryJobConfig(
-            query_parameters=[bigquery.ScalarQueryParameter("entity_id", "STRING", entity_id)]
-        )
-        
-        try:
-            results = list(self.bq.client.query(query, job_config=job_config).result())
-            return [{"type": r.type, "block_id": r.block_id, "reason": f"{r.type}: {r.reason}"} for r in results]
-        except Exception as e:
-            # Projections might be empty/table not found early in build
-            logger.debug(f"[ENFORCER] Truth lookup skipped or failed for {entity_id}: {e}")
-            return []
 
     def _emit_enforcement_event(self, session: SessionContext, event_type: str, outcome: EnforcementOutcome, action: str, target: Optional[str]):
         """Emits an enforcement logging event to the cil_events spine."""

@@ -79,18 +79,8 @@ def get_role_permissions(role: str) -> set:
         return set(ActionType)
     return set(ActionType(a) for a in role_perms)
 
-# Entity scope per person (from personnel_access_matrix)
-ENTITY_SCOPE = {
-    "ahsin": {"scope": "ALL"},
-    "asim": {"scope": ["KAMM_LLC", "AUTOHAUS_SERVICES_LLC"]},
-    "mohsin": {"scope": ["ASTROLOGISTICS_LLC", "AUTOHAUS_SERVICES_LLC"]},
-    "moaz": {"scope": ["FLUIDITRUCK_LLC", "CARLUX_LLC"]},
-}
-
-KAMM_MUST_REVIEW = [
-    "DAMAGE_DISCLOSURE_IA", "DEALER_PLATE",
-    "TITLE_REASSIGNMENT", "ODOMETER_DISCLOSURE",
-]
+# Permissions and configuration moved to Policy Registry (Domain HITL)
+# or SessionContext (Domain PERSONNEL)
 
 # Actions that require explicit confirmation before applying (high-risk)
 HIGH_RISK_ACTIONS = {
