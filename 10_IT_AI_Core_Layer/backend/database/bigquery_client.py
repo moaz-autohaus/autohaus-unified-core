@@ -23,7 +23,6 @@ class BigQueryClient:
         
         if sa_json_str:
             try:
-                # We expect raw JSON string in the environment variable.
                 sa_info = json.loads(sa_json_str)
                 self.credentials = service_account.Credentials.from_service_account_info(sa_info)
                 self.client = bigquery.Client(credentials=self.credentials, project=self.project_id)
@@ -31,20 +30,22 @@ class BigQueryClient:
                 logger.error(f"Failed to parse GCP_SERVICE_ACCOUNT_JSON or init client: {str(e)}")
                 self.client = None
         else:
-            # Fallback for local development if the environment variable isn't set
-            local_key_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "auth", "replit-sa-key.json")
-            if os.path.exists(local_key_path):
-                try:
-                    self.credentials = service_account.Credentials.from_service_account_file(local_key_path)
-                    self.client = bigquery.Client(credentials=self.credentials, project=self.project_id)
-                except Exception as e:
-                    logger.warning(f"Failed to use local SA key: {e}. Trying default credentials...")
-                    self.client = bigquery.Client(project=self.project_id)
-            else:
-                try:
-                    self.client = bigquery.Client(project=self.project_id)
-                except Exception as e:
-                    logger.warning(f"No GCP credentials found: {e}. BigQuery unavailable.")
+            # Prefer Application Default Credentials (ADC) for local developer environments
+            try:
+                self.client = bigquery.Client(project=self.project_id)
+                logger.info("Initialized BigQuery Client with Default Credentials")
+            except Exception as e:
+                # If ADC fails, try the local key file as a last resort
+                local_key_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "auth", "replit-sa-key.json")
+                if os.path.exists(local_key_path):
+                    try:
+                        self.credentials = service_account.Credentials.from_service_account_file(local_key_path)
+                        self.client = bigquery.Client(credentials=self.credentials, project=self.project_id)
+                    except Exception as sa_e:
+                        logger.error(f"BigQuery auth failed (ADC error: {e}, SA file error: {sa_e})")
+                        self.client = None
+                else:
+                    logger.error(f"No GCP credentials found: {e}. BigQuery unavailable.")
                     self.client = None
 
     def execute_query(self, query: str, parameters: list = None):

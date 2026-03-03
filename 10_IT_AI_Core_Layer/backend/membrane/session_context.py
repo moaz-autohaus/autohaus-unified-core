@@ -98,19 +98,21 @@ class SessionContext(BaseModel):
         event_row = {
             "event_id": event_id,
             "event_type": event_type,
-            "entity_id": self.user_id,
-            "entity_type": "PERSON",
-            "session_id": self.session_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "actor_type": "HUMAN",
             "actor_id": self.user_id,
-            "correlation_id": None,
-            "parent_event_id": None,
-            "emitted_by": "membrane.session_context",
-            "authority": self.role,
+            "actor_role": self.role,
+            "target_type": "PERSON",
+            "target_id": self.user_id,
             "payload": json.dumps(payload or {
                 "user_id": self.user_id,
                 "role": self.role,
                 "entity_scope": self.entity_scope,
                 "session_started_at": self.session_started_at.isoformat()
+            }),
+            "metadata": json.dumps({
+                "session_id": self.session_id,
+                "emitted_by": "membrane.session_context"
             }),
             "created_at": datetime.now(timezone.utc).isoformat()
         }
