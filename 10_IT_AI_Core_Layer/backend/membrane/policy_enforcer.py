@@ -95,19 +95,19 @@ class PolicyEnforcer:
         return EnforcementOutcome(status="ALLOWED")
 
     async def _check_active_blocks(self, entity_id: str) -> List[Dict[str, Any]]:
-        """Queries the MATERIAL_CONFLICT_REGISTRY and POLICY_BREACH_LOG projections."""
+        """Queries the PENDING_VERIFICATION_QUEUE and COMPLIANCE_TIMELINE projections."""
         if not self.bq.client:
             return []
             
-        # Interrogate CIL projections
+        # Interrogate CIL projections (Canonical Reference Section 5)
         query = f"""
-            SELECT 'CONFLICT' as type, conflict_id as block_id, variance_description as reason
-            FROM `autohaus-infrastructure.autohaus_cil.material_conflict_registry`
-            WHERE entity_id = @entity_id AND truth_status = 'IN_CONFLICT'
+            SELECT 'CONFLICT' as type, claim_id as block_id, target_field as reason
+            FROM `autohaus-infrastructure.autohaus_cil.pending_verification_queue`
+            WHERE target_id = @entity_id AND truth_status = 'CONFLICT'
             UNION ALL
-            SELECT 'BREACH' as type, breach_id as block_id, reason
-            FROM `autohaus-infrastructure.autohaus_cil.policy_breach_log`
-            WHERE entity_id = @entity_id AND severity = 'HARD_STOP'
+            SELECT 'BREACH' as type, event_id as block_id, event_type as reason
+            FROM `autohaus-infrastructure.autohaus_cil.compliance_timeline`
+            WHERE target_id = @entity_id AND event_type = 'THRESHOLD_BREACHED'
         """
         
         job_config = bigquery.QueryJobConfig(
@@ -116,7 +116,7 @@ class PolicyEnforcer:
         
         try:
             results = list(self.bq.client.query(query, job_config=job_config).result())
-            return [{"type": r.type, "block_id": r.block_id, "reason": r.reason} for r in results]
+            return [{"type": r.type, "block_id": r.block_id, "reason": f"{r.type}: {r.reason}"} for r in results]
         except Exception as e:
             # Projections might be empty/table not found early in build
             logger.debug(f"[ENFORCER] Truth lookup skipped or failed for {entity_id}: {e}")
