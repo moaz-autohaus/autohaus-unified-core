@@ -181,16 +181,17 @@ class RouterAgent:
         )
         logger.info(f"RouterAgent initialized with primary: {model_name}, fallback: gemini-2.5-pro")
 
-    def classify(self, user_input: str) -> RoutedIntent:
+    async def classify(self, user_input: str, system_context: Optional[str] = None) -> RoutedIntent:
         """
         Classify a natural language command into an operational domain.
+        CIL Layer: Pure classification and entity extraction.
 
         Args:
-            user_input: The raw text from the CEO, advisor, or Twilio webhook.
+            user_input:     The raw text from the human actor.
+            system_context: Optional grounding context (e.g. current role/scope) provided by Membrane.
 
         Returns:
-            A RoutedIntent dataclass containing the classified intent,
-            confidence score, extracted entities, and suggested action.
+            A RoutedIntent dataclass.
         """
         if not user_input or not user_input.strip():
             logger.warning("Empty input received. Returning UNKNOWN intent.")
@@ -201,22 +202,27 @@ class RouterAgent:
                 suggested_action="No actionable input received.",
             )
 
+        # Inject context if provided (Membrane -> CIL interface)
+        full_input = user_input
+        if system_context:
+            full_input = f"CONTEXT: {system_context}\n\nUSER COMMAND: {user_input}"
+
         try:
-            logger.info(f"Classifying input: '{user_input[:80]}...'")
+            logger.info(f"Classifying input (CIL): '{user_input[:80]}...'")
             # Model Failover Chain
             try:
-                response = self._primary_model.generate_content(user_input)
+                response = await self._primary_model.generate_content_async(full_input)
             except Exception as e_primary:
-                logger.warning(f"Router Primary Model failed ({e_primary}). Attempting fallback to Pro...")
+                logger.warning(f"Router Primary Model failed ({e_primary}). Attempting fallback...")
                 try:
-                    response = self._fallback_model.generate_content(user_input)
+                    response = await self._fallback_model.generate_content_async(full_input)
                 except Exception as e_fallback:
-                    logger.error(f"Router Fallback Model failed ({e_fallback}). Returning EMERGENCY UNKNOWN state.")
+                    logger.error(f"Router Fallback Model failed ({e_fallback}).")
                     return RoutedIntent(
                         intent=IntentDomain.UNKNOWN.value,
                         confidence=0.0,
                         raw_input=user_input,
-                        suggested_action="Critical System Error: All AI models unreachable.",
+                        suggested_action="System Error: AI unreachable.",
                         entities={"error": "llm_outage"}
                     )
 
@@ -225,8 +231,7 @@ class RouterAgent:
 
             # Strip markdown fences if Gemini wraps them despite instructions
             if raw_text.startswith("```"):
-                raw_text = raw_text.split("\n", 1)[1]  # Remove first line
-                raw_text = raw_text.rsplit("```", 1)[0] # Remove last fence
+                raw_text = raw_text.split("\n", 1)[1].rsplit("```", 1)[0]
 
             parsed = json.loads(raw_text)
 
@@ -239,11 +244,7 @@ class RouterAgent:
                 raw_input=user_input,
             )
 
-            logger.info(
-                f"Classification result: intent={result.intent}, "
-                f"confidence={result.confidence}, "
-                f"target={result.target_entity}"
-            )
+            logger.info(f"CIL Result: intent={result.intent}, confidence={result.confidence}")
             return result
 
         except json.JSONDecodeError as e:
@@ -270,27 +271,32 @@ class RouterAgent:
 # Local Test Harness (__main__)
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    print("=" * 70)
-    print("  AutoHaus C-OS v3.1 — Agentic Router Test Harness")
-    print("=" * 70)
+    import asyncio
+    
+    async def run_tests():
+        print("=" * 70)
+        print("  AutoHaus C-OS v3.1 — Agentic Router Test Harness")
+        print("=" * 70)
+    
+        # Initialize the router (reads GEMINI_API_KEY from environment)
+        router = RouterAgent()
+    
+        # Test cases derived from real AutoHaus operational scenarios
+        test_commands = [
+            "Show me the financials for Service Lane A, but exclude detailing.",
+            "Schedule an inspection for the BMW M4 in Lane A.",
+            "What's the status of the blue 911 Carrera T?",
+            "Did John Smith ever get his tint done at AstroLogistics?",
+            "Book a transport from Chicago to Des Moines for VIN WBA12345.",
+            "I need the title paperwork for the 2024 Camry we just sold.",
+            "How much did we spend on recon for Lane B last month?",
+        ]
+    
+        for i, cmd in enumerate(test_commands, 1):
+            print(f"\n--- TEST {i} ---")
+            print(f"INPUT:  {cmd}")
+            result = await router.classify(cmd)
+            print(f"OUTPUT: {result.to_json()}")
+            print()
 
-    # Initialize the router (reads GEMINI_API_KEY from environment)
-    router = RouterAgent()
-
-    # Test cases derived from real AutoHaus operational scenarios
-    test_commands = [
-        "Show me the financials for Service Lane A, but exclude detailing.",
-        "Schedule an inspection for the BMW M4 in Lane A.",
-        "What's the status of the blue 911 Carrera T?",
-        "Did John Smith ever get his tint done at AstroLogistics?",
-        "Book a transport from Chicago to Des Moines for VIN WBA12345.",
-        "I need the title paperwork for the 2024 Camry we just sold.",
-        "How much did we spend on recon for Lane B last month?",
-    ]
-
-    for i, cmd in enumerate(test_commands, 1):
-        print(f"\n--- TEST {i} ---")
-        print(f"INPUT:  {cmd}")
-        result = router.classify(cmd)
-        print(f"OUTPUT: {result.to_json()}")
-        print()
+    asyncio.run(run_tests())
