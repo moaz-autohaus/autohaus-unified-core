@@ -4,7 +4,13 @@
       "legal_name": "Carbon LLC",
       "display_name": "AutoHaus",
       "description": "The master management and intellectual property holding entity.",
-      "tax_id_ref": "CONFIDENTIAL_DB_LOOKUP"
+      "tax_id_ref": "CONFIDENTIAL_DB_LOOKUP",
+      "aliases": [
+        "Carbon LLC",
+        "AutoHaus",
+        "Auto-Haus",
+        "Auto Haus"
+      ]
     },
     "operating_lanes": [
       {
@@ -12,21 +18,53 @@
         "legal_name": "KAMM LLC",
         "alias": "AutoHaus Retail",
         "function": "Retail Sales & Financing",
-        "description": "Handles all public-facing vehicle sales, CRM leads, and direct dealership financing."
+        "description": "Handles all public-facing vehicle sales, CRM leads, and direct dealership financing.",
+        "aliases": [
+          "KAMM LLC",
+          "Kamm LLC",
+          "KAMM",
+          "AutoHaus Retail",
+          "Auto-Haus Retail",
+          "Auto Haus Retail",
+          "AutoHaus Retail LLC"
+        ]
       },
       {
         "lane_id": "LANE_B",
         "legal_name": "AstroLogistics LLC",
         "alias": "AutoHaus Fleet",
         "function": "Logistics & Fleet Operations",
-        "description": "Manages Turo rentals, Fluiditruck fleets, and external vendor car movements."
+        "description": "Manages Turo rentals, Fluiditruck fleets, and external vendor car movements.",
+        "aliases": [
+          "AstroLogistics LLC",
+          "AstroLogistics",
+          "Astro Logistics LLC",
+          "Astro Logistics",
+          "AutoHaus Fleet",
+          "Auto-Haus Fleet",
+          "Auto Haus Fleet"
+        ]
       },
       {
         "lane_id": "LANE_SERVICE",
         "legal_name": "Carbon LLC - Service Division",
         "alias": "AutoHaus Service",
         "function": "Repairs, Recon & Diagnostics",
-        "description": "Performs mechanical inspections, body-shop tasks, and internal vehicle reconditioning. Bills labor to Lane A and Lane B."
+        "description": "Performs mechanical inspections, body-shop tasks, and internal vehicle reconditioning. Bills labor to Lane A and Lane B.",
+        "aliases": [
+          "Carbon LLC - Service Division",
+          "AutoHaus Service",
+          "AutoHaus Service LLC",
+          "AutoHaus Services LLC",
+          "Auto-Haus Service LLC",
+          "Auto-Haus Services LLC",
+          "Auto Haus Service LLC",
+          "Auto Haus Services LLC",
+          "AutoHaus Services",
+          "Auto-Haus Service",
+          "Auto Haus Service",
+          "AUTOHAUS_SERVICES_LLC"
+        ]
       }
     ]
   },
