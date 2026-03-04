@@ -125,7 +125,7 @@ def seed():
     ('COMPLIANCE', 'inventory_warning_units', '13', CURRENT_TIMESTAMP()),
     ('COMPLIANCE', 'insurance_alert_threshold_80pct', '160000', CURRENT_TIMESTAMP()),
     ('COMPLIANCE', 'cit_aging_threshold_days', '5', CURRENT_TIMESTAMP()),
-    ('HITL', 'ROLE_PERMISSIONS', '{{"SOVEREIGN": ["*"], "STANDARD": ["MEDIA_INGEST", "OVERRIDE_FIELDS", "VIEW_CLAIMS", "VIEW_QUESTIONS"], "FIELD": ["MEDIA_INGEST", "ASSERT_ENTITY", "VIEW_QUESTIONS"]}}', CURRENT_TIMESTAMP())
+    ('HITL', 'ROLE_PERMISSIONS', '{{"SOVEREIGN": ["*"], "STANDARD": ["MEDIA_INGEST", "FIELD_OVERRIDE", "CONTEXT_ADD"], "FIELD": ["MEDIA_INGEST", "CONTEXT_ADD"]}}', CURRENT_TIMESTAMP())
     """
     try:
         client.query(p_sql).result()
