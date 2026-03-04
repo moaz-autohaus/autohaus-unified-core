@@ -20,6 +20,7 @@ class MediaIngestResponse(BaseModel):
     requires_approval: bool
     proposed_actions: List[dict]
     extracted_claims: List[dict]
+    claim_count: int
 
 @media_router.post("/ingest", response_model=MediaIngestResponse)
 async def ingest_media(
@@ -161,7 +162,8 @@ async def ingest_media(
             status="PROPOSED",
             requires_approval=True,
             proposed_actions=proposal_payload["actions"],
-            extracted_claims=claims_dicts
+            extracted_claims=claims_dicts,
+            claim_count=len(claims_dicts)
         )
         
     except Exception as e:

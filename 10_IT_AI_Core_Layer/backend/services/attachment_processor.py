@@ -46,6 +46,8 @@ def unpack_to_claims(raw_response: dict,
     except Exception as e:
         logger.error(f"Failed to load ontology: {e}")
 
+    doc_type = raw_response.get("doc_type") or raw_response.get("document_type")
+    
     for key, val in raw_response.items():
         if isinstance(val, list):
             for item in val:
@@ -58,21 +60,25 @@ def unpack_to_claims(raw_response: dict,
                         if val_str == "VIN_NOT_PROVIDED":
                             lineage["stub_type"] = "STUB_PENDING_VIN"
                         
-                        if target_field == "bill_to_entity_name" and raw_response.get("doc_type") == "VENDOR_INVOICE":
+                        if target_field == "bill_to_entity_name" and doc_type == "VENDOR_INVOICE":
                             if val_str.lower() not in ontology_valid_names:
-                                from database.open_questions import raise_open_question
-                                from database.bigquery_client import BigQueryClient
-                                bq_client = BigQueryClient().client
-                                raise_open_question(
-                                    bq_client=bq_client,
-                                    question_type="ENTITY_MATCH_FAILURE",
-                                    priority="HIGH",
-                                    context={
-                                        "input_reference": input_reference,
-                                        "attempted_name": val_str
-                                    },
-                                    description=f"Extracted bill_to_entity_name '{val_str}' does not match any registered entity."
-                                )
+                                # We'll raise the open question but continue processing the claim
+                                try:
+                                    from database.open_questions import raise_open_question
+                                    from database.bigquery_client import BigQueryClient
+                                    bq_client = BigQueryClient().client
+                                    raise_open_question(
+                                        bq_client=bq_client,
+                                        question_type="ENTITY_MATCH_FAILURE",
+                                        priority="HIGH",
+                                        context={
+                                            "input_reference": input_reference,
+                                            "attempted_name": val_str
+                                        },
+                                        description=f"Extracted bill_to_entity_name '{val_str}' does not match any registered entity."
+                                    )
+                                except Exception as bqe:
+                                    logger.warning(f"Failed to raise open question for mismatch: {bqe}")
                                 val_str = "ENTITY_NAME_MISMATCH"
                         
                         claim_data = {
@@ -88,6 +94,8 @@ def unpack_to_claims(raw_response: dict,
                         claims.append(ExtractedClaim.from_gemini_response(claim_data))
                     except Exception as e:
                         logger.error(f"Failed to unpack claim from {item}: {e}")
+    
+    logger.info(f"[ATTACHMENTS] Unpacked {len(claims)} claims from raw response.")
     return claims
 
 class AttachmentProcessor:
@@ -243,6 +251,7 @@ Example output:
                 { "mime_type": "application/pdf", "data": file_bytes }
             ])
             text = response.text.strip().strip("```json").strip("```")
+            logger.info(f"[ATTACHMENTS] Raw Gemini text for {filename}: {text[:500]}...")
             return json.loads(text)
         except Exception as e:
             logger.error(f"[ATTACHMENTS] Gemini extraction failed: {e}")

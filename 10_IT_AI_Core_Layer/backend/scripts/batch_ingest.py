@@ -39,7 +39,7 @@ async def warm_up_ping(client: httpx.AsyncClient) -> bool:
 async def ingest_file(client: httpx.AsyncClient, filepath: Path):
     with open(filepath, "rb") as f:
         files = {"file": (filepath.name, f, "application/octet-stream")}
-        data = {"actor_id": ACTOR_ID, "access_level": ACCESS_LEVEL}
+        data = {"actor_id": ACTOR_ID, "actor_role": ACCESS_LEVEL}
         response = await client.post(
             f"{BASE_URL}/api/media/ingest",
             files=files,
@@ -109,7 +109,8 @@ async def run_batch():
                 name, status, body = await ingest_file_with_retry(client, filepath)
                 if status == 200:
                     proposal_id = body.get("proposal_id", "unknown")
-                    claim_count = body.get("claim_count", 0)
+                    claims = body.get("extracted_claims", [])
+                    claim_count = len(claims)
                     print(f"  ✓ {name} → {claim_count} claims → proposal {proposal_id}")
                     results["success"].append({
                         "file": name,
