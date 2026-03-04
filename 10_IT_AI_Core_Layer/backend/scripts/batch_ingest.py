@@ -8,7 +8,7 @@ import httpx
 import asyncio
 from pathlib import Path
 
-BASE_URL = os.getenv("CIL_BASE_URL", "http://localhost:5000")
+BASE_URL = os.getenv("CIL_BASE_URL", "http://localhost:8001")  # 5000 is reserved by macOS AirPlay/Control Center
 DOCS_DIR = Path(os.getenv("DOCS_DIR", "10_IT_AI_Core_Layer/attached_assets"))
 ACTOR_ID = "MOAZ_SIAL"
 ACCESS_LEVEL = "SOVEREIGN"
