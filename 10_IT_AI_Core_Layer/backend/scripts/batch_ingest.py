@@ -1,8 +1,9 @@
 # backend/scripts/batch_ingest.py
-# Idempotent: checks if file_id already has a PROPOSED or APPROVED
-# entry in hitl_events before re-ingesting. Skips if already processed.
+# Idempotent: skips files that already have a PROPOSED or APPROVED hitl_events entry.
+# Resilient: warm-up ping aborts if server is sleeping. Up to 2 retries on network exceptions.
 
 import os
+import sys
 import httpx
 import asyncio
 from pathlib import Path
@@ -13,6 +14,27 @@ ACTOR_ID = "MOAZ_SIAL"
 ACCESS_LEVEL = "SOVEREIGN"
 
 SUPPORTED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".docx", ".xlsx"]
+MAX_RETRIES = 2
+RETRY_BACKOFF_SECONDS = 10
+INTER_FILE_SLEEP_SECONDS = 5
+
+
+async def warm_up_ping(client: httpx.AsyncClient) -> bool:
+    """
+    Pings the server before the batch starts.
+    Returns True if the server is alive, False if sleeping or unreachable.
+    Aborts the batch immediately on failure — do not run against a sleeping server.
+    """
+    for endpoint in ["/api/health", "/"]:
+        try:
+            resp = await client.get(f"{BASE_URL}{endpoint}", timeout=10.0)
+            if resp.status_code < 500:
+                print(f"✓ Server is alive (GET {endpoint} → {resp.status_code})")
+                return True
+        except Exception:
+            continue
+    return False
+
 
 async def ingest_file(client: httpx.AsyncClient, filepath: Path):
     with open(filepath, "rb") as f:
@@ -25,6 +47,31 @@ async def ingest_file(client: httpx.AsyncClient, filepath: Path):
             timeout=120.0
         )
     return filepath.name, response.status_code, response.json()
+
+
+async def ingest_file_with_retry(client: httpx.AsyncClient, filepath: Path):
+    """
+    Wraps ingest_file with up to MAX_RETRIES retries on network exception.
+    HTTP errors (4xx/5xx) are NOT retried — they indicate real pipeline failures.
+    Only connection-level exceptions (server sleeping, TCP reset, timeout) are retried.
+    """
+    last_exception = None
+    for attempt in range(1 + MAX_RETRIES):
+        try:
+            return await ingest_file(client, filepath)
+        except (httpx.ConnectError, httpx.RemoteProtocolError,
+                httpx.ReadTimeout, httpx.ConnectTimeout, asyncio.TimeoutError) as e:
+            last_exception = e
+            if attempt < MAX_RETRIES:
+                print(f"  ⚠ {filepath.name} → Network exception (attempt {attempt + 1}/{1 + MAX_RETRIES}): {e}")
+                print(f"    Retrying in {RETRY_BACKOFF_SECONDS}s...")
+                await asyncio.sleep(RETRY_BACKOFF_SECONDS)
+            else:
+                raise last_exception
+        except Exception as e:
+            # Non-network exception — do not retry
+            raise e
+
 
 async def run_batch():
     files = [
@@ -41,13 +88,25 @@ async def run_batch():
         print(f"  {f.name}")
     print()
 
-    results = {"success": [], "failed": [], "skipped": []}
-
     async with httpx.AsyncClient() as client:
+        # --- WARM-UP PING ---
+        print("Pinging server before batch start...")
+        server_alive = await warm_up_ping(client)
+        if not server_alive:
+            print()
+            print("✗ ABORT: Server is not responding.")
+            print("  The Replit instance is sleeping or the URL is wrong.")
+            print(f"  CIL_BASE_URL = {BASE_URL}")
+            print("  Wake up the Replit server (hit Run, wait for WS LIVE) then re-run this script.")
+            sys.exit(1)
+        print()
+
+        results = {"success": [], "failed": [], "skipped": []}
+
         for filepath in files:
             print(f"Ingesting: {filepath.name}")
             try:
-                name, status, body = await ingest_file(client, filepath)
+                name, status, body = await ingest_file_with_retry(client, filepath)
                 if status == 200:
                     proposal_id = body.get("proposal_id", "unknown")
                     claim_count = body.get("claim_count", 0)
@@ -61,14 +120,15 @@ async def run_batch():
                     print(f"  ⟳ {name} → already processed, skipping")
                     results["skipped"].append(name)
                 else:
+                    # HTTP 4xx/5xx = real pipeline error, do not retry
                     print(f"  ✗ {name} → HTTP {status}: {body}")
                     results["failed"].append({"file": name, "status": status, "error": body})
             except Exception as e:
-                print(f"  ✗ {filepath.name} → Exception: {e}")
+                print(f"  ✗ {filepath.name} → Exception after {MAX_RETRIES} retries: {e}")
                 results["failed"].append({"file": filepath.name, "error": str(e)})
 
-            # Pause between ingestions to avoid overwhelming Gemini API
-            await asyncio.sleep(5)
+            # Pause between files to avoid Gemini API rate limits
+            await asyncio.sleep(INTER_FILE_SLEEP_SECONDS)
 
     print()
     print("=" * 60)
