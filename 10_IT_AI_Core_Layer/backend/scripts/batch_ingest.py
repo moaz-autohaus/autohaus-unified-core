@@ -68,7 +68,7 @@ async def run_batch():
                 results["failed"].append({"file": filepath.name, "error": str(e)})
 
             # Pause between ingestions to avoid overwhelming Gemini API
-            await asyncio.sleep(2)
+            await asyncio.sleep(5)
 
     print()
     print("=" * 60)

@@ -33,10 +33,16 @@ def unpack_to_claims(raw_response: dict,
             parent = ontology.get("business_structure", {}).get("parent_entity", {})
             if parent.get("legal_name"): ontology_valid_names.append(parent.get("legal_name").lower())
             if parent.get("display_name"): ontology_valid_names.append(parent.get("display_name").lower())
+            # Read parent aliases array
+            for alias in parent.get("aliases", []):
+                ontology_valid_names.append(alias.lower())
             lanes = ontology.get("business_structure", {}).get("operating_lanes", [])
             for lane in lanes:
                 if lane.get("legal_name"): ontology_valid_names.append(lane.get("legal_name").lower())
                 if lane.get("alias"): ontology_valid_names.append(lane.get("alias").lower())
+                # Read lane aliases array — this was missing and caused ENTITY_NAME_MISMATCH
+                for alias in lane.get("aliases", []):
+                    ontology_valid_names.append(alias.lower())
     except Exception as e:
         logger.error(f"Failed to load ontology: {e}")
 
