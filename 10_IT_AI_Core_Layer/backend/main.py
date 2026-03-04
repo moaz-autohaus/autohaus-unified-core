@@ -89,6 +89,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Health Check (no dependencies — responds even if BQ is down) ────────────
+from fastapi.responses import JSONResponse
+
+@app.get("/api/health", tags=["System"], include_in_schema=True)
+async def health():
+    """Liveness probe for batch_ingest.py warm-up ping and Cloud Run health checks."""
+    return JSONResponse({"status": "ok", "service": "autohaus-cil-backend"})
+
 # API Routing
 app.include_router(inventory_router, prefix="/api/inventory")
 app.include_router(webhook_router, prefix="/api")

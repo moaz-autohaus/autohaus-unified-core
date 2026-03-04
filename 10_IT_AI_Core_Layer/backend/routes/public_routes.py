@@ -9,6 +9,15 @@ from database.bigquery_client import get_database
 logger = logging.getLogger("autohaus.public_api")
 public_router = APIRouter()
 
+
+@public_router.get("/health", include_in_schema=True, tags=["System"])
+async def health_check():
+    """
+    Liveness probe for batch_ingest.py warm-up ping and Cloud Run health checks.
+    Returns 200 immediately — no dependencies checked.
+    """
+    return {"status": "ok", "service": "autohaus-cil-backend"}
+
 class LeadRequest(BaseModel):
     name: str
     phone: str
