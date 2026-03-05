@@ -1,0 +1,21 @@
+{
+    "mcpServers": {
+        "google-workspace": {
+            "command": "uvx",
+            "args": [
+                "workspace-mcp"
+            ],
+            "env": {
+                "ENABLED_SERVICES": "drive,sheets,docs,contacts,tasks,gmail,calendar"
+            }
+        },
+        "autohaus-cil": {
+            "command": "python3",
+            "args": [
+                "-c",
+                "import uvicorn; uvicorn.run('mcp.mcp_server:mcp_router', port=8000)"
+            ],
+            "env": {}
+        }
+    }
+}
