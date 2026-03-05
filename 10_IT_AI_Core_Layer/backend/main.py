@@ -25,6 +25,7 @@ from routes.drive_webhooks import drive_webhook_router
 from routes.intel_routes import intel_router
 from routes.deploy_routes import deploy_router
 from routes.legal import legal_router
+from mcp.mcp_server import mcp_router
 
 logger = logging.getLogger("autohaus.main")
 
@@ -115,6 +116,9 @@ app.include_router(public_router, prefix="/api/public")
 # Legal/Compliance routes (no prefix)
 # MUST be registered before static mounts to prevent SPA catch-all interference
 app.include_router(legal_router)
+
+# MCP Layer
+app.include_router(mcp_router)
 
 # Static Hosting for React Frontend
 # MUST be the absolute last mount — serves dist/ with html=True for SPA + legal pages
