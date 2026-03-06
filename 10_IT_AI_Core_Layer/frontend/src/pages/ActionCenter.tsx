@@ -48,7 +48,8 @@ export function ActionCenter() {
     const fetchQueue = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/hitl/queue');
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+            const res = await fetch(`${backendUrl}/api/hitl/queue`);
             if (!res.ok) throw new Error(`${res.status}`);
             const data: HitlEvent[] = await res.json();
             setQueue(data.map(e => ({ ...e, payload: parsePayload(e.payload) })));
@@ -65,7 +66,8 @@ export function ActionCenter() {
         const eid = getEventId(event);
         setBusyId(eid);
         try {
-            const res = await fetch(`/api/hitl/${eid}/${action}`, { method: 'POST' });
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+            const res = await fetch(`${backendUrl}/api/hitl/${eid}/${action}`, { method: 'POST' });
             if (!res.ok) throw new Error(await res.text());
             setQueue(prev => prev.filter(e => getEventId(e) !== eid));
             showToast('success', action === 'approve' ? 'Approved and applied.' : 'Rejected and archived.');
