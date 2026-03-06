@@ -266,8 +266,10 @@ export function OrchestratorProvider({ children }: { children: React.ReactNode }
   }, [messages, processing]);
 
   useEffect(() => {
-    const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(`${proto}//${window.location.host}/ws/chat`);
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+    const proto = backendUrl.startsWith("https") ? "wss:" : "ws:";
+    const wsBase = backendUrl.replace(/^https?:\/\//, "");
+    const ws = new WebSocket(`${proto}//${wsBase}/ws/chat`);
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -356,7 +358,8 @@ export function OrchestratorProvider({ children }: { children: React.ReactNode }
         formData.append("actor_id", user.id);
         formData.append("actor_role", user.role);
 
-        const res = await fetch("/api/media/ingest", {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+        const res = await fetch(`${backendUrl}/api/media/ingest`, {
           method: "POST",
           body: formData,
         });

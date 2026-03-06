@@ -134,7 +134,8 @@ export function PublicApiTest({ onBack }: { onBack: () => void }) {
     (async () => {
       setInventoryLoading(true);
       try {
-        const res = await fetch("/api/public/inventory");
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+        const res = await fetch(`${backendUrl}/api/public/inventory`);
         if (!res.ok) throw new Error(`${res.status}`);
         const data = await res.json();
         const items = Array.isArray(data) ? data : data.vehicles || data.inventory || [];
@@ -152,7 +153,8 @@ export function PublicApiTest({ onBack }: { onBack: () => void }) {
     setLeadSubmitting(true);
     setLeadResult(null);
     try {
-      const res = await fetch("/api/public/lead", {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+      const res = await fetch(`${backendUrl}/api/public/lead`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
