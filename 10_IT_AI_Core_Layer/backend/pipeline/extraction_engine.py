@@ -90,21 +90,23 @@ def _build_extraction_prompt(text_content: str, schema: dict) -> str:
     required = schema.get("required_fields", [])
     optional = schema.get("optional_fields", [])
     
-    field_instructions = "REQUIRED FIELDS (must extract or mark null):\n"
+    field_instructions = "REQUIRED FIELDS:\n"
     for f in required:
         extra = ""
         if f.get("pattern"):
             extra += f" [pattern: {f['pattern']}]"
         if f.get("enum"):
             extra += f" [one of: {', '.join(f['enum'])}]"
-        field_instructions += f"  - {f['name']} ({f['type']}){extra}\n"
+        desc = f" - {f.get('description', '')}" if f.get("description") else ""
+        field_instructions += f"  - {f['name']} ({f['type']}){extra}{desc}\n"
     
     field_instructions += "\nOPTIONAL FIELDS (extract if present):\n"
     for f in optional:
         extra = ""
         if f.get("enum"):
             extra += f" [one of: {', '.join(f['enum'])}]"
-        field_instructions += f"  - {f['name']} ({f['type']}){extra}\n"
+        desc = f" - {f.get('description', '')}" if f.get("description") else ""
+        field_instructions += f"  - {f['name']} ({f['type']}){extra}{desc}\n"
     
     return f"""You are a precise document data extraction engine for AutoHaus, an auto dealership.
 
@@ -136,7 +138,7 @@ Document text:
 ---"""
 
 
-def _call_gemini(prompt: str, use_pro: bool = False) -> Optional[dict]:
+async def _call_gemini(prompt: str, use_pro: bool = False) -> Optional[dict]:
     """
     Call Gemini API and parse JSON response.
     Uses Flash by default. Switches to Pro only when use_pro=True.
@@ -160,7 +162,7 @@ def _call_gemini(prompt: str, use_pro: bool = False) -> Optional[dict]:
             )
         )
         
-        response = model.generate_content(prompt)
+        response = await model.generate_content_async(prompt)
         text = response.text.strip()
         
         # Strip markdown code fences if present
@@ -178,13 +180,13 @@ def _call_gemini(prompt: str, use_pro: bool = False) -> Optional[dict]:
         return None
 
 
-def classify_document(text_content: str) -> Tuple[str, float]:
+async def classify_document(text_content: str) -> Tuple[str, float]:
     """
     Classify a document's text content into a schema type.
     Returns (doc_type, confidence).
     """
     prompt = _build_classification_prompt(text_content)
-    result = _call_gemini(prompt, use_pro=False)  # Flash is fine for classification
+    result = await _call_gemini(prompt, use_pro=False)  # Flash is fine for classification
     
     if not result:
         return "UNKNOWN", 0.0
@@ -201,7 +203,7 @@ def classify_document(text_content: str) -> Tuple[str, float]:
     return doc_type, confidence
 
 
-def extract_fields(
+async def extract_fields(
     text_content: str,
     doc_type: str,
     document_id: str,
@@ -223,7 +225,7 @@ def extract_fields(
         logger.info(f"[EXTRACT] KAMM document ({doc_type}) — using Gemini Pro 3.1")
     
     prompt = _build_extraction_prompt(text_content, schema)
-    result = _call_gemini(prompt, use_pro=use_pro)
+    result = await _call_gemini(prompt, use_pro=use_pro)
     
     if not result or "fields" not in result:
         logger.error(f"[EXTRACT] Extraction returned no fields for {document_id}")

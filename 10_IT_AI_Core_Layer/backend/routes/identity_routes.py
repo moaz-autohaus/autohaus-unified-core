@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from utils.identity_resolution import IdentityEngine
 from agents.attention_dispatcher import AttentionDispatcher
-from routes.chat_stream import manager, _resolve_skin
+from pipeline.orchestrator import _resolve_skin
 
 identity_router = APIRouter()
 try:
@@ -62,9 +62,8 @@ async def trigger_membrane_attention(payload: LeadIntakeRequest, identity_result
         "dataset": [] 
     }
 
-    # If it's very urgent, we could hypothetically use Twilio SMS here if route == "SMS".
-    # For now, we always broadcast the new lead to the websocket (System Ledger / Dashboard).
-    await manager.broadcast(plate_payload)
+    # Broadcast temporarily disabled because chat_stream manager was decoupled.
+    pass
 
 
 @identity_router.post("/intake")

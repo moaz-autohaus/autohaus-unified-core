@@ -1,326 +1,120 @@
 """
 AutoHaus C-OS v3.1 — MODULE 3: JIT Plate Protocol (WebSocket Chat Stream)
 ==========================================================================
-This module is the "Nervous System" of the Conversational Operating System.
-It maintains persistent WebSocket connections between the Python CIL backend
-and the React frontend (UCC), enabling the Digital Chief of Staff to push
-JIT UI Plates in real-time without page refreshes.
-
-Architecture:
-  1. Client connects to /ws/chat
-  2. Client sends a natural language message (JSON: {"message": "..."})
-  3. The RouterAgent classifies intent and extracts entities
-  4. The backend pushes back a MOUNT_PLATE command with hydrated data
-  5. React dynamically renders the correct Plate component
-
-Plate Types:
-  - FINANCE_CHART:        Revenue/cost visualization for a lane or entity
-  - INVENTORY_TABLE:      Vehicle inventory data grid
-  - SERVICE_TIMELINE:     Active repair orders and recon status
-  - CRM_PROFILE:          Customer identity card from the Human Graph
-  - LOGISTICS_MAP:        Live driver tracking and dispatch board
-  - COMPLIANCE_CHECKLIST: Title/disclosure document status
-  - CHAT_RESPONSE:        Simple text reply (no Plate needed)
-  - AMBIGUITY_RESOLUTION: Multi-choice selector for collisions
+Rebuild 3 (Cloud Run Ready): 
+WebSocket Transport decoupled from Orchestration using Redis Pub/Sub.
 
 Author: AutoHaus CIL Build System
-Version: 1.0.0
+Version: 2.0.0
 """
 
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
+import asyncio
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-import google.generativeai as genai
+import redis.asyncio as redis
+import os
 
-# C-OS Modules
-from memory.vector_vault import VectorVault
-from agents.iea_agent import InputEnrichmentAgent
-from agents.governance_agent import GovernanceAgent
-from agents.router_agent import RouterAgent, RoutedIntent
-from models.cos_response import CoSResponse, UIStrategyModel
+from pipeline.orchestrator import route_and_process
+from models.cos_response import CoSResponse
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("autohaus.chat_stream")
 
+chat_router = APIRouter()
+
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+redis_client = None
+
+try:
+    redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+except Exception as e:
+    logger.warning(f"Failed to initialize Redis client: {e}")
 
 # ---------------------------------------------------------------------------
-# Plate Mapping: Intent Domain → React UI Component
+# Local In-Memory Fallback Broker (for dev without Redis)
 # ---------------------------------------------------------------------------
-PLATE_MAP = {
-    "FINANCE":    "FINANCE_CHART",
-    "INVENTORY":  "INVENTORY_TABLE",
-    "SERVICE":    "CHAT_RESPONSE",
-    "CRM":        "CHAT_RESPONSE",
-    "LOGISTICS":  "LIVE_DISPATCH",
-    "COMPLIANCE": "ANOMALY_ALERT",
-    "GOVERNANCE": "GOVERNANCE_DASHBOARD",
-    "UNKNOWN":    "CHAT_RESPONSE",
-}
-
-
-# ---------------------------------------------------------------------------
-# WebSocket Connection Manager
-# ---------------------------------------------------------------------------
-class ConnectionManager:
-    """
-    Manages active WebSocket connections for the C-OS.
-
-    Each connected client (browser tab, mobile app, etc.) is tracked by a
-    unique client_id derived from their WebSocket session. This enables
-    targeted "push" messages to specific users (e.g., alert only the CEO).
-    """
-
+class LocalBroker:
     def __init__(self):
-        self._active_connections: dict[str, WebSocket] = {}
-        self._client_meta: dict[str, dict] = {}
-
-    async def connect(self, websocket: WebSocket, client_id: str, access: str = "FIELD"):
-        """Accept and register a new WebSocket connection with access level (default: least privilege)."""
-        await websocket.accept()
-        self._active_connections[client_id] = websocket
-        self._client_meta[client_id] = {"access": access}
-        logger.info(f"Client connected: {client_id} access={access} (Total: {len(self._active_connections)})")
-
-    def disconnect(self, client_id: str):
-        """Remove a disconnected client."""
-        self._active_connections.pop(client_id, None)
-        self._client_meta.pop(client_id, None)
-        logger.info(f"Client disconnected: {client_id} (Total: {len(self._active_connections)})")
-
-    def set_client_access(self, client_id: str, access: str):
-        """Update the access level for a connected client."""
-        if client_id in self._client_meta:
-            self._client_meta[client_id]["access"] = access
-
-    def get_clients_with_access(self) -> dict[str, dict]:
-        """Return all client metadata for role-based broadcast filtering."""
-        return dict(self._client_meta)
-
-    async def send_personal_message(self, message: dict, client_id: str):
-        """Push a JSON message to a specific connected client."""
-        ws = self._active_connections.get(client_id)
-        if ws:
-            await ws.send_json(message)
-
-    async def broadcast(self, message: dict):
-        """Push a JSON message to ALL connected clients (e.g., system alerts)."""
-        for client_id, ws in self._active_connections.items():
-            try:
-                await ws.send_json(message)
-            except Exception as e:
-                logger.error(f"Broadcast failed for {client_id}: {e}")
-
-    @property
-    def active_count(self) -> int:
-        return len(self._active_connections)
-
-
-# ---------------------------------------------------------------------------
-# Singleton Instances
-# ---------------------------------------------------------------------------
-manager = ConnectionManager()
-
-# Lazy-initialized RouterAgent (only created on first message to conserve quota)
-_router: Optional[RouterAgent] = None
-
-
-def _get_router() -> RouterAgent:
-    """Lazy singleton for the RouterAgent to avoid initializing Gemini on import."""
-    global _router
-    if _router is None:
-        _router = RouterAgent()
-    return _router
-
-
-# ---------------------------------------------------------------------------
-# Skin Selection Logic (Backend decides, Frontend obeys)
-# ---------------------------------------------------------------------------
-def _resolve_skin(urgency_score: int, target_entity: str) -> dict:
-    """
-    The Backend is the single source of truth for the visual expression.
-    This function maps urgency and context to a UI Strategy directive.
-    """
-    if urgency_score >= 8:
-        return {
-            "skin": "FIELD_DIAGNOSTIC",
-            "urgency": urgency_score,
-            "vibration": True,
-            "overlay": "porsche-red-pulse",
-        }
-    elif target_entity in ("CLIENT", "EXTERNAL", "WEB_LEAD"):
-        return {
-            "skin": "CLIENT_HANDSHAKE",
-            "urgency": urgency_score,
-            "vibration": False,
-            "overlay": None,
-        }
-    elif urgency_score <= 2:
-        return {
-            "skin": "GHOST",
-            "urgency": urgency_score,
-            "vibration": False,
-            "overlay": None,
-        }
-    else:
-        return {
-            "skin": "SUPER_ADMIN",
-            "urgency": urgency_score,
-            "vibration": False,
-            "overlay": None,
-        }
-
-
-# ---------------------------------------------------------------------------
-# JIT Plate Builder
-# ---------------------------------------------------------------------------
-def build_plate_payload(routed: RoutedIntent, urgency_score: int = 5) -> CoSResponse:
-    """
-    Translate a RoutedIntent into a JIT Plate mount command for the React UI.
-
-    The React <PlateHydrator /> component listens for these payloads and
-    dynamically imports and renders the correct visualization component.
-
-    The nested `strategy` block makes the frontend truly stateless —
-    it never has to guess which skin to use.
-    """
-    plate_id = PLATE_MAP.get(routed.intent, "CHAT_RESPONSE")
-
-    # If confidence is low, override to ambiguity resolution
-    if routed.confidence < 0.7 and routed.intent != "UNKNOWN":
-        plate_id = "AMBIGUITY_RESOLUTION"
-
-    strategy_dict = _resolve_skin(urgency_score, routed.target_entity)
-    strategy = UIStrategyModel(**strategy_dict)
-
-    return CoSResponse(
-        type="MOUNT_PLATE",
-        plate_id=plate_id,
-        intent=routed.intent,
-        confidence=routed.confidence,
-        entities=routed.entities,
-        target_entity=routed.target_entity,
-        suggested_action=routed.suggested_action,
-        strategy=strategy,
-        timestamp=datetime.now(timezone.utc).isoformat(),
-        dataset=[]
-    )
-
-
-# ---------------------------------------------------------------------------
-# Message Processor
-# ---------------------------------------------------------------------------
-async def process_incoming_message(websocket: WebSocket, client_id: str, text_data: str):
-    """Processes an incoming chat message using the C-OS pipeline."""
-    logger.info(f"[WS] Received message: '{text_data[:80]}...'")
-
-    # 1. Sovereign Memory context injection
-    from memory.vector_vault import VectorVault
-    vault = VectorVault()
-    memory_context = vault.build_context_injection(text_data, top_k=3)
-
-    enriched_input = text_data
-    if memory_context:
-        logger.info(f"[WS] Found historical context.")
-        enriched_input = f"{text_data}\n\n{memory_context}"
-
-    # 2. Intelligent Membrane: IEA Enrichment
-    from agents.iea_agent import InputEnrichmentAgent
-    iea = InputEnrichmentAgent()
-    logger.info("[WS] Passing through IEA Membrane")
-    iea_result = iea.evaluate(enriched_input)
-
-    if iea_result.status == "INCOMPLETE":
-        logger.warning(f"[WS] Membrane caught incomplete input: {iea_result.clarifying_question}")
-        # If incomplete, bypass the Router and ask the user directly
-        clarification_response = CoSResponse(
-            type="MOUNT_PLATE",
-            plate_id="CHAT_RESPONSE",
-            intent="CLARIFICATION_REQUIRED",
-            confidence=1.0,
-            entities=iea_result.extracted_entities,
-            target_entity="CARBON_LLC",
-            suggested_action=iea_result.clarifying_question,
-            strategy=UIStrategyModel(**_resolve_skin(5, "CARBON_LLC")),
-            timestamp=datetime.now(timezone.utc).isoformat(),
-            dataset=[]
-        )
-        await manager.send_personal_message(clarification_response.model_dump(), client_id)
-        return
-
-    # 3. Classify structured input via RouterAgent
-    from agents.router_agent import RouterAgent
-    router = _get_router()
-    logger.info("[WS] Classifying intent.")
-    routed_intent = router.classify(enriched_input)
-
-    # 4. Determine Urgency via Attention Dispatcher
-    from agents.attention_dispatcher import AttentionDispatcher
-    dispatcher = AttentionDispatcher()
-    attention_result = dispatcher.evaluate_event(enriched_input)
-
-    # 4.5. If GOVERNANCE, execute it now
-    if routed_intent.intent == "GOVERNANCE":
-        gov_agent = GovernanceAgent()
-        gov_res = gov_agent.evaluate_governance_command(text_data, client_id, "SYSTEM")
+        self.subscribers = {}
         
-        # Override plate payload with Governance outputs
-        plate_payload = CoSResponse(
-            type="MOUNT_PLATE",
-            plate_id=gov_res.get("plate", "GOVERNANCE_DASHBOARD"),
-            intent="GOVERNANCE",
-            confidence=1.0,
-            entities=routed_intent.entities,
-            target_entity=routed_intent.target_entity,
-            suggested_action=gov_res.get("message", "Governance action executed"),
-            strategy=UIStrategyModel(**_resolve_skin(attention_result.urgency_score, "CARBON_LLC")),
-            timestamp=datetime.now(timezone.utc).isoformat(),
-            dataset=gov_res.get("dataset", [])
-        )
-    else:
-        # 5. Generate the standard JIT Plate JSON payload
-        plate_payload = build_plate_payload(routed_intent, urgency_score=attention_result.urgency_score)
+    async def subscribe(self, client_id: str, queue: asyncio.Queue):
+        self.subscribers[client_id] = queue
+        
+    def unsubscribe(self, client_id: str):
+        self.subscribers.pop(client_id, None)
+        
+    async def publish(self, client_id: str, message: dict):
+        if client_id in self.subscribers:
+            await self.subscribers[client_id].put(message)
 
-    # 6. Push payload back to the browser
-    logger.info(f"[WS] Pushing Plate: {plate_payload.plate_id} (Intent: {plate_payload.intent}, Skin: {plate_payload.strategy.skin if plate_payload.strategy else 'UNKNOWN'}, Urgency: {attention_result.urgency_score})")
-    await manager.send_personal_message(plate_payload.model_dump(), client_id)
+local_broker = LocalBroker()
+
+
+# ---------------------------------------------------------------------------
+# Pub/Sub Listener Task for Each WebSocket Connection
+# ---------------------------------------------------------------------------
+async def redis_listener(websocket: WebSocket, client_id: str):
+    """Subscribes to a client-specific channel and pushes messages to the WebSocket."""
+    if redis_client:
+        pubsub = redis_client.pubsub()
+        await pubsub.subscribe(f"client:{client_id}")
+        
+        try:
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    payload = json.loads(message["data"])
+                    await websocket.send_json(payload)
+        except asyncio.CancelledError:
+            await pubsub.unsubscribe(f"client:{client_id}")
+        except Exception as e:
+            logger.error(f"[{client_id}] Redis listener error: {e}")
+            await pubsub.unsubscribe(f"client:{client_id}")
+    else:
+        # Local fallback
+        queue = asyncio.Queue()
+        await local_broker.subscribe(client_id, queue)
+        try:
+            while True:
+                payload = await queue.get()
+                await websocket.send_json(payload)
+        except asyncio.CancelledError:
+            local_broker.unsubscribe(client_id)
 
 
 # ---------------------------------------------------------------------------
 # FastAPI WebSocket Router
 # ---------------------------------------------------------------------------
-chat_router = APIRouter()
-
-
 @chat_router.websocket("/ws/chat")
 async def websocket_chat_endpoint(websocket: WebSocket):
     """
-    The primary C-OS WebSocket endpoint.
-
-    Protocol:
-      → Client sends: {"message": "Show me financials for Lane A"}
-      ← Server sends: {"type": "MOUNT_PLATE", "plate_id": "FINANCE_CHART", ...}
+    Stateless WebSocket Endpoint.
+    Only handles transport. Orchestration is offloaded to background task / worker.
     """
-    # Generate a session-based client ID
+    await websocket.accept()
+    
     client_id = f"client_{id(websocket)}"
+    logger.info(f"[{client_id}] WebSocket client connected.")
 
-    await manager.connect(websocket, client_id)
+    # Spin up a listener task for this specific client
+    listener_task = asyncio.create_task(redis_listener(websocket, client_id))
 
-    # Send welcome handshake with Governance Check
+    # Send Welcome Greeting asynchronously
+    from agents.governance_agent import GovernanceAgent
     gov_agent = GovernanceAgent()
     greeting_msg = gov_agent.generate_session_greeting()
     
     welcome_response = CoSResponse(
         type="SYSTEM",
         message=greeting_msg,
-        connected_clients=manager.active_count,
+        connected_clients=1, # Cannot rely on global active count in multi-instance
         authority_state="SOVEREIGN",
         legacy_sync=False,
         timestamp=datetime.now(timezone.utc).isoformat(),
     )
-    await manager.send_personal_message(welcome_response.model_dump(), client_id)
+    await websocket.send_json(welcome_response.model_dump())
 
     USER_ACCESS_MAP = {
         "AHSIN_CEO": "SOVEREIGN",
@@ -328,6 +122,8 @@ async def websocket_chat_endpoint(websocket: WebSocket):
         "MOHSIN_OPS": "STANDARD",
         "MOAZ_LOGISTICS": "FIELD",
     }
+    
+    access = "FIELD"
 
     try:
         while True:
@@ -338,8 +134,8 @@ async def websocket_chat_endpoint(websocket: WebSocket):
                 incoming_user_id = data.get("user_id", "")
                 if incoming_user_id:
                     access = USER_ACCESS_MAP.get(incoming_user_id, "FIELD")
-                    manager.set_client_access(client_id, access)
-                    logger.info(f"[{client_id}] Access set to {access} for user {incoming_user_id}")
+                    logger.info(f"[{client_id}] Access set to {access} for {incoming_user_id}")
+                
                 if data.get("type") == "identify":
                     continue
                 user_message = data.get("message", data.get("text", "")).strip()
@@ -351,14 +147,16 @@ async def websocket_chat_endpoint(websocket: WebSocket):
                     type="ERROR",
                     message="Empty command received. Please provide an instruction."
                 )
-                await manager.send_personal_message(error_response.model_dump(), client_id)
+                await websocket.send_json(error_response.model_dump())
                 continue
 
-            await process_incoming_message(websocket, client_id, user_message)
+            # Dispatch strictly to orchestration (Fire and forget)
+            # Route and process decoupled from connection management
+            asyncio.create_task(route_and_process(user_message, client_id, access))
 
     except WebSocketDisconnect:
-        manager.disconnect(client_id)
         logger.info(f"[{client_id}] WebSocket closed cleanly.")
     except Exception as e:
-        manager.disconnect(client_id)
-        logger.error(f"[{client_id}] WebSocket error: {e}")
+        logger.error(f"[{client_id}] WebSocket closed with error: {e}")
+    finally:
+        listener_task.cancel()

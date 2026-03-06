@@ -1,0 +1,68 @@
+schema_id: VENDOR_INVOICE
+schema_version: "1.0"
+description: "Invoice from a vendor for parts, tools, or services."
+confidence_threshold: 0.85
+kamm_must_review: false
+archive_folder: "05_Invoices"
+amendment_lock: false
+
+required_fields:
+  - name: vendor_name
+    type: string
+  - name: bill_to_entity_name
+    type: string
+  - name: invoice_number
+    type: string
+  - name: invoice_date
+    type: date
+  - name: total_amount
+    type: decimal
+
+optional_fields:
+  - name: vendor_address
+    type: string
+  - name: vendor_phone
+    type: string
+  - name: vendor_email
+    type: string
+  - name: bill_to_address
+    type: string
+  - name: bill_to_account_number
+    type: string
+  - name: contact_name
+    type: string
+  - name: vehicle_year
+    type: integer
+  - name: vehicle_make
+    type: string
+  - name: vehicle_model
+    type: string
+  - name: vehicle_mileage
+    type: string
+  - name: vehicle_stock_number
+    type: string
+  - name: due_date
+    type: date
+  - name: payment_terms
+    type: string
+  - name: subtotal
+    type: decimal
+  - name: tax_amount
+    type: decimal
+  - name: line_items
+    type: string
+  - name: notes
+    type: string
+  - name: vin
+    type: string
+    description: "If the document explicitly states 'VIN: NOT PROVIDED' or similar, extract exactly 'VIN_NOT_PROVIDED' as the value."
+
+entity_links:
+  - field: vendor_name
+    entity_type: VENDOR
+  - field: bill_to_entity_name
+    entity_type: ENTITY
+  - field: contact_name
+    entity_type: PERSON
+  - field: vin
+    entity_type: VEHICLE

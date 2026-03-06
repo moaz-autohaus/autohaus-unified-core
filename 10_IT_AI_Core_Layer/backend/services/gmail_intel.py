@@ -175,7 +175,7 @@ class GmailIntelService:
             
             # Hydrate into ExtractedClaim framework
             lineage = {
-                "model": "gemini-1.5-flash",
+                "model": "gemini-2.5-flash",
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
             claims = unpack_to_claims(
@@ -314,7 +314,7 @@ class GmailIntelService:
     async def _extract_entities(self, body: str, sender: str) -> dict:
         import google.generativeai as genai
         model = genai.GenerativeModel(
-            "gemini-1.5-flash",
+            "gemini-2.5-flash",
             generation_config=genai.GenerationConfig(
                 temperature=0.0,
                 response_mime_type="application/json"

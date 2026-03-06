@@ -79,12 +79,12 @@ class GovernanceAgent:
             logger.warning("[GOVERNANCE] GEMINI_API_KEY not set. LLM parsing will fail to regex.")
             self._model = None
 
-    def _parse_intent_with_llm(self, user_input: str) -> dict:
+    async def _parse_intent_with_llm(self, user_input: str) -> dict:
         if not self._model:
             return {"action": "UNKNOWN", "parameters": {}}
             
         try:
-            response = self._model.generate_content(user_input)
+            response = await self._model.generate_content_async(user_input)
             raw_text = response.text.strip()
             if raw_text.startswith("```"):
                 raw_text = raw_text.split("\n", 1)[1]
@@ -135,7 +135,7 @@ class GovernanceAgent:
             logger.error(f"Failed to generate greeting: {e}")
             return "AutoHaus C-OS v3.1 — Digital Chief of Staff connected. (Governance metrics unavailable)."
 
-    def evaluate_governance_command(self, user_input: str, actor_id: str, actor_role: str) -> dict:
+    async def evaluate_governance_command(self, user_input: str, actor_id: str, actor_role: str) -> dict:
         """
         Parses the user input and performs governance operations if it's a resolution.
         """
@@ -151,7 +151,7 @@ class GovernanceAgent:
             params = {"question_id": match.group(1), "resolution_value": match.group(2)}
         else:
             # Fallback to LLM intent classification (Primary for natural language)
-            parsed = self._parse_intent_with_llm(user_input)
+            parsed = await self._parse_intent_with_llm(user_input)
             action = parsed.get("action", "UNKNOWN")
             params = parsed.get("parameters", {})
         

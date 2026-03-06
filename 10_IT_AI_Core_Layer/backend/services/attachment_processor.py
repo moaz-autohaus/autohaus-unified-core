@@ -40,60 +40,70 @@ def unpack_to_claims(raw_response: dict,
             for lane in lanes:
                 if lane.get("legal_name"): ontology_valid_names.append(lane.get("legal_name").lower())
                 if lane.get("alias"): ontology_valid_names.append(lane.get("alias").lower())
-                # Read lane aliases array — this was missing and caused ENTITY_NAME_MISMATCH
+                # Read lane aliases array
                 for alias in lane.get("aliases", []):
                     ontology_valid_names.append(alias.lower())
     except Exception as e:
         logger.error(f"Failed to load ontology: {e}")
 
-    doc_type = raw_response.get("doc_type") or raw_response.get("document_type")
+    doc_type = raw_response.get("doc_type") or raw_response.get("document_type") or "UNKNOWN"
+    fields = raw_response.get("fields", {})
     
-    for key, val in raw_response.items():
-        if isinstance(val, list):
-            for item in val:
-                if isinstance(item, dict) and "extracted_value" in item:
+    # Handle the new dictionary-based schema approach
+    for target_field, field_data in fields.items():
+        if field_data.get("value") is None:
+            continue
+            
+        try:
+            val_str = str(field_data.get("value", ""))
+            lineage = dict(source_lineage)
+            if "extraction_version_id" in raw_response:
+                lineage["extraction_version_id"] = raw_response["extraction_version_id"]
+            
+            if val_str == "VIN_NOT_PROVIDED":
+                lineage["stub_type"] = "STUB_PENDING_VIN"
+            
+            if target_field == "bill_to_entity_name" and doc_type == "VENDOR_INVOICE":
+                if val_str.lower() not in ontology_valid_names:
+                    # Raise open question
                     try:
-                        target_field = item.get("target_field", key)
-                        val_str = str(item.get("extracted_value", ""))
-                        lineage = dict(source_lineage)
-                        
-                        if val_str == "VIN_NOT_PROVIDED":
-                            lineage["stub_type"] = "STUB_PENDING_VIN"
-                        
-                        if target_field == "bill_to_entity_name" and doc_type == "VENDOR_INVOICE":
-                            if val_str.lower() not in ontology_valid_names:
-                                # We'll raise the open question but continue processing the claim
-                                try:
-                                    from database.open_questions import raise_open_question
-                                    from database.bigquery_client import BigQueryClient
-                                    bq_client = BigQueryClient().client
-                                    raise_open_question(
-                                        bq_client=bq_client,
-                                        question_type="ENTITY_MATCH_FAILURE",
-                                        priority="HIGH",
-                                        context={
-                                            "input_reference": input_reference,
-                                            "attempted_name": val_str
-                                        },
-                                        description=f"Extracted bill_to_entity_name '{val_str}' does not match any registered entity."
-                                    )
-                                except Exception as bqe:
-                                    logger.warning(f"Failed to raise open question for mismatch: {bqe}")
-                                val_str = "ENTITY_NAME_MISMATCH"
-                        
-                        claim_data = {
-                            "source": source.value if hasattr(source, "value") else source,
-                            "extractor_identity": extractor_identity,
-                            "input_reference": input_reference,
-                            "source_lineage": lineage,
-                            "entity_type": item.get("entity_type", "UNKNOWN"),
-                            "target_field": target_field,
-                            "extracted_value": val_str,
-                            "confidence": float(item.get("confidence", 1.0))
-                        }
-                        claims.append(ExtractedClaim.from_gemini_response(claim_data))
-                    except Exception as e:
-                        logger.error(f"Failed to unpack claim from {item}: {e}")
+                        from database.open_questions import raise_open_question
+                        from database.bigquery_client import BigQueryClient
+                        bq_client = BigQueryClient().client
+                        raise_open_question(
+                            bq_client=bq_client,
+                            question_type="ENTITY_MATCH_FAILURE",
+                            priority="HIGH",
+                            context={
+                                "input_reference": input_reference,
+                                "attempted_name": val_str
+                            },
+                            description=f"Extracted bill_to_entity_name '{val_str}' does not match any registered entity."
+                        )
+                    except Exception as bqe:
+                        logger.warning(f"Failed to raise open question for mismatch: {bqe}")
+                    val_str = "ENTITY_NAME_MISMATCH"
+            
+            # Map robust entity_type via rough legacy heuristic or default to DOCUMENT
+            entity_type = "DOCUMENT"
+            if target_field == "vin": entity_type = "VEHICLE"
+            elif target_field in ("vendor_name", "transport_carrier", "auction_house"): entity_type = "VENDOR"
+            elif target_field == "bill_to_entity_name": entity_type = "DOCUMENT"
+            elif "name" in target_field: entity_type = "PERSON"
+
+            claim_data = {
+                "source": source.value if hasattr(source, "value") else source,
+                "extractor_identity": extractor_identity,
+                "input_reference": input_reference,
+                "source_lineage": lineage,
+                "entity_type": entity_type,
+                "target_field": target_field,
+                "extracted_value": val_str,
+                "confidence": float(field_data.get("confidence", 1.0))
+            }
+            claims.append(ExtractedClaim.from_gemini_response(claim_data))
+        except Exception as e:
+            logger.error(f"Failed to unpack claim for {target_field}: {e}")
     
     logger.info(f"[ATTACHMENTS] Unpacked {len(claims)} claims from raw response.")
     return claims
@@ -197,72 +207,56 @@ class AttachmentProcessor:
                 await self._create_proposal(item, sender, subject, message_id)
 
     async def _extract_tier0_metrics(self, file_bytes: bytes, filename: str, sender: str, subject: str) -> Dict:
-        """Uses Gemini 1.5 Flash to extract VINs, Costs, and Entity details from a PDF."""
-        prompt = f"""Read only what is literally present in this document.
-The document type is determined by the document's own header and content — not by context about the business receiving it.
-Do not infer, assume, or hallucinate fields that are not explicitly present.
-If a field is not found, return null for that field. Do not substitute plausible values.
-
-If the document explicitly states "VIN: NOT PROVIDED" or similar, extract "VIN_NOT_PROVIDED" as the value with confidence 1.0.
-
-You are the AutoHaus Tier 0 Extraction Agent.
-Analyze this document (attached PDF) for an auto dealership.
-Identify:
-1. VINs (17 characters, or VIN_NOT_PROVIDED)
-2. Exact Dollar Amounts (Purchase Price, Transport Cost, Auction Fees, Policy Premia)
-3. Entity Names (Transport Carrier, Insurance Carrier, Auction House, Bank)
-4. Dates (Purchase Date, Policy Start/End)
-5. Document Type (AUCTION_RECEIPT, BOL, VENDOR_INVOICE, INSURANCE_CERT, BANK_STMT, TAX_DOC)
-6. For VENDOR_INVOICE documents ONLY, additionally extract these into a "vendor_invoice_fields" array: 
-   vendor_name, vendor_address, vendor_phone, vendor_email, bill_to_entity_name, bill_to_address, bill_to_account_number, contact_name, vehicle_year, vehicle_make, vehicle_model, vehicle_mileage, vehicle_stock_number, invoice_number, invoice_date, due_date, payment_terms, subtotal, tax_amount, total_amount, line_items (encode the entire array as a single JSON string), notes.
-   Ensure bill_to_entity_name is always present if it exists.
-
-Sender: {sender}
-Subject: {subject}
-Filename: {filename}
-
-Return valid JSON ONLY, using arrays of extracted fact objects partitioned freely by key (e.g. "vins", "financials", "entities", "dates", "vendor_invoice_fields", etc).
-Each extracted fact object MUST include exactly these fields:
-  - confidence (float between 0.0 and 1.0)
-  - entity_type (must be one of: VEHICLE, PERSON, VENDOR, DOCUMENT, UNKNOWN)
-  - target_field (string, e.g., 'vin', 'bill_to_entity_name', 'subtotal', 'line_items')
-  - extracted_value (string, the asserted value)
-
-Example output:
-{{
-  "doc_type": "AUCTION_RECEIPT",
-  "vins": [
-    {{"extracted_value": "12345678901234567", "confidence": 0.99, "entity_type": "VEHICLE", "target_field": "vin"}}
-  ],
-  "financials": [
-    {{"extracted_value": "500.0", "confidence": 1.0, "entity_type": "DOCUMENT", "target_field": "transport_cost"}}
-  ],
-  "entities": [
-    {{"extracted_value": "Carrier ABC", "confidence": 0.9, "entity_type": "VENDOR", "target_field": "transport_carrier"}}
-  ],
-  "dates": [
-    {{"extracted_value": "2026-02-21", "confidence": 1.0, "entity_type": "DOCUMENT", "target_field": "purchase_date"}}
-  ]
-}}"""
+        """Extracts fields by integrating with extraction_engine and OCR Pipeline."""
+        import tempfile
+        import asyncio
+        from pipeline.ocr_engine import _extract_via_gemini_vision
+        from pipeline.extraction_engine import classify_document, extract_fields
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            tmp.write(file_bytes)
+            tmp_path = tmp.name
+            
         try:
-            # Inline bytes to Gemini
-            response = self.model.generate_content([
-                prompt,
-                { "mime_type": "application/pdf", "data": file_bytes }
-            ])
-            text = response.text.strip().strip("```json").strip("```")
-            logger.info(f"[ATTACHMENTS] Raw Gemini text for {filename}: {text[:500]}...")
-            return json.loads(text)
+            # 1. OCR the PDF
+            text_content = await _extract_via_gemini_vision(tmp_path)
+            if not text_content: 
+                logger.error(f"[ATTACHMENTS] Empty OCR result for {filename}")
+                return {}
+             
+            full_text = f"Email Details:\nSender: {sender}\nSubject: {subject}\nFilename: {filename}\n\nDocument Text:\n{text_content}"
+            
+            # 2. Classify
+            doc_type, conf = await classify_document(full_text)
+            if doc_type == "UNKNOWN":
+                logger.warning(f"[ATTACHMENTS] Document type UNKNOWN for {filename}. Defaulting to VENDOR_INVOICE for heuristic fallback.")
+                doc_type = "VENDOR_INVOICE"
+            
+            # 3. Extract Fields against schema
+            file_id = "att_" + filename.replace(" ", "_")
+            result = await extract_fields(full_text, doc_type, file_id, self.bq.client)
+            
+            if not result:
+                logger.error(f"[ATTACHMENTS] Extraction returned nothing for {filename}")
+                return {}
+                
+            return result
         except Exception as e:
-            logger.error(f"[ATTACHMENTS] Gemini extraction failed: {e}")
+            logger.error(f"[ATTACHMENTS] Extraction pipeline failed: {e}")
             return {}
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
 
     async def _create_proposal(self, data: Dict, sender: str, subject: str, message_id: str):
         """Stages the extraction result in the HITL Governance system."""
         # Check for VINs to target vehicles
-        def get_val(x): return x.get("extracted_value") if isinstance(x, dict) else x
-        
-        vins = [get_val(v) for v in data.get("vins", [])]
+        vins = []
+        if "fields" in data and "vin" in data["fields"]:
+            vin_val = data["fields"]["vin"].get("value")
+            if vin_val:
+                vins.append(vin_val)
+                
         target_id = vins[0] if vins else message_id
         target_type = "VEHICLE" if vins else "EMAIL_ATTACHMENT"
         

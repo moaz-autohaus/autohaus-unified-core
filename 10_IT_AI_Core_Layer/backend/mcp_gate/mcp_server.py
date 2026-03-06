@@ -17,15 +17,26 @@ logger = logging.getLogger("autohaus.mcp")
 # Setup MCP Server
 mcp_server = Server("autohaus-cil")
 sse = SseServerTransport("/mcp/messages")
-mcp_router = APIRouter(prefix="/mcp", tags=["mcp"])
+mcp_router = APIRouter(prefix="", tags=["mcp"])
+
+from mcp.server.models import InitializationOptions
 
 @mcp_router.get("/sse")
 async def mcp_sse(request: Request):
     """MCP standard Server-Sent Events endpoint."""
-    async with sse.connect_sse(request.scope, request.receive, request._send) as response:
-        # Run the server loop connected to this transport
-        await mcp_server.connect(sse)
-        return response
+    async with sse.connect_sse(request.scope, request.receive, request._send) as (read_stream, write_stream):
+        await mcp_server.run(
+            read_stream,
+            write_stream,
+            InitializationOptions(
+                server_name="autohaus-cil",
+                server_version="0.1.0",
+                capabilities=mcp_server.get_capabilities(
+                    notification_options=types.ServerCapabilitiesNotificationOptions(),
+                    experimental_capabilities={},
+                ),
+            ),
+        )
 
 @mcp_router.post("/messages")
 async def mcp_messages(request: Request):

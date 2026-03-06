@@ -28,7 +28,7 @@ def setup_claims_tables():
       extracted_value STRING NOT NULL,
       confidence FLOAT64 NOT NULL,
       source_lineage JSON NOT NULL,
-      status STRING NOT NULL DEFAULT 'PENDING',
+      status STRING DEFAULT 'PENDING' NOT NULL,
       created_at TIMESTAMP NOT NULL,
       updated_at TIMESTAMP NOT NULL
     )
@@ -44,7 +44,7 @@ def setup_claims_tables():
       asserted_at TIMESTAMP NOT NULL,
       assertion_type STRING NOT NULL,
       content STRING NOT NULL,
-      authority STRING NOT NULL DEFAULT 'HUMAN_ASSERTED',
+      authority STRING DEFAULT 'HUMAN_ASSERTED' NOT NULL,
       evidence_required STRING,
       verified_by_document STRING,
       evidence_structure JSON,
@@ -85,10 +85,45 @@ def setup_claims_tables():
     ORDER BY created_at ASC;
     """
 
+    query_open_questions = f"""
+    DROP TABLE IF EXISTS `{bq.project_id}.{bq.dataset_id}.open_questions`;
+    CREATE TABLE `{bq.project_id}.{bq.dataset_id}.open_questions`
+    (
+      question_id STRING NOT NULL,
+      question_type STRING,
+      priority STRING,
+      status STRING NOT NULL,
+      content STRING,
+      description STRING,
+      context JSON,
+      owner_role STRING,
+      source_type STRING,
+      source_id STRING,
+      dependency_list JSON,
+      lineage_pointer JSON,
+      resolution_answer STRING,
+      resolution_propagated BOOL,
+      sla_hours INT64,
+      due_at TIMESTAMP,
+      due_by TIMESTAMP,
+      escalated BOOL,
+      assigned_to STRING,
+      escalation_target STRING,
+      created_at TIMESTAMP NOT NULL,
+      resolved_at TIMESTAMP,
+      resolved_by STRING,
+      resolution_event_id STRING
+    )
+    PARTITION BY DATE(created_at)
+    CLUSTER BY status, question_type, priority;
+    """
+
     print("Running DDL for extraction_claims...")
     client.query(query_extraction_claims).result()
     print("Running DDL for human_assertions...")
     client.query(query_human_assertions).result()
+    print("Running DDL for open_questions...")
+    client.query(query_open_questions).result()
     print("Running DDL for pending_verification_queue view...")
     client.query(query_verification_view).result()
     

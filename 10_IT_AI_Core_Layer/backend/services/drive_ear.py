@@ -12,7 +12,7 @@ from google.oauth2 import service_account
 from agents.router_agent import RouterAgent
 from agents.iea_agent import InputEnrichmentAgent
 from agents.attention_dispatcher import AttentionDispatcher
-from routes.chat_stream import manager, build_plate_payload
+# ws_manager removed to decouple from chat_stream in Rebuild 3
 
 logger = logging.getLogger("autohaus.drive_ear")
 
@@ -143,8 +143,8 @@ class DriveEar:
              plate_payload.strategy.skin = "AMBIENT_RECON"
              plate_payload.strategy.overlay = "ambient-discovery-shimmer"
 
-        logger.info(f"[DRIVE EAR] Broadcasing Plate: {plate_payload.plate_id} | Urgency: {attention_result.urgency_score}")
-        await manager.broadcast(plate_payload.model_dump())
+        logger.info(f"[DRIVE EAR] Plate ready: {filename} | Urgency: {attention_result.urgency_score}")
+        # Broadcast temporarily disabled — chat_stream manager was decoupled
 
 try:
     drive_ear = DriveEar()

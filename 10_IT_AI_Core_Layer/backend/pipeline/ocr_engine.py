@@ -59,7 +59,7 @@ async def _extract_via_gemini_vision(file_path: str) -> Optional[str]:
             return None
             
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         
         # Determine if PDF or Image
         mime_type = "application/pdf" if file_path.lower().endswith(".pdf") else "image/jpeg"
@@ -74,13 +74,13 @@ async def _extract_via_gemini_vision(file_path: str) -> Optional[str]:
                 img_data = f.read()
             
             prompt = "You are an OCR engine. Extract ALL text from this image as accurately as possible. Output ONLY the text content, no commentary."
-            response = model.generate_content([prompt, {"mime_type": "image/jpeg", "data": img_data}])
+            response = await model.generate_content_async([prompt, {"mime_type": "image/jpeg", "data": img_data}])
             return response.text.strip()
         
         # For PDF, use the File API
         myfile = genai.upload_file(file_path, mime_type=mime_type)
         prompt = "You are an OCR engine. Extract ALL text from this document as accurately as possible. Output ONLY the text content, no commentary."
-        response = model.generate_content([prompt, myfile])
+        response = await model.generate_content_async([prompt, myfile])
         
         # Cleanup
         genai.delete_file(myfile.name)

@@ -25,7 +25,7 @@ from routes.drive_webhooks import drive_webhook_router
 from routes.intel_routes import intel_router
 from routes.deploy_routes import deploy_router
 from routes.legal import legal_router
-from mcp.mcp_server import mcp_router
+from mcp_gate.mcp_server import mcp_router
 
 logger = logging.getLogger("autohaus.main")
 
@@ -74,6 +74,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"[BOOT] HITL seeding failed: {e}")
 
+    # 4. Ensure Claims Tables Exist
+    try:
+        from scripts.setup_bq_claims import setup_claims_tables
+        setup_claims_tables()
+        logger.info("[BOOT] Auto-provisioned missing claims tables if any.")
+    except Exception as e:
+        logger.error(f"[BOOT] Failed to auto-provision claims tables: {e}")
+
     yield
     
     anomaly_task.cancel()
@@ -118,7 +126,7 @@ app.include_router(public_router, prefix="/api/public")
 app.include_router(legal_router)
 
 # MCP Layer
-app.include_router(mcp_router)
+app.include_router(mcp_router, prefix="/mcp")
 
 # Static Hosting for React Frontend
 # MUST be the absolute last mount — serves dist/ with html=True for SPA + legal pages

@@ -88,14 +88,14 @@ class InputEnrichmentAgent:
             ]
         )
 
-    def _classify_domain(self, user_input: str) -> str:
+    async def _classify_domain(self, user_input: str) -> str:
         model = genai.GenerativeModel(
             model_name=self.model_name,
             system_instruction=DOMAIN_CLASSIFIER_PROMPT,
             generation_config=genai.GenerationConfig(temperature=0.1, response_mime_type="text/plain")
         )
         try:
-            resp = model.generate_content(f"INPUT: {user_input}")
+            resp = await model.generate_content_async(f"INPUT: {user_input}")
             domain = resp.text.strip().upper()
             if domain not in ["INVENTORY", "FINANCE", "LOGISTICS", "SERVICE", "CRM", "COMPLIANCE"]:
                 domain = "CRM"

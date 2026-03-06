@@ -64,7 +64,7 @@ Respond with ONLY a JSON object in this exact format:
         prompt = self._build_prompt(sender, subject, body)
         
         try:
-            response = model.generate_content(prompt)
+            response = await model.generate_content_async(prompt)
             text = response.text.strip()
             
             # Clean JSON

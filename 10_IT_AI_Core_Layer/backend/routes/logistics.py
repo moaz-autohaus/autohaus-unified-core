@@ -55,7 +55,7 @@ LEDGER_TABLE = f"{PROJECT_ID}.{DATASET_ID}.system_audit_ledger"
 TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
 TWILIO_PHONE_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER", "")
-UI_BASE_URL = os.environ.get("UI_BASE_URL", "https://autohaus-command.replit.app")
+UI_BASE_URL = os.getenv("UI_BASE_URL")
 
 logistics_router = APIRouter()
 

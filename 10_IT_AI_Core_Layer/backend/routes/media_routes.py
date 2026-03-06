@@ -73,17 +73,16 @@ async def ingest_media(
             loop = asyncio.get_running_loop()
             
             try:
-                with ThreadPoolExecutor(max_workers=2) as executor:
-                    doc_type, conf = await asyncio.wait_for(
-                        loop.run_in_executor(executor, classify_document, text_content),
-                        timeout=30.0
-                    )
-                    extracted_data = await asyncio.wait_for(
-                        loop.run_in_executor(executor, extract_fields, text_content, doc_type, file_id),
-                        timeout=45.0
-                    )
-                    if extracted_data is None:
-                        extracted_data = {}
+                doc_type, conf = await asyncio.wait_for(
+                    classify_document(text_content),
+                    timeout=30.0
+                )
+                extracted_data = await asyncio.wait_for(
+                    extract_fields(text_content, doc_type, file_id),
+                    timeout=45.0
+                )
+                if extracted_data is None:
+                    extracted_data = {}
             except asyncio.TimeoutError:
                 logger.error("Timeout during Gemini text extraction")
                 extracted_data = {}
@@ -99,23 +98,17 @@ async def ingest_media(
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "extraction_version_id": extracted_data.get("extraction_version_id")
                 }
-                for field_name, field_data in extracted_data["fields"].items():
-                    val_str = str(field_data["value"]) if field_data["value"] is not None else "null"
-                    field_lineage = dict(lineage)
-                    if val_str == "VIN_NOT_PROVIDED":
-                        field_lineage["stub_type"] = "STUB_PENDING_VIN"
-
-                    claim = ExtractedClaim(
-                        source=ClaimSource.MEDIA,
-                        extractor_identity="extraction_engine.extract_fields",
-                        input_reference=file_id,
-                        entity_type="DOCUMENT",
-                        target_field=field_name,
-                        extracted_value=val_str,
-                        confidence=field_data["confidence"],
-                        source_lineage=field_lineage
-                    )
-                    claims.append(claim)
+                
+                from services.attachment_processor import unpack_to_claims
+                from models.claims import ClaimSource
+                
+                claims = unpack_to_claims(
+                    raw_response=extracted_data,
+                    source=ClaimSource.MEDIA,
+                    extractor_identity="extraction_engine.extract_fields",
+                    input_reference=file_id,
+                    source_lineage=lineage
+                )
 
         # Step 3: Create HITL Proposal
         bq = BigQueryClient()

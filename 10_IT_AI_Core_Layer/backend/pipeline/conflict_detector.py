@@ -106,7 +106,7 @@ async def evaluate_claim(
 
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
-            bigquery.ScalarQueryParameter("entity_id", "STRING", claim.target_entity_id),
+            bigquery.ScalarQueryParameter("entity_id", "STRING", str(claim.target_entity_id) if claim.target_entity_id else ""),
             bigquery.ScalarQueryParameter("target_field", "STRING", claim.target_field)
         ]
     )
@@ -397,7 +397,7 @@ async def process_claim(
                 """
                 j_config = bigquery.QueryJobConfig(query_parameters=[
                     bigquery.ScalarQueryParameter("status", "STRING", new_status),
-                    bigquery.ScalarQueryParameter("claim_id", "STRING", claim.claim_id)
+                    bigquery.ScalarQueryParameter("claim_id", "STRING", str(claim.claim_id))
                 ])
                 client.query(up_q, job_config=j_config).result()
             except Exception as e:
@@ -435,7 +435,7 @@ async def process_claim(
                     """
                     jc = bigquery.QueryJobConfig(query_parameters=[
                         bigquery.ScalarQueryParameter("doc", "STRING", claim.input_reference),
-                        bigquery.ScalarQueryParameter("a_id", "STRING", match.assertion_id)
+                        bigquery.ScalarQueryParameter("a_id", "STRING", str(match.assertion_id))
                     ])
                     client.query(u_q, job_config=jc).result()
                     
@@ -509,7 +509,7 @@ async def process_claim(
                         jc_u = bigquery.QueryJobConfig(query_parameters=[
                             bigquery.ScalarQueryParameter("ns", "FLOAT64", float(new_score)),
                             bigquery.ScalarQueryParameter("nst", "STRING", new_status),
-                            bigquery.ScalarQueryParameter("a_id", "STRING", match.assertion_id)
+                            bigquery.ScalarQueryParameter("a_id", "STRING", str(match.assertion_id))
                         ])
                         client.query(u_q, job_config=jc_u).result()
                         

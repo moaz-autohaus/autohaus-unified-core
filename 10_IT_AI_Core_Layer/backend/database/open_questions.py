@@ -23,11 +23,14 @@ def raise_open_question(bq_client, question_type: str, priority: str, context: d
         "question_type": question_type,
         "priority": priority, # HIGH, MEDIUM, LOW
         "status": "OPEN",
-        "context": json.dumps(context),
         "description": description,
+        "content": description,
+        "context": json.dumps(context),
         "assigned_to": None,
         "escalation_target": "CEO",
-        "due_by": None, # Could be set here based on max_overdue_hours
+        "owner_role": "SOVEREIGN" if priority == "HIGH" else "STANDARD",
+        "due_at": None,
+        "due_by": None,
         "created_at": datetime.utcnow().isoformat(),
         "resolved_at": None,
         "resolution_event_id": None
@@ -168,8 +171,11 @@ def create_question(
             client = bq_client if hasattr(bq_client, 'query') else bq_client.client
             row = {
                 "question_id": q.question_id,
-                "content": q.content,
+                "question_type": q.source_type,
+                "priority": "HIGH" if q.owner_role == "SOVEREIGN" else "MEDIUM",
                 "status": q.status,
+                "content": q.content,
+                "description": q.content,
                 "owner_role": q.owner_role,
                 "source_type": q.source_type,
                 "source_id": q.source_id,
@@ -179,13 +185,27 @@ def create_question(
                 "resolution_propagated": q.resolution_propagated,
                 "sla_hours": q.sla_hours,
                 "due_at": q.due_at.isoformat(),
+                "due_by": q.due_at.isoformat(),
                 "escalated": q.escalated,
                 "created_at": q.created_at.isoformat(),
                 "resolved_at": None,
-                "resolved_by": None
+                "resolved_by": None,
+                "escalation_target": "CEO" if q.owner_role == "SOVEREIGN" else "STANDARD"
             }
             
-            event_row = {
+            event_row_raised = {
+                "event_id": str(uuid.uuid4()),
+                "event_type": "QUESTION_RAISED",
+                "timestamp": created_at.isoformat(),
+                "actor_type": "SYSTEM",
+                "actor_id": "open_questions_engine",
+                "target_type": "QUESTION",
+                "target_id": q.question_id,
+                "payload": json.dumps({"summary": q.content, "owner_role": q.owner_role}),
+                "idempotency_key": f"raised_{q.question_id}"
+            }
+            
+            event_row_created = {
                 "event_id": str(uuid.uuid4()),
                 "event_type": "OPEN_QUESTION_CREATED",
                 "timestamp": created_at.isoformat(),
@@ -198,7 +218,7 @@ def create_question(
             }
             
             client.insert_rows_json("autohaus-infrastructure.autohaus_cil.open_questions", [row])
-            client.insert_rows_json("autohaus-infrastructure.autohaus_cil.cil_events", [event_row])
+            client.insert_rows_json("autohaus-infrastructure.autohaus_cil.cil_events", [event_row_raised, event_row_created])
         except Exception as e:
             logger.error(f"Failed to insert open question {q.question_id}: {e}")
             

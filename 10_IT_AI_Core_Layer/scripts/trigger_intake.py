@@ -145,7 +145,7 @@ def parse_pdf_and_trigger(pdf_path):
         print(f"[CRITICAL ERROR] BigQuery push failed: {str(e)}")
 
     # 3. Post to Replit Webhook
-    replit_url = "https://fe24ad2a-8956-4822-b4be-007a4f8fe15b-00-16nl0tpdj05do.worf.replit.dev/webhooks/leads"
+    replit_url = f"{os.getenv('CIL_BASE_URL', 'http://localhost:5000')}/webhooks/leads"
     print(f"\n[EVENT BUS] Firing Webhook to Frontend ({replit_url})...")
     try:
         resp = requests.post(replit_url, json=data, timeout=5)

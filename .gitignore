@@ -25,10 +25,19 @@ auth/
 gcp.json
 gcp_min.json
 
+# dist and build
+dist/
+build/
+*.egg-info/
+node_modules/
+__pycache__/
+venv/
+.venv/
+.pytest_cache/
+
 # Replit Environment
 .replit
 replit.md
 replit.nix
-dist/
 attached_assets/
 uv.lock

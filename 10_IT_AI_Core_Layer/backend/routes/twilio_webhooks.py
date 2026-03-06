@@ -43,8 +43,7 @@ from utils.identity_resolution import IdentityEngine
 # Module 2: Agentic Router
 from agents.router_agent import RouterAgent
 
-# Module 3: JIT Plate Protocol (ConnectionManager for browser push)
-from routes.chat_stream import manager as ws_manager, build_plate_payload
+# ws_manager removed to decouple from chat_stream in Rebuild 3
 
 # Module 4: Sovereign Memory
 from memory.vector_vault import VectorVault
@@ -199,25 +198,10 @@ async def handle_inbound_sms(
     event_desc = f"User {master_person_id} requested {intent} action: {suggested_action}"
     attention_result = dispatcher.evaluate_event(event_desc)
     
-    # ── STEP 8: Route Output based on Attention Score ────────────────
-    plate_payload = build_plate_payload(routed_intent)
-    plate_payload["sms_source"] = phone_number
-    plate_payload["master_person_id"] = master_person_id
-    
-    if attention_result.route == "WEBSOCKET" and ws_manager.active_count > 0:
-        # Route 1: Desk - Push to UI silently
-        logger.info(f"[DISPATCHER] Low Urgency ({attention_result.urgency_score}/10). Pushing to UI.")
-        await ws_manager.broadcast(plate_payload)
-        response_text = "" # Don't text Ahsin, he's seeing it on the screen
-    else:
-        # Route 2: Pocket - Send SMS
-        logger.info(f"[DISPATCHER] High Urgency or No UI ({attention_result.urgency_score}/10). Sending SMS.")
-        brand = ENTITY_BRANDING.get(target_entity, "AutoHaus Command Center")
-        response_text = f"{attention_result.synthesized_message}\n\n— {brand}"
-        
-        # Still push to WS for the audit trail
-        if ws_manager.active_count > 0:
-             await ws_manager.broadcast(plate_payload)
+    # Route 2: Pocket - Send SMS
+    logger.info(f"[DISPATCHER] High Urgency or No UI ({attention_result.urgency_score}/10). Sending SMS.")
+    brand = ENTITY_BRANDING.get(target_entity, "AutoHaus Command Center")
+    response_text = f"{attention_result.synthesized_message}\n\n— {brand}"
 
     # Note: Twilio requires non-empty responses, or it will throw an error, 
     # but an empty <Message></Message> acts as a "silent acknowledge"
