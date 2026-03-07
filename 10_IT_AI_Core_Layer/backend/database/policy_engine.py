@@ -63,7 +63,7 @@ class PolicyEngine:
             logger.error(f"Failed to fetch policy {domain}.{key}: {e}")
             return []
 
-    def get_policy(self, domain: str, key: str, doc_type: str = None, entity_type: str = None, entity: str = None) -> Any:
+    def get_policy(self, domain: str, key: str, doc_type: str = None, entity_type: str = None, entity: str = None, ttl_seconds: Optional[int] = None) -> Any:
         """
         Get a governed policy value.
         Precedence:
@@ -75,7 +75,9 @@ class PolicyEngine:
         cache_key = self._get_cache_key(domain, key)
         now = time.time()
         
-        if cache_key not in self._cache or (now - self._cache[cache_key]['timestamp'] > self._cache_ttl):
+        effective_ttl = ttl_seconds if ttl_seconds is not None else self._cache_ttl
+        
+        if cache_key not in self._cache or (now - self._cache[cache_key]['timestamp'] > effective_ttl):
             # Cache miss or expired
             policies = self._fetch_from_bq(domain, key)
             self._cache[cache_key] = {
@@ -138,6 +140,10 @@ class PolicyEngine:
 # Global singleton helper
 _engine = PolicyEngine()
 
-def get_policy(domain: str, key: str, doc_type: str = None, entity_type: str = None, entity: str = None) -> Any:
-    return _engine.get_policy(domain, key, doc_type, entity_type, entity)
+def get_policy(domain: str, key: str, doc_type: str = None, entity_type: str = None, entity: str = None, ttl_seconds: Optional[int] = None) -> Any:
+    return _engine.get_policy(domain, key, doc_type, entity_type, entity, ttl_seconds=ttl_seconds)
+
+def clear_policies():
+    """Module-level helper to force cache clear."""
+    _engine.clear_cache()
 

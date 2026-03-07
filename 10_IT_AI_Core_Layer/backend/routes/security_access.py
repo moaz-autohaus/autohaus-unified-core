@@ -5,7 +5,8 @@ import bcrypt
 import json
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Request, HTTPException, Depends, Header, Query
+from fastapi import APIRouter, Request, HTTPException, Depends, Header, Query, responses
+from fastapi.responses import JSONResponse
 from google.cloud import bigquery
 from database.bigquery_client import BigQueryClient
 from database.policy_engine import get_policy

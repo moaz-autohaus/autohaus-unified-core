@@ -52,8 +52,9 @@ async def get_public_inventory(client: bigquery.Client = Depends(get_database)):
             MAX(CASE WHEN f.field_name = 'mileage' THEN CAST(f.value AS INT64) END) as mileage,
             MAX(CASE WHEN f.field_name = 'nhtsa_overall_rating' THEN f.value END) as safety_rating
         FROM `autohaus-infrastructure.autohaus_cil.vehicles` v
+        JOIN `autohaus-infrastructure.autohaus_cil.inventory_master` m ON v.vin = m.id
         LEFT JOIN `autohaus-infrastructure.autohaus_cil.entity_facts` f ON v.vehicle_id = f.entity_id
-        WHERE v.status = 'AVAILABLE' AND f.status = 'ACTIVE'
+        WHERE m.status IN ('AVAILABLE', 'Pending') AND (f.status = 'ACTIVE' OR f.status IS NULL)
         GROUP BY v.vin, v.year, v.make, v.model, v.trim, v.color
     """
     try:

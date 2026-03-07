@@ -70,6 +70,16 @@
         "intelligent_membrane": {
             "status": "active",
             "description": "Omni-Channel Neural Membrane (SMS & Drive Ear) for bidirectional ambient awareness."
+        },
+        "security_access_layer": {
+            "status": "active",
+            "file": "10_IT_AI_Core_Layer/backend/routes/security_access.py",
+            "description": "Secure read-only egress API (/api/security) with silent auth and system freeze controls."
+        },
+        "mcp_meta_gate": {
+            "status": "active",
+            "file": "10_IT_AI_Core_Layer/backend/mcp_gate/mcp_server.py",
+            "description": "Phase 2/Meta-Layer tool definitions allowing external Sovereign control via MCP."
         }
     },
     "active_entities": {

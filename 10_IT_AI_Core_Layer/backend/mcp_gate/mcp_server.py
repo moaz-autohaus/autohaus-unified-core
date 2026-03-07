@@ -1,5 +1,6 @@
 import logging
 import json
+from datetime import datetime
 from typing import Optional, Dict, Any, List
 from fastapi import APIRouter, Request, HTTPException, Depends
 from google.cloud import bigquery
@@ -95,6 +96,34 @@ async def handle_list_tools() -> list[types.Tool]:
                 },
                 "required": ["sql"]
             }
+        ),
+        types.Tool(
+            name="get_business_health",
+            description="Provides a macro-level overview of the entire entity's health across all CIL subsystems.",
+            inputSchema={"type": "object", "properties": {}}
+        ),
+        types.Tool(
+            name="trigger_governance_review",
+            description="Surfaces all pending proposals that require high-tier SOVEREIGN authorization.",
+            inputSchema={"type": "object", "properties": {}}
+        ),
+        types.Tool(
+            name="kill_switch",
+            description="Hard stop mechanism for the entire autonomous pipeline. Requires a reason.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "description": "Justification for initiating the kill switch."
+                    },
+                    "authority": {
+                        "type": "string",
+                        "description": "The authority level of the caller. Must be 'SOVEREIGN' to execute."
+                    }
+                },
+                "required": ["reason", "authority"]
+            }
         )
     ]
 
@@ -129,6 +158,20 @@ async def handle_call_tool(name: str, arguments: dict | None) -> list[types.Text
             if not sql:
                 return [types.TextContent(type="text", text="Error: Missing 'sql' parameter.")]
             return await _query_bigquery(bq_client, sql)
+            
+        # Phase 3/4 (Meta-Layer)
+        elif name == "get_business_health":
+            return await _get_business_health(bq_client)
+        elif name == "trigger_governance_review":
+            return await _trigger_governance_review(bq_client)
+        elif name == "kill_switch":
+            reason = arguments.get("reason")
+            authority = arguments.get("authority")
+            if not reason or not authority:
+                 return [types.TextContent(type="text", text="Error: Missing 'reason' or 'authority' parameter.")]
+            if authority != "SOVEREIGN":
+                 return [types.TextContent(type="text", text="REJECTED: kill_switch requires SOVEREIGN authority level.")]
+            return await _kill_switch(bq_client, reason)
             
         else:
             return [types.TextContent(type="text", text=f"Error: Unknown tool '{name}'")]
@@ -193,3 +236,72 @@ async def _query_bigquery(client: bigquery.Client, sql: str) -> list[types.TextC
         return [types.TextContent(type="text", text=json.dumps(results, indent=2, default=str))]
     except Exception as e:
         return [types.TextContent(type="text", text=f"Query execution failed: {str(e)}")]
+
+async def _get_business_health(client: bigquery.Client) -> list[types.TextContent]:
+    """Macro-level overview of entity health."""
+    try:
+        # 1. Anomaly Status
+        query_anomalies = "SELECT COUNT(*) as cnt FROM `autohaus-infrastructure.autohaus_cil.drift_sweep_results` WHERE resolved = FALSE"
+        anomalies = list(client.query(query_anomalies).result())[0].cnt
+        status = "NORMAL" if anomalies == 0 else "ELEVATED" if anomalies < 5 else "CRITICAL"
+        
+        # 2. Cash Position
+        query_cash = "SELECT SUM(amount) as total FROM `autohaus-infrastructure.autohaus_cil.financial_ledger`"
+        cash = list(client.query(query_cash).result())[0].total or 0
+        
+        # 3. Open Questions
+        query_qs = "SELECT COUNT(*) as cnt FROM `autohaus-infrastructure.autohaus_cil.open_questions` WHERE status = 'OPEN'"
+        open_qs = list(client.query(query_qs).result())[0].cnt
+        
+        health = {
+            "anomaly_status": status,
+            "cash_position": cash,
+            "open_question_count": open_qs,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        return [types.TextContent(type="text", text=json.dumps(health, indent=2))]
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"Error fetching business health: {e}")]
+
+async def _trigger_governance_review(client: bigquery.Client) -> list[types.TextContent]:
+    """Surfaces pending SOVEREIGN tier proposals."""
+    query = "SELECT * FROM `autohaus-infrastructure.autohaus_cil.hitl_events` WHERE status = 'PROPOSED' AND urgency >= 8"
+    try:
+        results = [dict(row) for row in client.query(query).result()]
+        return [types.TextContent(type="text", text=json.dumps(results, indent=2, default=str))]
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"Error triggering governance review: {e}")]
+
+async def _kill_switch(client: bigquery.Client, reason: str) -> list[types.TextContent]:
+    """Hard stop for the autonomous pipeline."""
+    try:
+        # 1. Log to cil_events
+        event = {
+            "event_type": "HARD_STOP_ENFORCED",
+            "description": f"Kill switch triggered via MCP. Reason: {reason}",
+            "timestamp": datetime.utcnow().isoformat(),
+            "actor": "MCP_META_LAYER"
+        }
+        client.insert_rows_json("autohaus-infrastructure.autohaus_cil.cil_events", [event])
+        
+        # 2. Update policy to frozen
+        policy = {
+            "domain": "SYSTEM",
+            "key": "FROZEN",
+            "value": "true",
+            "active": True,
+            "version": int(datetime.utcnow().timestamp()),
+            "created_at": datetime.utcnow().isoformat()
+        }
+        client.insert_rows_json("autohaus-infrastructure.autohaus_cil.policy_registry", [policy])
+        
+        # 3. Clear policy cache if engine is loaded
+        try:
+            from database.policy_engine import _engine
+            _engine.clear_cache()
+        except:
+            pass
+            
+        return [types.TextContent(type="text", text=f"SUCCESS: SYSTEM HARD STOP INITIATED. Reason: {reason}")]
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"FAILED to initiate kill switch: {e}")]

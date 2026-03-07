@@ -1,0 +1,6 @@
+#!/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/test_venv/bin/python3.12
+import sys
+from jsonschema.cli import main
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(main())

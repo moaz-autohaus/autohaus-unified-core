@@ -1,0 +1,134 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/build-base-image: us-central1-docker.pkg.dev/serverless-runtimes/google-24/run/universal:public-image-next
+    run.googleapis.com/build-enable-automatic-updates: 'false'
+    run.googleapis.com/build-id: d76a40b5-9fda-487c-b923-1c2e45c1ed34
+    run.googleapis.com/build-image-uri: us-central1-docker.pkg.dev/autohaus-infrastructure/cloud-run-source-deploy/autohaus-cil
+    run.googleapis.com/build-name: projects/457080741078/locations/us-central1/builds/d76a40b5-9fda-487c-b923-1c2e45c1ed34
+    run.googleapis.com/build-source-location: gs://run-sources-autohaus-infrastructure-us-central1/services/autohaus-cil/1772692710.322289-664a16625b89466fba571848d1e5bbf2.zip#1772692719891033
+    run.googleapis.com/client-name: gcloud
+    run.googleapis.com/client-version: 542.0.0
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/maxScale: '6'
+    run.googleapis.com/operation-id: d8e52f2b-3df1-4c7f-a977-7ba381721883
+    run.googleapis.com/urls: '["https://autohaus-cil-457080741078.us-central1.run.app","https://autohaus-cil-bpai2qx3aa-uc.a.run.app"]'
+    serving.knative.dev/creator: moaz@autohausia.com
+    serving.knative.dev/lastModifier: moaz@autohausia.com
+  creationTimestamp: '2026-03-05T02:11:16.371696Z'
+  generation: 30
+  labels:
+    cloud.googleapis.com/location: us-central1
+  name: autohaus-cil
+  namespace: '457080741078'
+  resourceVersion: AAZMVSjo5To
+  selfLink: /apis/serving.knative.dev/v1/namespaces/457080741078/services/autohaus-cil
+  uid: c6cdfd9b-f645-45a7-a304-196cfe1fb75d
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '1'
+        autoscaling.knative.dev/minScale: '1'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 542.0.0
+        run.googleapis.com/sessionAffinity: 'true'
+        run.googleapis.com/startup-cpu-boost: 'true'
+      labels:
+        client.knative.dev/nonce: pgvcmabypw
+        run.googleapis.com/startupProbeType: Default
+    spec:
+      containerConcurrency: 160
+      containers:
+      - env:
+        - name: GCP_PROJECT
+          value: autohaus-infrastructure
+        - name: BQ_DATASET
+          value: autohaus_cil
+        - name: PUBLIC_URL
+          value: https://autohaus-cil-457080741078.us-central1.run.app
+        - name: UI_BASE_URL
+          value: https://autohaus-command.replit.app
+        - name: CIL_BASE_URL
+          value: https://autohaus-cil-457080741078.us-central1.run.app
+        - name: TWILIO_ACCOUNT_SID
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: TWILIO_ACCOUNT_SID
+        - name: TWILIO_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: TWILIO_AUTH_TOKEN
+        - name: TWILIO_PHONE_NUMBER
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: TWILIO_PHONE_NUMBER
+        - name: TWILIO_PHONE_PN_SID
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: TWILIO_PHONE_PN_SID
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: GEMINI_API_KEY
+        - name: GITHUB_WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: GITHUB_WEBHOOK_SECRET
+        - name: SECURITY_ACCESS_KEY_HASH
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: SECURITY_ACCESS_KEY_HASH
+        - name: GCP_SERVICE_ACCOUNT_JSON
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: GCP_SERVICE_ACCOUNT_JSON
+        image: us-central1-docker.pkg.dev/autohaus-infrastructure/autohaus-cil/backend:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: '2'
+            memory: 2Gi
+        startupProbe:
+          failureThreshold: 1
+          periodSeconds: 240
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 240
+      serviceAccountName: autohaus-cil-backend@autohaus-infrastructure.iam.gserviceaccount.com
+      timeoutSeconds: 600
+  traffic:
+  - latestRevision: true
+    percent: 100
+status:
+  address:
+    url: https://autohaus-cil-bpai2qx3aa-uc.a.run.app
+  conditions:
+  - lastTransitionTime: '2026-03-06T06:28:22.546746Z'
+    status: 'True'
+    type: Ready
+  - lastTransitionTime: '2026-03-06T06:27:52.143669Z'
+    status: 'True'
+    type: ConfigurationsReady
+  - lastTransitionTime: '2026-03-06T06:28:22.517855Z'
+    status: 'True'
+    type: RoutesReady
+  latestCreatedRevisionName: autohaus-cil-00028-78w
+  latestReadyRevisionName: autohaus-cil-00028-78w
+  observedGeneration: 30
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: autohaus-cil-00028-78w
+  url: https://autohaus-cil-bpai2qx3aa-uc.a.run.app

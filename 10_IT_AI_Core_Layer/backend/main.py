@@ -2,7 +2,7 @@ import os
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -25,6 +25,7 @@ from routes.drive_webhooks import drive_webhook_router
 from routes.intel_routes import intel_router
 from routes.deploy_routes import deploy_router
 from routes.legal import legal_router
+from routes.compliance_routes import compliance_router
 from mcp_gate.mcp_server import mcp_router
 
 logger = logging.getLogger("autohaus.main")
@@ -126,7 +127,12 @@ app.include_router(public_router, prefix="/api/public")
 app.include_router(legal_router)
 
 # MCP Layer
-app.include_router(mcp_router, prefix="/mcp")
+from routes.security_access import verify_security_access
+app.include_router(mcp_router, prefix="/mcp", dependencies=[Depends(verify_security_access)])
+
+# Security Access Layer
+app.include_router(security_router)
+app.include_router(compliance_router, prefix="/api/compliance")
 
 # Static Hosting for React Frontend
 # MUST be the absolute last mount — serves dist/ with html=True for SPA + legal pages

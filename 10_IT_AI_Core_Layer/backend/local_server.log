@@ -1,0 +1,1378 @@
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-05 22:11:08,125 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-05 22:11:08,125 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-05 22:11:08,386 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:08,386 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-05 22:11:08,397 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-05 22:11:08,397 [INFO] IEA Membrane initialized with failover support.
+2026-03-05 22:11:08,684 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:08,684 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-05 22:11:09,124 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:09,362 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:09,603 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:09,850 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:10,127 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Will watch for changes in these directories: ['/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [75844] using StatReload
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-05 22:11:10,919 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-05 22:11:10,919 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-05 22:11:11,199 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:11,200 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-05 22:11:11,213 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-05 22:11:11,214 [INFO] IEA Membrane initialized with failover support.
+2026-03-05 22:11:11,505 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:11,505 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-05 22:11:11,763 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:12,015 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:12,281 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:12,576 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:12,853 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [76064]
+INFO:     Waiting for application startup.
+2026-03-05 22:11:12,971 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-05 22:11:12,971 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-05 22:11:13,218 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:15,009 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-05 22:11:15,271 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:21,224 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+INFO:     ('127.0.0.1', 51859) - "WebSocket /ws/chat" [accepted]
+2026-03-05 22:11:22,470 [INFO] [client_4486668624] WebSocket client connected.
+2026-03-05 22:11:22,750 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:24,975 [ERROR] Failed to generate greeting: 400 Unrecognized name: sla_deadline at [1:129]
+
+Location: us-central1
+Job ID: 00783fd2-3b4a-4814-908e-6f128955fa57
+
+INFO:     connection open
+2026-03-05 22:11:24,977 [INFO] [client_4486668624] Orchestrating input: Show me the financial breakdown for Lane A for this week....
+2026-03-05 22:11:24,977 [INFO] VectorVault initialized with 0 memories (path: /Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/../../auth/sovereign_memory.json)
+2026-03-05 22:11:24,977 [WARNING] Vault is empty. No memories to recall.
+2026-03-05 22:11:24,977 [INFO] IEA Membrane initialized with failover support.
+2026-03-05 22:11:25,317 [WARNING] Domain classification failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:27,297 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_required_fields_CRM
+2026-03-05 22:11:27,297 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_required_fields_CRM
+2026-03-05 22:11:28,300 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_confidence_threshold
+2026-03-05 22:11:28,391 [ERROR] IEA (CIL) Evaluation Failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:28,391 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-05 22:11:28,391 [INFO] Classifying input (CIL): 'Show me the financial breakdown for Lane A for this week....'
+2026-03-05 22:11:28,692 [WARNING] Router Primary Model failed (400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]). Attempting fallback...
+2026-03-05 22:11:28,823 [ERROR] Router Fallback Model failed (400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]).
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1772777488.823703  170527 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+2026-03-05 22:11:29,107 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:29,107 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-05 22:11:30,212 [WARNING] [POLICY MISSING] no active policy for AGENTS.attention_urgency_scale
+2026-03-05 22:11:30,559 [ERROR] Attention Dispatcher (CIL) Failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:31,572 [ERROR] Redis client not available to publish. Falling back to local broker.
+2026-03-05 22:11:33,574 [INFO] [client_4486668624] Orchestrating input: What is the current inventory status of the BMW M4?...
+2026-03-05 22:11:33,574 [INFO] VectorVault initialized with 0 memories (path: /Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/../../auth/sovereign_memory.json)
+2026-03-05 22:11:33,574 [WARNING] Vault is empty. No memories to recall.
+2026-03-05 22:11:33,574 [INFO] IEA Membrane initialized with failover support.
+2026-03-05 22:11:33,891 [WARNING] Domain classification failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:33,891 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_required_fields_CRM
+2026-03-05 22:11:33,891 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_required_fields_CRM
+2026-03-05 22:11:33,891 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_confidence_threshold
+2026-03-05 22:11:34,066 [ERROR] IEA (CIL) Evaluation Failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:34,066 [INFO] Classifying input (CIL): 'What is the current inventory status of the BMW M4?...'
+2026-03-05 22:11:34,158 [WARNING] Router Primary Model failed (400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]). Attempting fallback...
+2026-03-05 22:11:34,248 [ERROR] Router Fallback Model failed (400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]).
+I0000 00:00:1772777494.249475  170527 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+2026-03-05 22:11:34,527 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:34,527 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-05 22:11:34,527 [WARNING] [POLICY MISSING] no active policy for AGENTS.attention_urgency_scale
+2026-03-05 22:11:34,897 [ERROR] Attention Dispatcher (CIL) Failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:35,644 [ERROR] Redis client not available to publish. Falling back to local broker.
+2026-03-05 22:11:37,646 [INFO] [client_4486668624] Orchestrating input: The car is leaking oil all over the service bay floor!...
+2026-03-05 22:11:37,646 [INFO] VectorVault initialized with 0 memories (path: /Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/../../auth/sovereign_memory.json)
+2026-03-05 22:11:37,646 [WARNING] Vault is empty. No memories to recall.
+2026-03-05 22:11:37,646 [INFO] IEA Membrane initialized with failover support.
+2026-03-05 22:11:38,051 [WARNING] Domain classification failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:38,051 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_required_fields_CRM
+2026-03-05 22:11:38,051 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_required_fields_CRM
+2026-03-05 22:11:38,051 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_confidence_threshold
+2026-03-05 22:11:38,136 [ERROR] IEA (CIL) Evaluation Failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:38,136 [INFO] Classifying input (CIL): 'The car is leaking oil all over the service bay floor!...'
+2026-03-05 22:11:38,263 [WARNING] Router Primary Model failed (400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]). Attempting fallback...
+2026-03-05 22:11:38,348 [ERROR] Router Fallback Model failed (400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]).
+I0000 00:00:1772777498.349320  170527 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+2026-03-05 22:11:38,597 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:38,597 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-05 22:11:38,597 [WARNING] [POLICY MISSING] no active policy for AGENTS.attention_urgency_scale
+2026-03-05 22:11:38,946 [ERROR] Attention Dispatcher (CIL) Failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:39,621 [ERROR] Redis client not available to publish. Falling back to local broker.
+2026-03-05 22:11:41,623 [INFO] [client_4486668624] Orchestrating input: CRITICAL SYSTEM ALERT: The entire production database was ju...
+2026-03-05 22:11:41,623 [INFO] VectorVault initialized with 0 memories (path: /Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/../../auth/sovereign_memory.json)
+2026-03-05 22:11:41,623 [WARNING] Vault is empty. No memories to recall.
+2026-03-05 22:11:41,623 [INFO] IEA Membrane initialized with failover support.
+2026-03-05 22:11:41,936 [WARNING] Domain classification failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:41,936 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_required_fields_CRM
+2026-03-05 22:11:41,936 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_required_fields_CRM
+2026-03-05 22:11:41,936 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_confidence_threshold
+2026-03-05 22:11:42,033 [ERROR] IEA (CIL) Evaluation Failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:42,033 [INFO] Classifying input (CIL): 'CRITICAL SYSTEM ALERT: The entire production database was just dropped by accide...'
+2026-03-05 22:11:42,120 [WARNING] Router Primary Model failed (400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]). Attempting fallback...
+2026-03-05 22:11:42,204 [ERROR] Router Fallback Model failed (400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]).
+I0000 00:00:1772777502.205446  170527 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+2026-03-05 22:11:42,490 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:42,490 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-05 22:11:42,490 [WARNING] [POLICY MISSING] no active policy for AGENTS.attention_urgency_scale
+2026-03-05 22:11:42,804 [ERROR] Attention Dispatcher (CIL) Failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:43,505 [ERROR] Redis client not available to publish. Falling back to local broker.
+2026-03-05 22:11:45,507 [INFO] [client_4486668624] Orchestrating input: Please prepare a finalized digital quote for the customer to...
+2026-03-05 22:11:45,507 [INFO] VectorVault initialized with 0 memories (path: /Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/../../auth/sovereign_memory.json)
+2026-03-05 22:11:45,507 [WARNING] Vault is empty. No memories to recall.
+2026-03-05 22:11:45,507 [INFO] IEA Membrane initialized with failover support.
+2026-03-05 22:11:45,883 [WARNING] Domain classification failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:45,883 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_required_fields_CRM
+2026-03-05 22:11:45,883 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_required_fields_CRM
+2026-03-05 22:11:45,883 [WARNING] [POLICY MISSING] no active policy for AGENTS.iea_confidence_threshold
+2026-03-05 22:11:45,969 [ERROR] IEA (CIL) Evaluation Failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:45,969 [INFO] Classifying input (CIL): 'Please prepare a finalized digital quote for the customer to review on deal #555...'
+2026-03-05 22:11:46,129 [WARNING] Router Primary Model failed (400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]). Attempting fallback...
+2026-03-05 22:11:46,226 [ERROR] Router Fallback Model failed (400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]).
+I0000 00:00:1772777506.226457  170527 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+2026-03-05 22:11:46,488 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:11:46,488 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-05 22:11:46,488 [WARNING] [POLICY MISSING] no active policy for AGENTS.attention_urgency_scale
+2026-03-05 22:11:46,875 [ERROR] Attention Dispatcher (CIL) Failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-03-05 22:11:47,510 [ERROR] Redis client not available to publish. Falling back to local broker.
+2026-03-05 22:11:49,513 [INFO] [client_4486668624] WebSocket closed cleanly.
+INFO:     connection closed
+WARNING:  StatReload detected changes in 'routes/public_routes.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-05 22:39:16,449 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [76064]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-05 22:39:19,745 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-05 22:39:19,745 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-05 22:39:20,064 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:39:20,064 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-05 22:39:20,125 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-05 22:39:20,125 [INFO] IEA Membrane initialized with failover support.
+2026-03-05 22:39:20,397 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:39:20,398 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-05 22:39:20,698 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:39:21,019 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:39:21,323 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:39:21,576 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:39:21,837 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [48828]
+INFO:     Waiting for application startup.
+2026-03-05 22:39:21,983 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-05 22:39:21,983 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-05 22:39:22,271 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:39:24,063 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-05 22:39:24,325 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-05 22:39:30,327 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+2026-03-05 23:09:30,301 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-05 23:09:30,302 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+2026-03-05 23:39:30,351 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-05 23:39:30,352 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+2026-03-06 08:27:18,842 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 08:27:18,844 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+2026-03-06 08:57:18,978 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 08:57:18,980 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+2026-03-06 09:27:18,842 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 09:27:18,843 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+2026-03-06 09:57:18,936 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 09:57:18,936 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+WARNING:  StatReload detected changes in 'models/events.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:03:25,334 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [48828]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:03:26,624 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:03:26,624 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:03:27,057 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:03:27,057 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:03:27,079 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:03:27,079 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:03:27,489 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:03:27,489 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:03:27,933 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:03:28,278 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:03:28,602 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:03:28,923 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:03:29,276 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [19053]
+INFO:     Waiting for application startup.
+2026-03-06 10:03:29,449 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:03:29,449 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:03:29,720 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:03:29,973 [WARNING] [HITL] Could not check seed existence: Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-06 10:03:30,071 [ERROR] [BOOT] HITL seeding failed: Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-06 10:03:30,381 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:03:30,659 [ERROR] [BOOT] Failed to auto-provision claims tables: Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'scripts/rotate_security_key.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:25:29,650 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [19053]
+Running DDL for extraction_claims...
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:25:30,915 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:25:30,916 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:25:31,448 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:31,449 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:25:31,469 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:25:31,469 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:25:31,871 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:31,871 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:25:32,244 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:32,583 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:32,913 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:33,288 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:33,604 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [62186]
+INFO:     Waiting for application startup.
+2026-03-06 10:25:33,770 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:25:33,770 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:25:34,076 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:35,986 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 10:25:36,269 [INFO] Initialized BigQuery Client with Default Credentials
+WARNING:  StatReload detected changes in 'scripts/rotate_secrets.py'. Reloading...
+2026-03-06 10:25:42,276 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:25:42,479 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [62186]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+WARNING:  StatReload detected changes in 'scripts/rotate_secrets.py'. Reloading...
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:25:44,302 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:25:44,302 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:25:44,710 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:44,710 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:25:44,727 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:25:44,727 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:25:45,107 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:45,107 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:25:45,458 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:45,844 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:46,199 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:46,565 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:47,056 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [62771]
+INFO:     Waiting for application startup.
+2026-03-06 10:25:47,253 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:25:47,253 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:25:47,651 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:49,371 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 10:25:49,726 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:25:55,386 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'scripts/rotation_utils.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:27:56,904 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [62771]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:27:58,386 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:27:58,386 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:27:58,811 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:27:58,811 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:27:58,834 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:27:58,834 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:27:59,219 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:27:59,219 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:27:59,622 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:27:59,947 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:28:00,253 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:28:00,580 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:28:00,948 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [67631]
+INFO:     Waiting for application startup.
+2026-03-06 10:28:01,129 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:28:01,129 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:28:01,411 [INFO] Initialized BigQuery Client with Default Credentials
+WARNING:  StatReload detected changes in 'scripts/rotate_secrets.py'. Reloading...
+2026-03-06 10:28:03,168 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 10:28:03,507 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:28:10,240 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:28:10,443 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [67631]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:28:11,263 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:28:11,264 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:28:11,539 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:28:11,539 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:28:11,550 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:28:11,550 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:28:11,796 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:28:11,796 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:28:12,059 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:28:12,330 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:28:12,601 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:28:12,899 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:28:13,292 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [68224]
+INFO:     Waiting for application startup.
+2026-03-06 10:28:13,474 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:28:13,474 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:28:13,827 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:28:15,492 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 10:28:15,748 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:28:22,003 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'scripts/rotate_security_key.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:29:48,096 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [68224]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:29:49,198 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:29:49,198 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:29:49,664 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:29:49,665 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:29:49,692 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:29:49,692 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:29:50,211 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:29:50,212 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:29:50,626 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:29:51,031 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:29:51,465 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:29:51,841 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:29:52,178 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [71881]
+INFO:     Waiting for application startup.
+2026-03-06 10:29:52,358 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:29:52,358 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:29:52,712 [INFO] Initialized BigQuery Client with Default Credentials
+WARNING:  StatReload detected changes in 'scripts/rotate_security_key.py'. Reloading...
+2026-03-06 10:29:54,242 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 10:29:54,626 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:30:00,474 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:30:00,677 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [71881]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:30:01,478 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:30:01,478 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:30:01,750 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:30:01,750 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:30:01,763 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:30:01,763 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:30:02,033 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:30:02,033 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:30:02,368 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:30:02,738 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:30:03,033 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:30:03,336 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:30:03,650 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [72411]
+INFO:     Waiting for application startup.
+2026-03-06 10:30:03,807 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:30:03,807 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:30:04,183 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:30:05,767 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 10:30:06,038 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:30:12,529 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'scripts/rotate_security_key.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:41:17,492 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [72411]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:41:19,371 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:41:19,371 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:41:19,838 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:41:19,839 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:41:19,866 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:41:19,866 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:41:20,396 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:41:20,396 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:41:20,800 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:41:21,184 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:41:21,561 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:41:21,876 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:41:22,204 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [94927]
+INFO:     Waiting for application startup.
+2026-03-06 10:41:22,394 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:41:22,394 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:41:22,869 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:41:24,971 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 10:41:25,304 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:41:31,785 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'scripts/rotate_secrets.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:45:16,736 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [94927]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:45:17,861 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:45:17,861 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:45:18,264 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:18,264 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:45:18,282 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:45:18,283 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:45:18,695 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:18,695 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:45:19,030 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:19,344 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:19,663 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:20,018 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:20,330 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [5426]
+INFO:     Waiting for application startup.
+2026-03-06 10:45:20,495 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:45:20,495 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:45:20,812 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:22,821 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 10:45:23,582 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:30,142 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'scripts/rotation_utils.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:45:36,204 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [5426]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:45:37,248 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:45:37,248 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:45:37,877 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:37,877 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:45:37,897 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:45:37,897 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:45:38,245 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:38,246 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:45:38,598 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:38,934 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:39,319 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:39,622 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:39,925 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [6533]
+INFO:     Waiting for application startup.
+2026-03-06 10:45:40,103 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:45:40,103 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:45:40,465 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:43,005 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 10:45:43,396 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:48,786 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'scripts/rotation_utils.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:45:53,434 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [6533]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:45:54,848 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:45:54,848 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:45:55,322 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:55,323 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:45:55,348 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:45:55,348 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:45:55,781 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:55,781 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:45:56,148 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:56,477 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:56,810 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:57,177 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:45:57,497 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [7577]
+INFO:     Waiting for application startup.
+2026-03-06 10:45:57,660 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:45:57,660 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:45:57,982 [INFO] Initialized BigQuery Client with Default Credentials
+WARNING:  StatReload detected changes in 'scripts/rotation_utils.py'. Reloading...
+2026-03-06 10:45:59,562 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 10:46:00,016 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:05,811 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:46:06,013 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [7577]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:46:07,026 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:46:07,026 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:46:07,372 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:07,372 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:46:07,387 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:46:07,387 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:46:07,734 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:07,734 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:46:08,140 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:08,503 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:08,839 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:09,159 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:09,523 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [8381]
+INFO:     Waiting for application startup.
+2026-03-06 10:46:09,672 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:46:09,672 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:46:09,995 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:11,810 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 10:46:12,081 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:18,578 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'scripts/rotation_utils.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:46:24,737 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [8381]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:46:25,733 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:46:25,733 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:46:26,129 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:26,130 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:46:26,146 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:46:26,146 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:46:26,512 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:26,512 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:46:26,860 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:27,226 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:27,573 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:27,882 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:28,205 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [9404]
+INFO:     Waiting for application startup.
+2026-03-06 10:46:28,346 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:46:28,347 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:46:28,706 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:30,113 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 10:46:30,407 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:35,377 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'scripts/rotation_utils.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 10:46:58,208 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [9404]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 10:46:59,240 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 10:46:59,240 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 10:46:59,802 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:46:59,802 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:46:59,824 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 10:46:59,824 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 10:47:00,356 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:47:00,356 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 10:47:00,730 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:47:01,098 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:47:01,485 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:47:01,851 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:47:02,202 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [11514]
+INFO:     Waiting for application startup.
+2026-03-06 10:47:02,360 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 10:47:02,360 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 10:47:02,703 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:47:04,106 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 10:47:04,537 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 10:47:09,964 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+2026-03-06 11:17:09,960 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 11:17:09,962 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+2026-03-06 11:47:10,014 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 11:47:10,015 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+2026-03-06 12:17:10,033 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 12:17:10,033 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+2026-03-06 12:47:10,002 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 12:47:10,003 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+2026-03-06 13:17:09,955 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 13:17:09,956 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+2026-03-06 13:47:09,922 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 13:47:09,922 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+2026-03-06 14:17:10,057 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 14:17:10,058 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+WARNING:  StatReload detected changes in 'database/policy_engine.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 14:21:38,184 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11514]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 14:21:39,628 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 14:21:39,628 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 14:21:39,995 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:21:39,996 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:21:40,014 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 14:21:40,014 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 14:21:40,380 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:21:40,381 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:21:40,771 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:21:41,213 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:21:41,541 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:21:41,871 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:21:42,214 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [34173]
+INFO:     Waiting for application startup.
+2026-03-06 14:21:42,417 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 14:21:42,417 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 14:21:42,751 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:21:46,454 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 14:21:46,731 [INFO] Initialized BigQuery Client with Default Credentials
+WARNING:  StatReload detected changes in 'main.py'. Reloading...
+2026-03-06 14:21:59,809 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 14:22:00,012 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [34173]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 14:22:00,947 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 14:22:00,947 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 14:22:01,343 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:01,343 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:22:01,362 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 14:22:01,362 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 14:22:01,719 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:01,720 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:22:02,084 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:02,470 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:02,954 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:03,384 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:03,856 [INFO] Initialized BigQuery Client with Default Credentials
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11_1/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11_1/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/spawn.py", line 131, in _main
+    prepare(preparation_data)
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11_1/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/spawn.py", line 246, in prepare
+    _fixup_main_from_path(data['init_main_from_path'])
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11_1/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+    main_content = runpy.run_path(main_path,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/main.py", line 28, in <module>
+    from routes.compliance_routes import compliance_router
+  File "/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/routes/compliance_routes.py", line 19, in <module>
+    @compliance_router.get("/inventory_gauge")
+     ^^^^^^^^^^^^^^^^^
+NameError: name 'compliance_router' is not defined
+WARNING:  StatReload detected changes in 'routes/compliance_routes.py'. Reloading...
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 14:22:15,465 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 14:22:15,465 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 14:22:15,890 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:15,890 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:22:15,908 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 14:22:15,908 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 14:22:16,413 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:16,413 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:22:16,859 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:17,268 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:17,650 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:17,997 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:18,349 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [35551]
+INFO:     Waiting for application startup.
+2026-03-06 14:22:18,555 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 14:22:18,555 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 14:22:18,890 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:22,203 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 14:22:22,553 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:22:32,470 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'models/events.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 14:25:45,153 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [35551]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 14:25:46,733 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 14:25:46,733 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 14:25:47,262 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:25:47,262 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:25:47,285 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 14:25:47,285 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 14:25:47,672 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:25:47,672 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:25:48,047 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:25:48,425 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:25:48,864 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:25:49,206 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:25:49,582 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [42314]
+INFO:     Waiting for application startup.
+2026-03-06 14:25:49,780 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 14:25:49,780 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 14:25:50,185 [INFO] Initialized BigQuery Client with Default Credentials
+WARNING:  StatReload detected changes in 'models/events.py'. Reloading...
+2026-03-06 14:25:52,662 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 14:25:53,020 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:03,906 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 14:26:04,109 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [42314]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 14:26:05,131 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 14:26:05,131 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 14:26:05,488 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:05,488 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:26:05,502 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 14:26:05,502 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 14:26:05,817 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:05,817 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:26:06,171 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:06,638 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:07,091 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:07,465 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:07,838 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [43060]
+INFO:     Waiting for application startup.
+2026-03-06 14:26:08,024 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 14:26:08,024 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 14:26:08,446 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:10,694 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 14:26:10,987 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:22,293 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routes/compliance_routes.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 14:26:43,618 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [43060]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 14:26:45,276 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 14:26:45,276 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 14:26:45,666 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:45,666 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:26:45,684 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 14:26:45,684 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 14:26:46,065 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:46,065 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:26:46,461 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:46,783 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:47,111 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:47,443 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:47,835 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [44456]
+INFO:     Waiting for application startup.
+2026-03-06 14:26:48,000 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 14:26:48,000 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 14:26:48,309 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:26:50,685 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 14:26:50,976 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:27:00,028 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+2026-03-06 14:57:00,051 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 14:57:00,052 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+WARNING:  StatReload detected changes in 'main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 14:58:01,012 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [44456]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 14:58:02,174 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 14:58:02,174 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 14:58:02,545 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:58:02,545 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:58:02,565 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 14:58:02,565 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 14:58:03,063 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:58:03,064 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 14:58:03,516 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:58:04,041 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:58:04,425 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:58:04,772 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:58:05,156 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [8051]
+INFO:     Waiting for application startup.
+2026-03-06 14:58:05,363 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 14:58:05,363 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 14:58:05,720 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:58:07,416 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 14:58:07,805 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 14:58:14,479 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routes/compliance_routes.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-06 15:07:07,729 [INFO] [LIFESPAN] Background services stopped.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [8051]
+Running DDL for extraction_claims...
+Running DDL for human_assertions...
+Running DDL for open_questions...
+Running DDL for pending_verification_queue view...
+Tables and view provisioned successfully.
+Assertions already seeded or no new assertions to seed.
+/Users/moazsial/Documents/AutoHaus_CIL/10_IT_AI_Core_Layer/backend/memory/vector_vault.py:39: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-06 15:07:08,811 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://). Falling back to in-memory broker if available.
+2026-03-06 15:07:08,812 [WARNING] Failed to initialize Redis client: Redis URL must specify one of the following schemes (redis://, rediss://, unix://)
+2026-03-06 15:07:09,169 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 15:07:09,169 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 15:07:09,188 [INFO] RouterAgent initialized with primary: gemini-2.5-flash, fallback: gemini-2.5-pro
+2026-03-06 15:07:09,188 [INFO] IEA Membrane initialized with failover support.
+2026-03-06 15:07:09,617 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 15:07:09,617 [INFO] Attention Dispatcher initialized with failover support.
+2026-03-06 15:07:10,109 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 15:07:10,534 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 15:07:10,946 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 15:07:11,304 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 15:07:11,672 [INFO] Initialized BigQuery Client with Default Credentials
+INFO:     Started server process [25814]
+INFO:     Waiting for application startup.
+2026-03-06 15:07:11,870 [INFO] [LIFESPAN] Anomaly sweep scheduler started (every 30 min).
+2026-03-06 15:07:11,870 [WARNING] [LIFESPAN] PUBLIC_URL not found. Drive Push registration skipped.
+2026-03-06 15:07:12,181 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 15:07:14,188 [INFO] [HITL] Demo proposals already exist. Skipping seed.
+2026-03-06 15:07:14,517 [INFO] Initialized BigQuery Client with Default Credentials
+2026-03-06 15:07:21,002 [INFO] [BOOT] Auto-provisioned missing claims tables if any.
+INFO:     Application startup complete.
+2026-03-06 15:37:20,948 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 15:37:20,949 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.
+2026-03-06 16:07:20,965 [INFO] [ANOMALY SCHEDULER] Running periodic anomaly sweep...
+2026-03-06 16:07:20,966 [WARNING] [ANOMALY SCHEDULER] anomaly_engine.py not found or not importable. Skipping.

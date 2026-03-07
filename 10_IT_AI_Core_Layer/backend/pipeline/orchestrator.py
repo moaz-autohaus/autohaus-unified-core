@@ -100,7 +100,7 @@ async def route_and_process(text_data: str, client_id: str, access: str):
 
         # 4. Determine Urgency via Attention Dispatcher
         dispatcher = AttentionDispatcher()
-        attention_result = dispatcher.evaluate_event(enriched_input)
+        attention_result = await dispatcher.evaluate_event(enriched_input)
         urgency_score = attention_result.urgency_score
 
         # 4.5. Governance

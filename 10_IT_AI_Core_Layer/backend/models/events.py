@@ -44,7 +44,11 @@ class EventType(str, Enum):
     ENRICHMENT_APPROVED = "ENRICHMENT_APPROVED"
     ENRICHMENT_REJECTED = "ENRICHMENT_REJECTED"
     CONFLICT_DETECTED = "CONFLICT_DETECTED"
-    # Other events can be added here as needed
+    CREDENTIAL_ROTATED = "CREDENTIAL_ROTATED"
+    # Compliance Events
+    TITLE_STATUS_UPDATED = "TITLE_STATUS_UPDATED"
+    DEAL_STATE_CHANGED = "DEAL_STATE_CHANGED"
+    STATE_CHANGE_FAILED = "STATE_CHANGE_FAILED"
 
 # Event Payload Models
 class PayloadDocumentRegistered(BaseModel):
@@ -90,6 +94,13 @@ class PayloadEntityEnriched(BaseModel):
     entity_id: str
     method: str
 
+class PayloadCredentialRotated(BaseModel):
+    secret_name: str
+    rotation_timestamp: str
+    actor: str
+    previous_version_disabled: bool = True
+    mcp_sessions_invalidated: Optional[bool] = None
+
 class EventMetadata(BaseModel):
     latency_ms: Optional[int] = None
     api_model: Optional[str] = None
@@ -125,5 +136,7 @@ class CILEvent(BaseModel):
             return PayloadEntityLinked(**payload)
         elif event_type == EventType.ENTITY_CREATED:
             return PayloadEntityCreated(**payload)
+        elif event_type == EventType.CREDENTIAL_ROTATED:
+            return PayloadCredentialRotated(**payload)
         # Default fallback
         return payload
