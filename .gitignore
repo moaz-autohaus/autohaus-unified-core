@@ -41,3 +41,23 @@ replit.md
 replit.nix
 attached_assets/
 uv.lock
+
+# Virtual environments
+test_venv/
+venv/
+.venv/
+env/
+
+# Logs
+*.log
+**/*.log
+local_server.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment files
+.env
+.env.local

@@ -23,3 +23,12 @@ Orchestrate the **AutoHaus Central Intelligence Layer (CIL)**: A 10-layer govern
 - **Immutable State:** We never `UPDATE` data values; we append new claims or assertions.
 - **Verification Example:** `backend/scripts/setup_bq_claims.py` (Standard DDL pattern).
 - **Service Pattern:** `backend/pipeline/hitl_service.py` (Standard append-only status pattern).
+
+## Git Discipline
+- Run `git status` before starting any task to understand current state
+- Commit after every completed subtask with a descriptive message
+- Never end a session without committing all completed work
+- Never use `git add -A` — always stage specific files by name
+- Commit message format: `type(scope): description`
+  - Types: feat, fix, chore, docs, refactor
+  - Example: `feat(compliance): add title_bottleneck route`
